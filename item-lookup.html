@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Item Lookup (Updated)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Item Lookup</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 2rem;
       background-color: #f8f9fa;
+      padding: 2rem;
     }
 
     h1 {
@@ -16,10 +16,17 @@
       margin-bottom: 2rem;
     }
 
+    input {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      background: white;
+      background-color: white;
     }
 
     th, td {
@@ -28,145 +35,115 @@
       border-bottom: 1px solid #ddd;
     }
 
-    th.sortable {
+    th {
       cursor: pointer;
       position: relative;
     }
 
-    th.sortable .sort-icon {
-      font-size: 0.8rem;
-      color: #aaa;
-      margin-left: 5px;
-    }
-
     th.sortable:hover {
-      background-color: #f2f2f2;
-    }
-
-    th.sorting {
-      background-color: #b11313;
+      background-color: #c8102e;
       color: white;
     }
 
-    th.sorting .sort-icon {
+    th.sorted {
+      background-color: #c8102e;
       color: white;
     }
 
-    th.sorting::after {
-      content: '▲';
-      position: absolute;
-      right: 10px;
+    th .sort-icon {
+      margin-left: 0.5rem;
+      font-size: 0.9rem;
     }
 
-    th.sorting.desc::after {
-      content: '▼';
-    }
-
-    input[type="text"] {
-      padding: 0.5rem;
-      width: 100%;
-      margin-bottom: 1rem;
-      box-sizing: border-box;
+    th span {
+      white-space: nowrap;
     }
   </style>
 </head>
 <body>
   <h1>Item Weight Lookup</h1>
-  <input type="text" id="search" placeholder="Search by name, SKU, or level...">
-  <table id="itemTable">
+
+  <input type="text" id="search" placeholder="Search by name, SKU, or level..." />
+
+  <table>
     <thead>
       <tr>
-        <th class="sortable" data-column="name">Name <span class="sort-icon">⬍</span></th>
-        <th class="sortable" data-column="sku">SKU <span class="sort-icon">⬍</span></th>
-        <th class="sortable" data-column="weight">Weight (lbs) <span class="sort-icon">⬍</span></th>
-        <th class="sortable" data-column="level">Shipping Level <span class="sort-icon">⬍</span></th>
+        <th onclick="sortTable(0)" class="sortable" id="col-0">
+          <span>Name ⬍</span><span class="sort-icon" id="sort-icon-0"></span>
+        </th>
+        <th onclick="sortTable(1)" class="sortable" id="col-1">
+          <span>SKU ⬍</span><span class="sort-icon" id="sort-icon-1"></span>
+        </th>
+        <th onclick="sortTable(2)" class="sortable" id="col-2">
+          <span>Weight (lbs) ⬍</span><span class="sort-icon" id="sort-icon-2"></span>
+        </th>
+        <th onclick="sortTable(3)" class="sortable" id="col-3">
+          <span>Shipping Level ⬍</span><span class="sort-icon" id="sort-icon-3"></span>
+        </th>
       </tr>
     </thead>
-    <tbody id="itemBody">
-      <!-- Dynamic content will be loaded here -->
+    <tbody id="table-body">
+      <tr><td>T-Shirt</td><td>TS001</td><td>0.5</td><td>1</td></tr>
+      <tr><td>Hoodie</td><td>HD002</td><td>1.4</td><td>3</td></tr>
+      <tr><td>Cap</td><td>CP003</td><td>0.4</td><td>1</td></tr>
+      <tr><td>Jacket</td><td>JK004</td><td>2.2</td><td>5</td></tr>
+      <tr><td>Sweatshirt</td><td>SW005</td><td>1.2</td><td>3</td></tr>
     </tbody>
   </table>
 
   <script>
-    const items = [
-      { name: "T-Shirt", sku: "TS001", weight: 0.5, level: 1 },
-      { name: "Hoodie", sku: "HD002", weight: 1.4, level: 3 },
-      { name: "Cap", sku: "CP003", weight: 0.4, level: 1 },
-      { name: "Jacket", sku: "JK004", weight: 2.2, level: 5 },
-      { name: "Sweatshirt", sku: "SW005", weight: 1.2, level: 3 },
-    ];
+    const searchInput = document.getElementById('search');
+    const tableBody = document.getElementById('table-body');
+    const rows = Array.from(tableBody.rows);
 
-    const tableBody = document.getElementById("itemBody");
-    const searchInput = document.getElementById("search");
-
-    let currentSort = { column: null, direction: "asc" };
-
-    function renderTable(data) {
-      tableBody.innerHTML = data.map(item => `
-        <tr>
-          <td>${item.name}</td>
-          <td>${item.sku}</td>
-          <td>${item.weight}</td>
-          <td>${item.level}</td>
-        </tr>
-      `).join("");
-    }
-
-    function sortTable(column) {
-      const isSameColumn = currentSort.column === column;
-      currentSort.direction = isSameColumn && currentSort.direction === "asc" ? "desc" : "asc";
-      currentSort.column = column;
-
-      let sorted = [...items].sort((a, b) => {
-        const valA = a[column];
-        const valB = b[column];
-
-        if (typeof valA === "string") {
-          return currentSort.direction === "asc"
-            ? valA.localeCompare(valB)
-            : valB.localeCompare(valA);
-        } else {
-          return currentSort.direction === "asc" ? valA - valB : valB - valA;
+    searchInput.addEventListener('input', function () {
+      const value = this.value.toLowerCase();
+      tableBody.innerHTML = '';
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        if (text.includes(value)) {
+          tableBody.appendChild(row);
         }
-      });
-
-      updateSortUI(column);
-      renderTable(sorted);
-    }
-
-    function updateSortUI(activeColumn) {
-      const headers = document.querySelectorAll("th.sortable");
-
-      headers.forEach(header => {
-        const col = header.getAttribute("data-column");
-        header.classList.remove("sorting", "desc");
-        if (col === activeColumn) {
-          header.classList.add("sorting");
-          if (currentSort.direction === "desc") {
-            header.classList.add("desc");
-          }
-        }
-      });
-    }
-
-    searchInput.addEventListener("input", () => {
-      const query = searchInput.value.toLowerCase();
-      const filtered = items.filter(item =>
-        item.name.toLowerCase().includes(query) ||
-        item.sku.toLowerCase().includes(query) ||
-        item.level.toString().includes(query)
-      );
-      renderTable(filtered);
-    });
-
-    document.querySelectorAll("th.sortable").forEach(header => {
-      header.addEventListener("click", () => {
-        const column = header.getAttribute("data-column");
-        sortTable(column);
       });
     });
 
-    renderTable(items);
+    let sortCol = -1;
+    let sortAsc = true;
+
+    function sortTable(colIndex) {
+      const isSameCol = sortCol === colIndex;
+      sortAsc = isSameCol ? !sortAsc : true;
+      sortCol = colIndex;
+
+      rows.sort((a, b) => {
+        const aText = a.cells[colIndex].textContent.trim();
+        const bText = b.cells[colIndex].textContent.trim();
+
+        const aNum = parseFloat(aText);
+        const bNum = parseFloat(bText);
+
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          return sortAsc ? aNum - bNum : bNum - aNum;
+        }
+
+        return sortAsc
+          ? aText.localeCompare(bText)
+          : bText.localeCompare(aText);
+      });
+
+      tableBody.innerHTML = '';
+      rows.forEach(row => tableBody.appendChild(row));
+
+      // Reset styles
+      for (let i = 0; i < 4; i++) {
+        document.getElementById(`col-${i}`).classList.remove('sorted');
+        document.getElementById(`sort-icon-${i}`).textContent = '';
+      }
+
+      const sortIcon = sortAsc ? '▲' : '▼';
+      document.getElementById(`col-${colIndex}`).classList.add('sorted');
+      document.getElementById(`sort-icon-${colIndex}`).textContent = sortIcon;
+    }
   </script>
 </body>
 </html>
