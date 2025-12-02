@@ -6,179 +6,143 @@
   <title>Item Lookup</title>
   <style>
     body {
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      font-family: Arial, sans-serif;
       background-color: #f8f9fa;
-      margin: 0;
-      padding: 40px 20px;
-      text-align: center;
+      padding: 2rem;
     }
 
     h1 {
-      font-size: 2rem;
-      font-weight: bold;
-      margin-bottom: 0.3em;
+      text-align: center;
+      margin-bottom: 2rem;
     }
 
-    .subtext {
-      font-size: 0.95rem;
-      color: #555;
-      margin-bottom: 1.5em;
-    }
-
-    .search-container {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    input[type="text"] {
-      padding: 10px;
+    input {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
       font-size: 1rem;
-      width: 280px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-
-    button {
-      background-color: #c60000;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      font-size: 1rem;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #a70000;
-    }
-
-    .instructions {
-      margin-top: 8px;
-      font-size: 0.85rem;
-      color: #555;
     }
 
     table {
-      margin: 30px auto 0;
+      width: 100%;
       border-collapse: collapse;
-      width: 95%;
-      max-width: 1100px;
-      font-size: 0.95rem;
       background-color: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
     th, td {
-      padding: 12px 10px;
-      border-bottom: 1px solid #ddd;
+      padding: 0.75rem;
       text-align: left;
+      border-bottom: 1px solid #ddd;
     }
 
     th {
-      background-color: #f1f1f1;
-      font-weight: 600;
+      cursor: pointer;
+      position: relative;
     }
 
-    tr:hover {
-      background-color: #f9f9f9;
+    th.sortable:hover {
+      background-color: #c8102e;
+      color: white;
     }
 
-    #resultsTable {
-      display: none;
+    th.sorted {
+      background-color: #c8102e;
+      color: white;
+    }
+
+    th .sort-icon {
+      margin-left: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    th span {
+      white-space: nowrap;
     }
   </style>
 </head>
 <body>
-  <h1>Item Weight & Shipping Lookup</h1>
-  <div class="subtext">
-    Search by <strong>Item # (exact)</strong> or <strong>Description keywords</strong>. Results include vendor, weight, and shipping/handling levels.
-  </div>
+  <h1>Item Weight Lookup</h1>
 
-  <div class="search-container">
-    <input type="text" id="skuInput" placeholder="Item # (exact)">
-    <input type="text" id="descInput" placeholder="Description keywords">
-    <button onclick="clearSearch()">Clear</button>
-  </div>
+  <input type="text" id="search" placeholder="Search by name, SKU, or level..." />
 
-  <div class="instructions">
-    Type an Item # (exact) or at least 2 characters in Description.
-  </div>
-
-  <table id="resultsTable">
+  <table>
     <thead>
       <tr>
-        <th>Item #</th>
-        <th>Description</th>
-        <th>Vendor</th>
-        <th>Weight (lbs)</th>
-        <th>Shipping Level</th>
-        <th>Handling Level</th>
+        <th onclick="sortTable(0)" class="sortable" id="col-0">
+          <span>Name ⬍</span><span class="sort-icon" id="sort-icon-0"></span>
+        </th>
+        <th onclick="sortTable(1)" class="sortable" id="col-1">
+          <span>SKU ⬍</span><span class="sort-icon" id="sort-icon-1"></span>
+        </th>
+        <th onclick="sortTable(2)" class="sortable" id="col-2">
+          <span>Weight (lbs) ⬍</span><span class="sort-icon" id="sort-icon-2"></span>
+        </th>
+        <th onclick="sortTable(3)" class="sortable" id="col-3">
+          <span>Shipping Level ⬍</span><span class="sort-icon" id="sort-icon-3"></span>
+        </th>
       </tr>
     </thead>
-    <tbody id="resultsBody"></tbody>
+    <tbody id="table-body">
+      <tr><td>T-Shirt</td><td>TS001</td><td>0.5</td><td>1</td></tr>
+      <tr><td>Hoodie</td><td>HD002</td><td>1.4</td><td>3</td></tr>
+      <tr><td>Cap</td><td>CP003</td><td>0.4</td><td>1</td></tr>
+      <tr><td>Jacket</td><td>JK004</td><td>2.2</td><td>5</td></tr>
+      <tr><td>Sweatshirt</td><td>SW005</td><td>1.2</td><td>3</td></tr>
+    </tbody>
   </table>
 
   <script>
-    const items = [
-      { sku: "TS001", desc: "T-Shirt", vendor: "Vendor A", weight: 0.5, shipping: 1, handling: 1 },
-      { sku: "HD002", desc: "Hoodie", vendor: "Vendor B", weight: 1.4, shipping: 3, handling: 2 },
-      { sku: "CP003", desc: "Cap", vendor: "Vendor C", weight: 0.4, shipping: 1, handling: 1 },
-      { sku: "JK004", desc: "Jacket", vendor: "Vendor D", weight: 2.2, shipping: 5, handling: 3 },
-      { sku: "SW005", desc: "Sweatshirt", vendor: "Vendor E", weight: 1.2, shipping: 3, handling: 2 },
-    ];
+    const searchInput = document.getElementById('search');
+    const tableBody = document.getElementById('table-body');
+    const rows = Array.from(tableBody.rows);
 
-    const skuInput = document.getElementById("skuInput");
-    const descInput = document.getElementById("descInput");
-    const resultsTable = document.getElementById("resultsTable");
-    const resultsBody = document.getElementById("resultsBody");
+    searchInput.addEventListener('input', function () {
+      const value = this.value.toLowerCase();
+      tableBody.innerHTML = '';
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        if (text.includes(value)) {
+          tableBody.appendChild(row);
+        }
+      });
+    });
 
-    function renderResults(filtered) {
-      resultsBody.innerHTML = "";
+    let sortCol = -1;
+    let sortAsc = true;
 
-      if (filtered.length === 0) {
-        resultsTable.style.display = "none";
-        return;
-      }
+    function sortTable(colIndex) {
+      const isSameCol = sortCol === colIndex;
+      sortAsc = isSameCol ? !sortAsc : true;
+      sortCol = colIndex;
 
-      filtered.forEach(item => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${item.sku}</td>
-          <td>${item.desc}</td>
-          <td>${item.vendor}</td>
-          <td>${item.weight}</td>
-          <td>${item.shipping}</td>
-          <td>${item.handling}</td>
-        `;
-        resultsBody.appendChild(row);
+      rows.sort((a, b) => {
+        const aText = a.cells[colIndex].textContent.trim();
+        const bText = b.cells[colIndex].textContent.trim();
+
+        const aNum = parseFloat(aText);
+        const bNum = parseFloat(bText);
+
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          return sortAsc ? aNum - bNum : bNum - aNum;
+        }
+
+        return sortAsc
+          ? aText.localeCompare(bText)
+          : bText.localeCompare(aText);
       });
 
-      resultsTable.style.display = "table";
-    }
+      tableBody.innerHTML = '';
+      rows.forEach(row => tableBody.appendChild(row));
 
-    function handleSearch() {
-      const skuValue = skuInput.value.trim().toLowerCase();
-      const descValue = descInput.value.trim().toLowerCase();
+      // Reset styles
+      for (let i = 0; i < 4; i++) {
+        document.getElementById(`col-${i}`).classList.remove('sorted');
+        document.getElementById(`sort-icon-${i}`).textContent = '';
+      }
 
-      const filtered = items.filter(item =>
-        (skuValue && item.sku.toLowerCase() === skuValue) ||
-        (descValue.length >= 2 && item.desc.toLowerCase().includes(descValue))
-      );
-
-      renderResults(filtered);
-    }
-
-    skuInput.addEventListener("input", handleSearch);
-    descInput.addEventListener("input", handleSearch);
-
-    function clearSearch() {
-      skuInput.value = "";
-      descInput.value = "";
-      resultsBody.innerHTML = "";
-      resultsTable.style.display = "none";
+      const sortIcon = sortAsc ? '▲' : '▼';
+      document.getElementById(`col-${colIndex}`).classList.add('sorted');
+      document.getElementById(`sort-icon-${colIndex}`).textContent = sortIcon;
     }
   </script>
 </body>
