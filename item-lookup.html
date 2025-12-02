@@ -3,86 +3,59 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Item Lookup</title>
+  <title>Item Weight Lookup</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background-color: #f8f9fa;
       padding: 2rem;
     }
-
     h1 {
       text-align: center;
-      margin-bottom: 2rem;
     }
-
     input {
-      width: 100%;
+      margin: 1rem auto;
       padding: 0.5rem;
-      margin-bottom: 1rem;
+      width: 50%;
+      display: block;
       font-size: 1rem;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
-      background-color: white;
+      margin-top: 2rem;
+      display: none;
     }
-
     th, td {
+      border: 1px solid #ddd;
       padding: 0.75rem;
       text-align: left;
-      border-bottom: 1px solid #ddd;
     }
-
     th {
-      cursor: pointer;
-      position: relative;
+      background-color: #f1f1f1;
     }
-
-    th.sortable:hover {
-      background-color: #c8102e;
-      color: white;
-    }
-
-    th.sorted {
-      background-color: #c8102e;
-      color: white;
-    }
-
-    th .sort-icon {
-      margin-left: 0.5rem;
-      font-size: 0.9rem;
-    }
-
-    th span {
-      white-space: nowrap;
+    tbody tr:hover {
+      background-color: #f5f5f5;
     }
   </style>
 </head>
 <body>
+
   <h1>Item Weight Lookup</h1>
 
-  <input type="text" id="search" placeholder="Search by name, SKU, or level..." />
+  <input type="text" id="skuInput" placeholder="Search by item # (SKU)...">
+  <input type="text" id="descInput" placeholder="Search by item description...">
 
-  <table>
+  <table id="itemTable">
     <thead>
       <tr>
-        <th onclick="sortTable(0)" class="sortable" id="col-0">
-          <span>Name ⬍</span><span class="sort-icon" id="sort-icon-0"></span>
-        </th>
-        <th onclick="sortTable(1)" class="sortable" id="col-1">
-          <span>SKU ⬍</span><span class="sort-icon" id="sort-icon-1"></span>
-        </th>
-        <th onclick="sortTable(2)" class="sortable" id="col-2">
-          <span>Weight (lbs) ⬍</span><span class="sort-icon" id="sort-icon-2"></span>
-        </th>
-        <th onclick="sortTable(3)" class="sortable" id="col-3">
-          <span>Shipping Level ⬍</span><span class="sort-icon" id="sort-icon-3"></span>
-        </th>
+        <th>Name</th>
+        <th>SKU</th>
+        <th>Weight (lbs)</th>
+        <th>Shipping Level</th>
       </tr>
     </thead>
-    <tbody id="table-body">
+    <tbody id="tableBody">
       <tr><td>T-Shirt</td><td>TS001</td><td>0.5</td><td>1</td></tr>
       <tr><td>Hoodie</td><td>HD002</td><td>1.4</td><td>3</td></tr>
       <tr><td>Cap</td><td>CP003</td><td>0.4</td><td>1</td></tr>
@@ -92,58 +65,38 @@
   </table>
 
   <script>
-    const searchInput = document.getElementById('search');
-    const tableBody = document.getElementById('table-body');
-    const rows = Array.from(tableBody.rows);
+    const skuInput = document.getElementById('skuInput');
+    const descInput = document.getElementById('descInput');
+    const table = document.getElementById('itemTable');
+    const rows = document.querySelectorAll('#tableBody tr');
 
-    searchInput.addEventListener('input', function () {
-      const value = this.value.toLowerCase();
-      tableBody.innerHTML = '';
+    function filterTable() {
+      const skuValue = skuInput.value.toLowerCase();
+      const descValue = descInput.value.toLowerCase();
+      let hasVisible = false;
+
       rows.forEach(row => {
-        const text = row.innerText.toLowerCase();
-        if (text.includes(value)) {
-          tableBody.appendChild(row);
+        const cells = row.getElementsByTagName('td');
+        const name = cells[0].textContent.toLowerCase();
+        const sku = cells[1].textContent.toLowerCase();
+
+        const matchSKU = sku.includes(skuValue);
+        const matchName = name.includes(descValue);
+
+        if (matchSKU && matchName) {
+          row.style.display = '';
+          hasVisible = true;
+        } else {
+          row.style.display = 'none';
         }
       });
-    });
 
-    let sortCol = -1;
-    let sortAsc = true;
-
-    function sortTable(colIndex) {
-      const isSameCol = sortCol === colIndex;
-      sortAsc = isSameCol ? !sortAsc : true;
-      sortCol = colIndex;
-
-      rows.sort((a, b) => {
-        const aText = a.cells[colIndex].textContent.trim();
-        const bText = b.cells[colIndex].textContent.trim();
-
-        const aNum = parseFloat(aText);
-        const bNum = parseFloat(bText);
-
-        if (!isNaN(aNum) && !isNaN(bNum)) {
-          return sortAsc ? aNum - bNum : bNum - aNum;
-        }
-
-        return sortAsc
-          ? aText.localeCompare(bText)
-          : bText.localeCompare(aText);
-      });
-
-      tableBody.innerHTML = '';
-      rows.forEach(row => tableBody.appendChild(row));
-
-      // Reset styles
-      for (let i = 0; i < 4; i++) {
-        document.getElementById(`col-${i}`).classList.remove('sorted');
-        document.getElementById(`sort-icon-${i}`).textContent = '';
-      }
-
-      const sortIcon = sortAsc ? '▲' : '▼';
-      document.getElementById(`col-${colIndex}`).classList.add('sorted');
-      document.getElementById(`sort-icon-${colIndex}`).textContent = sortIcon;
+      table.style.display = hasVisible ? 'table' : 'none';
     }
+
+    skuInput.addEventListener('input', filterTable);
+    descInput.addEventListener('input', filterTable);
   </script>
+
 </body>
 </html>
