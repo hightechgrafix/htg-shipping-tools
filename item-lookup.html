@@ -1,412 +1,266 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Item Weight & Shipping Lookup</title>
   <style>
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      background: #fff;
-      color: #111;
-      margin: 0;
-      padding: 24px;
-    }
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-    h1 {
-      color: #000;
-      margin-bottom: 4px;
-    }
-    .sub {
-      color: #555;
-      margin: 0 0 18px;
-      font-size: 14px;
-    }
-    .search-bar {
-      display: grid;
-      grid-template-columns: 1fr 1fr 120px;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    input,
-    button,
-    select {
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 15px;
-      box-sizing: border-box;
-    }
-    input {
-      border: 1px solid #ccc;
-    }
-    input:focus {
-      border-color: #c40000;
-      outline: none;
-      box-shadow: 0 0 0 2px rgba(196, 0, 0, 0.15);
-    }
-    button {
-      background: #c40000;
-      color: #fff;
-      border: 1px solid #c40000;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    button:hover {
-      filter: brightness(0.93);
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    th,
-    td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-      font-size: 13px;
-    }
-    th {
-      background: #f4f4f4;
-      cursor: pointer;
-      user-select: none;
-    }
-    tr:hover td {
-      background: #f9f9f9;
-    }
-    .muted {
-      color: #555;
-      font-size: 13px;
-      margin-top: 4px;
-    }
-    .badge {
-      display: inline-block;
-      padding: 1px 6px;
-      border-radius: 999px;
-      border: 1px solid #ddd;
-      font-size: 11px;
-      background: #fafafa;
-    }
-    #tableWrap {
-      display: none;
-    }
-    .pagination {
-      margin-top: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .pagination button {
-      font-size: 14px;
-    }
-    .page-info {
-      font-size: 14px;
-      font-weight: bold;
-    }
-    @media (max-width: 760px) {
-      .search-bar {
-        grid-template-columns: 1fr;
-      }
-      th,
-      td {
-        font-size: 12px;
-      }
+    body {font-family: Arial, Helvetica, sans-serif; background: #fff; color: #111; margin: 0; padding: 24px;}
+    .container {max-width: 1100px; margin: 0 auto;}
+    h1 {color: #000; margin-bottom: 4px;}
+    .sub {color:#555; margin:0 0 18px; font-size:14px;}
+    .search-bar {display: grid; grid-template-columns: 1fr 1fr 120px; gap: 10px; margin-bottom: 10px;}
+    input, button, select {padding: 10px; border-radius: 8px; font-size: 15px; box-sizing:border-box;}
+    input {border: 1px solid #ccc;}
+    input:focus {border-color:#c40000; outline:none; box-shadow:0 0 0 2px rgba(196,0,0,.15);}
+    button {background: #c40000; color: #fff; border: 1px solid #c40000; cursor: pointer; font-weight:600;}
+    button:hover {filter: brightness(0.93);}
+    table {width: 100%; border-collapse: collapse; margin-top: 10px;}
+    th, td {border: 1px solid #ddd; padding: 8px; text-align: left; font-size:13px;}
+    th {background: #f4f4f4; cursor: pointer; user-select:none; position: relative;}
+    tr:hover td {background: #f9f9f9;}
+    .muted {color: #555; font-size: 13px; margin-top:4px;}
+    .badge {display:inline-block; padding:1px 6px; border-radius:999px; border:1px solid #ddd; font-size:11px; background:#fafafa;}
+    #tableWrap {display:none;}
+    .pagination {margin-top: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;}
+    .pagination button {font-size: 14px;}
+    .page-info {font-size: 14px; font-weight: bold;}
+    .sort-icon {font-size: 12px; margin-left: 6px; color: #aaa;}
+    th.active {background-color: #b6282c; color: #fff;}
+    th.active .sort-icon {color: #fff;}
+    @media (max-width:760px){
+      .search-bar {grid-template-columns: 1fr;}
+      th, td {font-size:12px;}
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Item Weight & Shipping Lookup</h1>
-    <p class="sub">
-      Search by <strong>Item # (exact)</strong> or <strong>Description keywords</strong>. Results include vendor, weight, and shipping/handling levels.
-    </p>
+<div class="container">
+  <h1>Item Weight & Shipping Lookup</h1>
+  <p class="sub">
+    Search by <strong>Item # (exact)</strong> or <strong>Description keywords</strong>.  
+    Results include vendor, weight, and shipping/handling levels.
+  </p>
 
-    <div class="search-bar">
-      <input type="text" id="itemInput" placeholder="Item # (exact)" />
-      <input type="text" id="descInput" placeholder="Description keywords" />
-      <button id="clearBtn">Clear</button>
+  <div class="search-bar">
+    <input type="text" id="itemInput" placeholder="Item # (exact)">
+    <input type="text" id="descInput" placeholder="Description keywords">
+    <button id="clearBtn">Clear</button>
+  </div>
+  <div id="status" class="muted">Type an Item # (exact) or at least 2 characters in Description.</div>
+
+  <div id="tableWrap">
+    <div class="pagination">
+      <div class="page-info" id="pageTop"></div>
+      <select id="pageJump"></select>
     </div>
-    <div id="status" class="muted">Type an Item # (exact) or at least 2 characters in Description.</div>
-
-    <div id="tableWrap">
-      <div class="pagination">
-        <div class="page-info" id="pageTop"></div>
-        <select id="pageJump"></select>
-      </div>
-      <table id="resultTable">
-        <thead>
-          <tr>
-            <th data-k="vendor">Vendor</th>
-            <th data-k="style_num">Style #</th>
-            <th data-k="product_title">Title</th>
-            <th data-k="size">Size</th>
-            <th data-k="piece_weight">Weight (lb)</th>
-            <th data-k="ship_level">Ship Level</th>
-            <th>Shipping $ min</th>
-            <th>Shipping $/Item</th>
-            <th>Handling $ min</th>
-            <th>Handling $/Item</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <div class="pagination">
-        <button id="prevBtn">Previous</button>
-        <div class="page-info" id="pageBottom"></div>
-        <button id="nextBtn">Next</button>
-      </div>
+    <table id="resultTable">
+      <thead>
+        <tr>
+          <th data-k="vendor">Vendor <span class="sort-icon">⬍</span></th>
+          <th data-k="style_num">Style # <span class="sort-icon">⬍</span></th>
+          <th data-k="product_title">Title <span class="sort-icon">⬍</span></th>
+          <th data-k="size">Size <span class="sort-icon">⬍</span></th>
+          <th data-k="piece_weight">Weight (lb) <span class="sort-icon">⬍</span></th>
+          <th data-k="ship_level">Ship Level <span class="sort-icon">⬍</span></th>
+          <th>Shipping $ min</th>
+          <th>Shipping $/Item</th>
+          <th>Handling $ min</th>
+          <th>Handling $/Item</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="pagination">
+      <button id="prevBtn">Previous</button>
+      <div class="page-info" id="pageBottom"></div>
+      <button id="nextBtn">Next</button>
     </div>
   </div>
+</div>
 
-  <script>
-    const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
-    const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
+<script>
+// (unchanged config and API constants)
+const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
+const API_ITEMS = `${SUPABASE_URL}/rest/v1/items_unified`;
+const API_LEVELS = `${SUPABASE_URL}/rest/v1/shipping_levels`;
+let sortKey = "style_num";
+let sortAsc = true;
+let page = 0;
+const pageSize = 100;
+let totalPages = 0;
+let shippingLevels = [];
+let shippingLevelsLoaded = false;
+let currentRows = [];
 
-    const API_ITEMS = `${SUPABASE_URL}/rest/v1/items_unified`;
-    const API_LEVELS = `${SUPABASE_URL}/rest/v1/shipping_levels`;
+document.addEventListener("DOMContentLoaded", () => {
+  const itemInput = document.getElementById("itemInput");
+  const descInput = document.getElementById("descInput");
+  const clearBtn = document.getElementById("clearBtn");
+  const tableWrap = document.getElementById("tableWrap");
+  const tbody = document.querySelector("#resultTable tbody");
+  const statusEl = document.getElementById("status");
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  const pageTop = document.getElementById("pageTop");
+  const pageBottom = document.getElementById("pageBottom");
+  const pageJump = document.getElementById("pageJump");
 
-    let sortKey = "style_num";
-    let sortAsc = true;
-    let page = 0;
-    const pageSize = 100;
-    let totalPages = 0;
-
-    let shippingLevels = [];
-    let shippingLevelsLoaded = false;
-    let currentRows = [];
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const itemInput = document.getElementById("itemInput");
-      const descInput = document.getElementById("descInput");
-      const clearBtn = document.getElementById("clearBtn");
-      const tableWrap = document.getElementById("tableWrap");
-      const tbody = document.querySelector("#resultTable tbody");
-      const statusEl = document.getElementById("status");
-      const prevBtn = document.getElementById("prevBtn");
-      const nextBtn = document.getElementById("nextBtn");
-      const pageTop = document.getElementById("pageTop");
-      const pageBottom = document.getElementById("pageBottom");
-      const pageJump = document.getElementById("pageJump");
-
-      // ✅ Sort column click handler with active indicator
-      document.querySelectorAll("th[data-k]").forEach((th) => {
-        th.addEventListener("click", () => {
-          const key = th.dataset.k;
-          if (!key) return;
-
-          if (sortKey === key) {
-            sortAsc = !sortAsc;
-          } else {
-            sortKey = key;
-            sortAsc = true;
-          }
-
-          // Reset all headers
-          document.querySelectorAll("th[data-k]").forEach((header) => {
-            header.style.backgroundColor = "";
-            header.style.color = "";
-            header.textContent = header.textContent.replace(" ▲", "").replace(" ▼", "");
-          });
-
-          // Add arrow to current column
-          const arrow = sortAsc ? " ▲" : " ▼";
-          th.style.backgroundColor = "#b6282c";
-          th.style.color = "#ffffff";
-          th.textContent = th.textContent + arrow;
-
-          page = 0;
-          render(currentRows);
-        });
-      });
-
-      async function loadShippingLevels() {
-        try {
-          const url = new URL(API_LEVELS);
-          url.searchParams.set("select", "*");
-          url.searchParams.set("order", "min_weight.asc");
-          const res = await fetch(url.toString(), {
-            headers: {
-              apikey: SUPABASE_ANON,
-              Authorization: `Bearer ${SUPABASE_ANON}`,
-            },
-            cache: "no-store",
-          });
-          if (!res.ok) throw new Error("shipping levels failed");
-          shippingLevels = await res.json();
-          shippingLevelsLoaded = true;
-        } catch (err) {
-          console.error("Failed to load shipping levels", err);
-          shippingLevels = [];
-          shippingLevelsLoaded = false;
-        }
+  document.querySelectorAll("th[data-k]").forEach(th => {
+    th.addEventListener("click", () => {
+      const key = th.dataset.k;
+      if (!key) return;
+      if (sortKey === key) {
+        sortAsc = !sortAsc;
+      } else {
+        sortKey = key;
+        sortAsc = true;
       }
-
-      function findShippingForWeight(weight) {
-        const w = Number(weight || 0);
-        if (!shippingLevels.length || !isFinite(w)) return null;
-        return (
-          shippingLevels.find(
-            (level) =>
-              w >= Number(level.min_weight) && w <= Number(level.max_weight)
-          ) || null
-        );
-      }
-
-      function render(rows) {
-        tbody.innerHTML = "";
-        const paged = rows.slice(page * pageSize, (page + 1) * pageSize);
-
-        paged.sort((a, b) => {
-          let aVal = a[sortKey];
-          let bVal = b[sortKey];
-
-          if (sortKey === "ship_level") {
-            aVal = findShippingForWeight(a.piece_weight)?.shipping_level || 999;
-            bVal = findShippingForWeight(b.piece_weight)?.shipping_level || 999;
-          }
-
-          if (typeof aVal === "string") aVal = aVal.toLowerCase();
-          if (typeof bVal === "string") bVal = bVal.toLowerCase();
-
-          return sortAsc ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
-        });
-
-        paged.forEach((r) => {
-          const ship = findShippingForWeight(r.piece_weight);
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td><span class="badge">${r.vendor || ""}</span></td>
-            <td>${r.style_num || ""}</td>
-            <td>${r.product_title || ""}</td>
-            <td>${r.size || ""}</td>
-            <td>${r.piece_weight?.toFixed(2) || ""}</td>
-            <td>${ship ? `Level ${ship.shipping_level}` : ""}</td>
-            <td>${ship ? `$${ship.shipping_min.toFixed(2)}` : ""}</td>
-            <td>${ship ? `$${ship.shipping_per_item.toFixed(2)}` : ""}</td>
-            <td>${ship ? `$${ship.handling_min.toFixed(2)}` : ""}</td>
-            <td>${ship ? `$${ship.handling_per_item.toFixed(2)}` : ""}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-        tableWrap.style.display = rows.length ? "block" : "none";
-        statusEl.textContent = rows.length
-          ? `${rows.length} item(s) found`
-          : "No results";
-
-        totalPages = Math.ceil(rows.length / pageSize);
-        pageTop.textContent = `Page ${page + 1} of ${totalPages}`;
-        pageBottom.textContent = `Page ${page + 1} of ${totalPages}`;
-
-        pageJump.innerHTML = "";
-        for (let i = 0; i < totalPages; i++) {
-          const opt = document.createElement("option");
-          opt.value = i;
-          opt.textContent = `Go to page ${i + 1}`;
-          if (i === page) opt.selected = true;
-          pageJump.appendChild(opt);
-        }
-
-        prevBtn.disabled = page === 0;
-        nextBtn.disabled = page + 1 >= totalPages;
-      }
-
-      async function fetchItems() {
-        const style = itemInput.value.trim();
-        const desc = descInput.value.trim();
-
-        if (!shippingLevelsLoaded) await loadShippingLevels();
-
-        const url = new URL(API_ITEMS);
-        url.searchParams.set(
-          "select",
-          "vendor,style_num,product_title,product_description,size,piece_weight"
-        );
-
-        if (style.length > 0) {
-          url.searchParams.set("style_num", `ilike.${style}`);
-        } else if (desc.length >= 2) {
-          const like = `*${desc}*`;
-          url.searchParams.set(
-            "or",
-            `(product_title.ilike.${like},product_description.ilike.${like})`
-          );
-        } else {
-          tableWrap.style.display = "none";
-          tbody.innerHTML = "";
-          statusEl.textContent =
-            "Type an Item # (exact) or at least 2 characters in Description.";
-          return;
-        }
-
-        if (sortKey !== "ship_level") {
-          url.searchParams.set("order", `${sortKey}.${sortAsc ? "asc" : "desc"}`);
-        }
-
-        url.searchParams.set("limit", "1000");
-
-        try {
-          const res = await fetch(url.toString(), {
-            headers: {
-              apikey: SUPABASE_ANON,
-              Authorization: `Bearer ${SUPABASE_ANON}`,
-            },
-            cache: "no-store",
-          });
-          if (!res.ok) throw new Error("API error");
-          currentRows = await res.json();
-          render(currentRows);
-        } catch (e) {
-          console.error(e);
-          tableWrap.style.display = "none";
-          statusEl.textContent = "Search failed.";
-        }
-      }
-
-      const runSearch = (() => {
-        let t;
-        return (...a) => {
-          clearTimeout(t);
-          t = setTimeout(() => fetchItems(...a), 160);
-        };
-      })();
-
-      clearBtn.addEventListener("click", () => {
-        itemInput.value = "";
-        descInput.value = "";
-        tbody.innerHTML = "";
-        tableWrap.style.display = "none";
-        statusEl.textContent =
-          "Type an Item # (exact) or at least 2 characters in Description.";
+      document.querySelectorAll("th[data-k]").forEach(header => {
+        header.classList.remove("active");
+        const icon = header.querySelector(".sort-icon");
+        if (icon) icon.textContent = "⬍";
       });
-
-      itemInput.addEventListener("input", runSearch);
-      descInput.addEventListener("input", runSearch);
-
-      prevBtn.addEventListener("click", () => {
-        if (page > 0) {
-          page--;
-          render(currentRows);
-        }
-      });
-
-      nextBtn.addEventListener("click", () => {
-        if ((page + 1) * pageSize < currentRows.length) {
-          page++;
-          render(currentRows);
-        }
-      });
-
-      pageJump.addEventListener("change", () => {
-        page = parseInt(pageJump.value);
-        render(currentRows);
-      });
+      th.classList.add("active");
+      const icon = th.querySelector(".sort-icon");
+      if (icon) icon.textContent = sortAsc ? "▲" : "▼";
+      page = 0;
+      render(currentRows);
     });
-  </script>
+  });
+
+  async function loadShippingLevels() {
+    try {
+      const url = new URL(API_LEVELS);
+      url.searchParams.set("select", "*");
+      url.searchParams.set("order", "min_weight.asc");
+      const res = await fetch(url.toString(), {
+        headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` },
+        cache: "no-store"
+      });
+      if (!res.ok) throw new Error("shipping levels failed");
+      shippingLevels = await res.json();
+      shippingLevelsLoaded = true;
+    } catch (err) {
+      console.error("Failed to load shipping levels", err);
+      shippingLevels = [];
+      shippingLevelsLoaded = false;
+    }
+  }
+
+  function findShippingForWeight(weight) {
+    const w = Number(weight || 0);
+    if (!shippingLevels.length || !isFinite(w)) return null;
+    return shippingLevels.find(level => w >= Number(level.min_weight) && w <= Number(level.max_weight)) || null;
+  }
+
+  function render(rows) {
+    tbody.innerHTML = "";
+    const paged = rows.slice(page * pageSize, (page + 1) * pageSize);
+    paged.sort((a, b) => {
+      let aVal = a[sortKey];
+      let bVal = b[sortKey];
+      if (sortKey === "ship_level") {
+        aVal = findShippingForWeight(a.piece_weight)?.shipping_level || 999;
+        bVal = findShippingForWeight(b.piece_weight)?.shipping_level || 999;
+      }
+      if (typeof aVal === "string") aVal = aVal.toLowerCase();
+      if (typeof bVal === "string") bVal = bVal.toLowerCase();
+      return sortAsc ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
+    });
+    paged.forEach(r => {
+      const ship = findShippingForWeight(r.piece_weight);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><span class="badge">${r.vendor || ""}</span></td>
+        <td>${r.style_num || ""}</td>
+        <td>${r.product_title || ""}</td>
+        <td>${r.size || ""}</td>
+        <td>${r.piece_weight?.toFixed(2) || ""}</td>
+        <td>${ship ? `Level ${ship.shipping_level}` : ""}</td>
+        <td>${ship ? `$${ship.shipping_min.toFixed(2)}` : ""}</td>
+        <td>${ship ? `$${ship.shipping_per_item.toFixed(2)}` : ""}</td>
+        <td>${ship ? `$${ship.handling_min.toFixed(2)}` : ""}</td>
+        <td>${ship ? `$${ship.handling_per_item.toFixed(2)}` : ""}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    tableWrap.style.display = rows.length ? "block" : "none";
+    statusEl.textContent = rows.length ? `${rows.length} item(s) found` : "No results";
+    totalPages = Math.ceil(rows.length / pageSize);
+    pageTop.textContent = `Page ${page + 1} of ${totalPages}`;
+    pageBottom.textContent = `Page ${page + 1} of ${totalPages}`;
+    pageJump.innerHTML = "";
+    for (let i = 0; i < totalPages; i++) {
+      const opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = `Go to page ${i + 1}`;
+      if (i === page) opt.selected = true;
+      pageJump.appendChild(opt);
+    }
+    prevBtn.disabled = page === 0;
+    nextBtn.disabled = page + 1 >= totalPages;
+  }
+
+  async function fetchItems() {
+    const style = itemInput.value.trim();
+    const desc = descInput.value.trim();
+    if (!shippingLevelsLoaded) await loadShippingLevels();
+    const url = new URL(API_ITEMS);
+    url.searchParams.set("select", "vendor,style_num,product_title,product_description,size,piece_weight");
+    if (style.length > 0) {
+      url.searchParams.set("style_num", `ilike.${style}`);
+    } else if (desc.length >= 2) {
+      const like = `*${desc}*`;
+      url.searchParams.set("or", `(product_title.ilike.${like},product_description.ilike.${like})`);
+    } else {
+      tableWrap.style.display = "none";
+      tbody.innerHTML = "";
+      statusEl.textContent = "Type an Item # (exact) or at least 2 characters in Description.";
+      return;
+    }
+    if (sortKey !== 'ship_level') {
+      url.searchParams.set("order", `${sortKey}.${sortAsc ? "asc" : "desc"}`);
+    }
+    url.searchParams.set("limit", "1000");
+    try {
+      const res = await fetch(url.toString(), {
+        headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` },
+        cache: "no-store"
+      });
+      if (!res.ok) throw new Error("API error");
+      currentRows = await res.json();
+      render(currentRows);
+    } catch (e) {
+      console.error(e);
+      tableWrap.style.display = "none";
+      statusEl.textContent = "Search failed.";
+    }
+  }
+
+  const runSearch = (() => {
+    let t;
+    return (...a) => {
+      clearTimeout(t);
+      t = setTimeout(() => fetchItems(...a), 160);
+    };
+  })();
+
+  clearBtn.addEventListener("click", () => {
+    itemInput.value = "";
+    descInput.value = "";
+    tbody.innerHTML = "";
+    tableWrap.style.display = "none";
+    statusEl.textContent = "Type an Item # (exact) or at least 2 characters in Description.";
+  });
+
+  itemInput.addEventListener("input", runSearch);
+  descInput.addEventListener("input", runSearch);
+  prevBtn.addEventListener("click", () => { if (page > 0) { page--; render(currentRows); } });
+  nextBtn.addEventListener("click", () => { if ((page + 1) * pageSize < currentRows.length) { page++; render(currentRows); } });
+  pageJump.addEventListener("change", () => { page = parseInt(pageJump.value); render(currentRows); });
+});
+</script>
 </body>
 </html>
