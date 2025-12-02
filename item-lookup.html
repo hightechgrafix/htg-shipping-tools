@@ -17,7 +17,8 @@
     button:hover {filter: brightness(0.93);}
     table {width: 100%; border-collapse: collapse; margin-top: 10px;}
     th, td {border: 1px solid #ddd; padding: 8px; text-align: left; font-size:13px;}
-    th {background: #f4f4f4; cursor: pointer; user-select:none; position: relative;}
+    th {background: #f4f4f4; cursor: pointer; user-select:none; white-space: nowrap;}
+    th.sortable {display: flex; align-items: center; justify-content: space-between; gap: 6px;}
     tr:hover td {background: #f9f9f9;}
     .muted {color: #555; font-size: 13px; margin-top:4px;}
     .badge {display:inline-block; padding:1px 6px; border-radius:999px; border:1px solid #ddd; font-size:11px; background:#fafafa;}
@@ -25,12 +26,13 @@
     .pagination {margin-top: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;}
     .pagination button {font-size: 14px;}
     .page-info {font-size: 14px; font-weight: bold;}
-    .sort-icon {font-size: 12px; margin-left: 6px; color: #aaa;}
-    th.active {background-color: #b6282c; color: #fff;}
-    th.active .sort-icon {color: #fff;}
+    .sort-icon {font-size: 12px; opacity: 0.3; transition: 0.2s;}
+    .active-sort {background: #b6282c; color: white; border-radius: 6px; padding: 2px 6px;}
+    .active-sort .sort-icon {opacity: 1;}
     @media (max-width:760px){
       .search-bar {grid-template-columns: 1fr;}
       th, td {font-size:12px;}
+      th.sortable {flex-direction: column; align-items: flex-start;}
     }
   </style>
 </head>
@@ -57,12 +59,12 @@
     <table id="resultTable">
       <thead>
         <tr>
-          <th data-k="vendor">Vendor <span class="sort-icon">⬍</span></th>
-          <th data-k="style_num">Style # <span class="sort-icon">⬍</span></th>
-          <th data-k="product_title">Title <span class="sort-icon">⬍</span></th>
-          <th data-k="size">Size <span class="sort-icon">⬍</span></th>
-          <th data-k="piece_weight">Weight (lb) <span class="sort-icon">⬍</span></th>
-          <th data-k="ship_level">Ship Level <span class="sort-icon">⬍</span></th>
+          <th class="sortable" data-k="vendor">Vendor <span class="sort-icon">⬍</span></th>
+          <th class="sortable" data-k="style_num">Style # <span class="sort-icon">⬍</span></th>
+          <th class="sortable" data-k="product_title">Title <span class="sort-icon">⬍</span></th>
+          <th class="sortable" data-k="size">Size <span class="sort-icon">⬍</span></th>
+          <th class="sortable" data-k="piece_weight">Weight (lb) <span class="sort-icon">⬍</span></th>
+          <th class="sortable" data-k="ship_level">Ship Level <span class="sort-icon">⬍</span></th>
           <th>Shipping $ min</th>
           <th>Shipping $/Item</th>
           <th>Handling $ min</th>
@@ -80,11 +82,12 @@
 </div>
 
 <script>
-// (unchanged config and API constants)
 const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
+
 const API_ITEMS = `${SUPABASE_URL}/rest/v1/items_unified`;
 const API_LEVELS = `${SUPABASE_URL}/rest/v1/shipping_levels`;
+
 let sortKey = "style_num";
 let sortAsc = true;
 let page = 0;
@@ -111,64 +114,66 @@ document.addEventListener("DOMContentLoaded", () => {
     th.addEventListener("click", () => {
       const key = th.dataset.k;
       if (!key) return;
+
       if (sortKey === key) {
         sortAsc = !sortAsc;
       } else {
         sortKey = key;
         sortAsc = true;
       }
+
       document.querySelectorAll("th[data-k]").forEach(header => {
-        header.classList.remove("active");
+        header.classList.remove("active-sort");
         const icon = header.querySelector(".sort-icon");
         if (icon) icon.textContent = "⬍";
       });
-      th.classList.add("active");
+
+      th.classList.add("active-sort");
       const icon = th.querySelector(".sort-icon");
       if (icon) icon.textContent = sortAsc ? "▲" : "▼";
+
       page = 0;
       render(currentRows);
     });
   });
 
   async function loadShippingLevels() {
-    try {
-      const url = new URL(API_LEVELS);
-      url.searchParams.set("select", "*");
-      url.searchParams.set("order", "min_weight.asc");
-      const res = await fetch(url.toString(), {
-        headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` },
-        cache: "no-store"
-      });
-      if (!res.ok) throw new Error("shipping levels failed");
-      shippingLevels = await res.json();
-      shippingLevelsLoaded = true;
-    } catch (err) {
-      console.error("Failed to load shipping levels", err);
-      shippingLevels = [];
-      shippingLevelsLoaded = false;
-    }
+    const url = new URL(API_LEVELS);
+    url.searchParams.set("select", "*");
+    url.searchParams.set("order", "min_weight.asc");
+
+    const res = await fetch(url.toString(), {
+      headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` }
+    });
+
+    shippingLevels = await res.json();
+    shippingLevelsLoaded = true;
   }
 
   function findShippingForWeight(weight) {
     const w = Number(weight || 0);
-    if (!shippingLevels.length || !isFinite(w)) return null;
-    return shippingLevels.find(level => w >= Number(level.min_weight) && w <= Number(level.max_weight)) || null;
+    return shippingLevels.find(l => w >= l.min_weight && w <= l.max_weight) || null;
   }
 
   function render(rows) {
     tbody.innerHTML = "";
     const paged = rows.slice(page * pageSize, (page + 1) * pageSize);
+
     paged.sort((a, b) => {
       let aVal = a[sortKey];
       let bVal = b[sortKey];
+
       if (sortKey === "ship_level") {
         aVal = findShippingForWeight(a.piece_weight)?.shipping_level || 999;
         bVal = findShippingForWeight(b.piece_weight)?.shipping_level || 999;
       }
+
       if (typeof aVal === "string") aVal = aVal.toLowerCase();
       if (typeof bVal === "string") bVal = bVal.toLowerCase();
+
       return sortAsc ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
     });
+
     paged.forEach(r => {
       const ship = findShippingForWeight(r.piece_weight);
       const tr = document.createElement("tr");
@@ -186,11 +191,14 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
       tbody.appendChild(tr);
     });
+
     tableWrap.style.display = rows.length ? "block" : "none";
     statusEl.textContent = rows.length ? `${rows.length} item(s) found` : "No results";
+
     totalPages = Math.ceil(rows.length / pageSize);
     pageTop.textContent = `Page ${page + 1} of ${totalPages}`;
     pageBottom.textContent = `Page ${page + 1} of ${totalPages}`;
+
     pageJump.innerHTML = "";
     for (let i = 0; i < totalPages; i++) {
       const opt = document.createElement("option");
@@ -199,6 +207,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (i === page) opt.selected = true;
       pageJump.appendChild(opt);
     }
+
     prevBtn.disabled = page === 0;
     nextBtn.disabled = page + 1 >= totalPages;
   }
@@ -206,9 +215,12 @@ document.addEventListener("DOMContentLoaded", () => {
   async function fetchItems() {
     const style = itemInput.value.trim();
     const desc = descInput.value.trim();
+
     if (!shippingLevelsLoaded) await loadShippingLevels();
+
     const url = new URL(API_ITEMS);
     url.searchParams.set("select", "vendor,style_num,product_title,product_description,size,piece_weight");
+
     if (style.length > 0) {
       url.searchParams.set("style_num", `ilike.${style}`);
     } else if (desc.length >= 2) {
@@ -220,10 +232,13 @@ document.addEventListener("DOMContentLoaded", () => {
       statusEl.textContent = "Type an Item # (exact) or at least 2 characters in Description.";
       return;
     }
+
     if (sortKey !== 'ship_level') {
       url.searchParams.set("order", `${sortKey}.${sortAsc ? "asc" : "desc"}`);
     }
+
     url.searchParams.set("limit", "1000");
+
     try {
       const res = await fetch(url.toString(), {
         headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` },
@@ -257,9 +272,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   itemInput.addEventListener("input", runSearch);
   descInput.addEventListener("input", runSearch);
-  prevBtn.addEventListener("click", () => { if (page > 0) { page--; render(currentRows); } });
-  nextBtn.addEventListener("click", () => { if ((page + 1) * pageSize < currentRows.length) { page++; render(currentRows); } });
-  pageJump.addEventListener("change", () => { page = parseInt(pageJump.value); render(currentRows); });
+
+  prevBtn.addEventListener("click", () => {
+    if (page > 0) {
+      page--;
+      render(currentRows);
+    }
+  });
+
+  nextBtn.addEventListener("click", () => {
+    if ((page + 1) * pageSize < currentRows.length) {
+      page++;
+      render(currentRows);
+    }
+  });
+
+  pageJump.addEventListener("change", () => {
+    page = parseInt(pageJump.value);
+    render(currentRows);
+  });
 });
 </script>
 </body>
