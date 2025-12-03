@@ -460,8 +460,7 @@
         prevBtn.disabled = page === 0;
         nextBtn.disabled = page + 1 >= totalPages;
       }
-
-            // -------------------------------------------------------
+      // -------------------------------------------------------
       // SECTION 21: FETCH ITEMS
       // -------------------------------------------------------
       async function fetchItems() {
@@ -571,4 +570,16 @@
       });
 
       pageJump.addEventListener("change", () => {
-        p
+        page = parseInt(pageJump.value, 10) || 0;
+        render(currentRows);
+      });
+    }); <!-- THIS NOW MATCHES THE OPENING DOMContentLoaded -->
+
+    // =========================================================
+    // SECTION 24: END OF SCRIPT
+    // =========================================================
+  </script>
+</body>
+</html>
+
+      
