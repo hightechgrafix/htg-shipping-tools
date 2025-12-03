@@ -357,93 +357,17 @@
         );
       }
 
-           // -------------------------------------------------------
-// SECTION 20: RENDER TABLE
-// -------------------------------------------------------
+           // =========================================================
+// SECTION 20: RENDER TABLE (UPDATED WITH QUOTE LOGIC)
+// =========================================================
 function render(rows) {
   tbody.innerHTML = "";
+  tableWrap.style.display = rows.length ? "block" : "none";
 
-  if (!rows || !rows.length) {
-    tableWrap.style.display = "none";
-    statusEl.textContent = "No results";
-    pageTop.textContent = "";
-    pageBottom.textContent = "";
-    pageJump.innerHTML = "";
-    return;
-  }
-
-  totalPages = Math.ceil(rows.length / pageSize);
-  if (page >= totalPages) page = totalPages - 1;
-  if (page < 0) page = 0;
-
+  const totalPages = Math.ceil(rows.length / pageSize);
   const start = page * pageSize;
   const end = start + pageSize;
-  const paged = rows.slice(start, end);
-
-  paged.sort((a, b) => {
-    let aVal, bVal;
-
-    if (sortKey === "ship_level") {
-      const sa = findShippingForWeight(a.piece_weight);
-      const sb = findShippingForWeight(b.piece_weight);
-      aVal = sa ? Number(sa.shipping_level) : 9999;
-      bVal = sb ? Number(sb.shipping_level) : 9999;
-    } else {
-      aVal = a[sortKey];
-      bVal = b[sortKey];
-    }
-
-    if (typeof aVal === "string") aVal = aVal.toLowerCase();
-    if (typeof bVal === "string") bVal = bVal.toLowerCase();
-
-    if (aVal === bVal) return 0;
-    return sortAsc ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
-  });
-
-  paged.forEach((r) => {
-    const ship = findShippingForWeight(r.piece_weight);
-
-    let w = "";
-    const rw = Number(r.piece_weight);
-    if (isFinite(rw) && rw > 0) w = rw.toFixed(3);
-
-    let shipLevelText = "";
-    let shipMinText = "";
-    let shipPerItemText = "";
-    let handlingMinText = "";
-    let handlingPerItemText = "";
-
-    if (ship) {
-      const sMin = Number(ship.shipping_min);
-      const sPer = Number(ship.shipping_per_item);
-      const hMin = Number(ship.handling_min);
-      const hPer = Number(ship.handling_per_item);
-
-      shipLevelText = `Level ${ship.shipping_level}`;
-      shipMinText = `\$${sMin.toFixed(2)}`;
-      shipPerItemText = `\$${sPer.toFixed(2)}`;
-      handlingMinText = `\$${hMin.toFixed(2)}`;
-      handlingPerItemText = `\$${hPer.toFixed(2)}`;
-    }
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><span class="badge">${r.vendor || ""}</span></td>
-      <td>${r.style_num || ""}</td>
-      <td>${r.product_title || ""}</td>
-      <td>${r.size || ""}</td>
-      <td>${w}</td>
-      <td>${shipLevelText}</td>
-      <td>${shipMinText}</td>
-      <td>${shipPerItemText}</td>
-      <td>${handlingMinText}</td>
-      <td>${handlingPerItemText}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  tableWrap.style.display = "block";
-  statusEl.textContent = `${rows.length} item(s) found`;
+  const slice = rows.slice(start, end);
 
   pageTop.textContent = `Page ${page + 1} of ${totalPages}`;
   pageBottom.textContent = `Page ${page + 1} of ${totalPages}`;
@@ -456,6 +380,52 @@ function render(rows) {
     if (i === page) opt.selected = true;
     pageJump.appendChild(opt);
   }
+
+  slice.forEach((item) => {
+    const tr = document.createElement("tr");
+
+    const weight = parseFloat(item.piece_weight) || 0;
+    const levelObj = shippingLevels.find(
+      (lvl) => weight >= lvl.min_weight && weight <= lvl.max_weight
+    );
+
+    let levelLabel, shipMin, shipItem, handMin, handItem;
+
+    if (!levelObj) {
+      // ---------- QUOTE MODE ----------
+      levelLabel = `
+        <span class="quote-label" title="This item requires a manual shipping quote due to weight.">
+          Shipping Quote Required
+        </span>
+      `;
+      shipMin = "—";
+      shipItem = "—";
+      handMin = "—";
+      handItem = "—";
+    } else {
+      // ---------- NORMAL LEVEL ----------
+      levelLabel = `Level ${levelObj.shipping_level}`;
+      shipMin = `$${levelObj.shipping_min.toFixed(2)}`;
+      shipItem = `$${levelObj.shipping_per_item.toFixed(2)}`;
+      handMin = `$${levelObj.handling_min.toFixed(2)}`;
+      handItem = `$${levelObj.handling_per_item.toFixed(2)}`;
+    }
+
+    tr.innerHTML = `
+      <td><button class="vendor-btn">${item.vendor}</button></td>
+      <td>${item.style_num}</td>
+      <td>${item.product_title}</td>
+      <td>${item.size}</td>
+      <td>${weight.toFixed(3)}</td>
+      <td>${levelLabel}</td>
+      <td>${shipMin}</td>
+      <td>${shipItem}</td>
+      <td>${handMin}</td>
+      <td>${handItem}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
 
   prevBtn.disabled = page === 0;
   nextBtn.disabled = page + 1 >= totalPages;
