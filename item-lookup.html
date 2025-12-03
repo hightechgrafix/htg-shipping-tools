@@ -357,9 +357,9 @@
         );
       }
 
-      // -------------------------------------------------------
-      // SECTION 20: RENDER TABLE
-      // -------------------------------------------------------
+            <!-- =========================================================
+           SECTION 20: RENDER TABLE
+           ========================================================= -->
       function render(rows) {
         tbody.innerHTML = "";
 
@@ -384,10 +384,10 @@
           let aVal, bVal;
 
           if (sortKey === "ship_level") {
-            const sa = findShippingForWeight(a.piece_weight);
-            const sb = findShippingForWeight(b.piece_weight);
-            aVal = sa ? Number(sa.shipping_level) : 9999;
-            bVal = sb ? Number(sb.shipping_level) : 9999;
+            const aShip = findShippingForWeight(a.piece_weight);
+            const bShip = findShippingForWeight(b.piece_weight);
+            aVal = aShip ? Number(aShip.shipping_level) : 9999;
+            bVal = bShip ? Number(bShip.shipping_level) : 9999;
           } else {
             aVal = a[sortKey];
             bVal = b[sortKey];
@@ -400,30 +400,43 @@
           return sortAsc ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
         });
 
-        paged.forEach((r) => {
+        paged.forEach(r => {
           const ship = findShippingForWeight(r.piece_weight);
 
-          let w = "";
-          const rw = Number(r.piece_weight);
-          if (isFinite(rw) && rw > 0) w = rw.toFixed(3);
+          // Weight (3 decimals)
+          const rawWeight = Number(r.piece_weight);
+          const weightDisplay =
+            isFinite(rawWeight) && rawWeight > 0
+              ? rawWeight.toFixed(3)
+              : "";
 
+          // Prepare display fields
           let shipLevelText = "";
           let shipMinText = "";
           let shipPerItemText = "";
           let handlingMinText = "";
           let handlingPerItemText = "";
 
-          if (ship) {
+          // ======================================================
+          // QUOTE CATCH-ALL LOGIC
+          // ======================================================
+          if (!ship) {
+            shipLevelText = `<span title="This item requires a manual shipping quote due to weight.">Shipping Quote Required</span>`;
+            shipMinText = "—";
+            shipPerItemText = "—";
+            handlingMinText = "—";
+            handlingPerItemText = "—";
+          } else {
             const sMin = Number(ship.shipping_min);
             const sPer = Number(ship.shipping_per_item);
             const hMin = Number(ship.handling_min);
             const hPer = Number(ship.handling_per_item);
 
             shipLevelText = `Level ${ship.shipping_level}`;
-            shipMinText = `$${sMin.toFixed(2)}`;
-            shipPerItemText = `$${sPer.toFixed(2)}`;
-            handlingMinText = `$${hMin.toFixed(2)}`;
-            handlingPerItemText = `$${hPer.toFixed(2)}`;
+            shipMinText = isFinite(sMin) ? `$${sMin.toFixed(2)}` : "";
+            shipPerItemText = isFinite(sPer) ? `$${sPer.toFixed(2)}` : "";
+            handlingMinText = isFinite(hMin) ? `$${hMin.toFixed(2)}` : "";
+            handlingPerItemText = isFinite(hPer) ? `$${hPer.toFixed(2)}` : "";
           }
 
           const tr = document.createElement("tr");
@@ -432,7 +445,7 @@
             <td>${r.style_num || ""}</td>
             <td>${r.product_title || ""}</td>
             <td>${r.size || ""}</td>
-            <td>${w}</td>
+            <td>${weightDisplay}</td>
             <td>${shipLevelText}</td>
             <td>${shipMinText}</td>
             <td>${shipPerItemText}</td>
