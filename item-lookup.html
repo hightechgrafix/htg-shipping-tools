@@ -461,7 +461,7 @@
         nextBtn.disabled = page + 1 >= totalPages;
       }
 
-      // -------------------------------------------------------
+            // -------------------------------------------------------
       // SECTION 21: FETCH ITEMS
       // -------------------------------------------------------
       async function fetchItems() {
@@ -473,22 +473,32 @@
         }
 
         const url = new URL(API_ITEMS);
-        url.searchParams.set("select", "vendor,style_num,product_title,product_description,size,piece_weight");
+        url.searchParams.set(
+          "select",
+          "vendor,style_num,product_title,product_description,size,piece_weight"
+        );
 
         if (style.length > 0) {
           url.searchParams.set("style_num", `eq.${style}`);
         } else if (desc.length >= 2) {
           const like = `*${desc}*`;
-          url.searchParams.set("or", `(product_title.ilike.${like},product_description.ilike.${like})");
+          url.searchParams.set(
+            "or",
+            `(product_title.ilike.${like},product_description.ilike.${like})`
+          );
         } else {
           tableWrap.style.display = "none";
           tbody.innerHTML = "";
-          statusEl.textContent = "Type an Item # (exact) or at least 2 characters in Description.";
+          statusEl.textContent =
+            "Type an Item # (exact) or at least 2 characters in Description.";
           return;
         }
 
         if (sortKey !== "ship_level") {
-          url.searchParams.set("order", `${sortKey}.${sortAsc ? "asc" : "desc"}`);
+          url.searchParams.set(
+            "order",
+            `${sortKey}.${sortAsc ? "asc" : "desc"}`
+          );
         }
 
         url.searchParams.set("limit", "1000");
@@ -503,6 +513,7 @@
           });
 
           if (!res.ok) throw new Error("API error");
+
           currentRows = await res.json();
           page = 0;
           render(currentRows);
@@ -513,62 +524,51 @@
         }
       }
 
-         // -------------------------------------------------------
-    // SECTION 22: SEARCH DEBOUNCE
-    // -------------------------------------------------------
-    const runSearch = (() => {
-      let t;
-      return () => {
-        clearTimeout(t);
-        t = setTimeout(fetchItems, 160);
-      };
-    })();
+      // -------------------------------------------------------
+      // SECTION 22: SEARCH DEBOUNCE
+      // -------------------------------------------------------
+      const runSearch = (() => {
+        let t;
+        return () => {
+          clearTimeout(t);
+          t = setTimeout(fetchItems, 160);
+        };
+      })();
 
-    // -------------------------------------------------------
-    // SECTION 23: EVENT LISTENERS
-    // -------------------------------------------------------
-    clearBtn.addEventListener("click", () => {
-      itemInput.value = "";
-      descInput.value = "";
-      currentRows = [];
-      page = 0;
-      tbody.innerHTML = "";
-      tableWrap.style.display = "none";
-      statusEl.textContent =
-        "Type an Item # (exact) or at least 2 characters in Description.";
+      // -------------------------------------------------------
+      // SECTION 23: EVENT LISTENERS
+      // -------------------------------------------------------
+      clearBtn.addEventListener("click", () => {
+        itemInput.value = "";
+        descInput.value = "";
+        currentRows = [];
+        page = 0;
+        tbody.innerHTML = "";
+        tableWrap.style.display = "none";
+        statusEl.textContent =
+          "Type an Item # (exact) or at least 2 characters in Description.";
 
-      pageTop.textContent = "";
-      pageBottom.textContent = "";
-      pageJump.innerHTML = "";
-    });
+        pageTop.textContent = "";
+        pageBottom.textContent = "";
+        pageJump.innerHTML = "";
+      });
 
-    itemInput.addEventListener("input", runSearch);
-    descInput.addEventListener("input", runSearch);
+      itemInput.addEventListener("input", runSearch);
+      descInput.addEventListener("input", runSearch);
 
-    prevBtn.addEventListener("click", () => {
-      if (page > 0) {
-        page--;
-        render(currentRows);
-      }
-    });
+      prevBtn.addEventListener("click", () => {
+        if (page > 0) {
+          page--;
+          render(currentRows);
+        }
+      });
 
-    nextBtn.addEventListener("click", () => {
-      if ((page + 1) * pageSize < currentRows.length) {
-        page++;
-        render(currentRows);
-      }
-    });
+      nextBtn.addEventListener("click", () => {
+        if ((page + 1) * pageSize < currentRows.length) {
+          page++;
+          render(currentRows);
+        }
+      });
 
-    pageJump.addEventListener("change", () => {
-      page = parseInt(pageJump.value, 10) || 0;
-      render(currentRows);
-    });
-  }); // <--- THIS closes DOMContentLoaded correctly
-
-  // =========================================================
-  // SECTION 24: END OF SCRIPT
-  // =========================================================
-</script>
-</body>
-</html>
-
+      pageJump.addEventListener("change", () => {
+        p
