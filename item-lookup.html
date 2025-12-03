@@ -430,12 +430,15 @@ function render(rows) {
   prevBtn.disabled = page === 0;
   nextBtn.disabled = page + 1 >= totalPages;
 }
-      // -------------------------------------------------------
-// SECTION 21: FETCH ITEMS (CASE-INSENSITIVE SEARCH FIXED)
+     // -------------------------------------------------------
+// SECTION 21: FETCH ITEMS (Item # now case-insensitive)
 // -------------------------------------------------------
 async function fetchItems() {
-  const style = itemInput.value.trim();
-  const desc  = descInput.value.trim();
+  const styleRaw = itemInput.value.trim();
+  const desc     = descInput.value.trim();
+
+  // Force style number to uppercase so search is not case-sensitive
+  const style = styleRaw.toUpperCase();
 
   if (!shippingLevelsLoaded) {
     await loadShippingLevels();
@@ -448,10 +451,9 @@ async function fetchItems() {
   );
 
   if (style.length > 0) {
-    // Case-insensitive exact style match
-    url.searchParams.set("style_num", `ilike.${style}`);
+    // Exact match on uppercase style_num (user can type any case)
+    url.searchParams.set("style_num", `eq.${style}`);
   } else if (desc.length >= 2) {
-    // Case-insensitive description search
     const like = `*${desc}*`;
     url.searchParams.set(
       "or",
@@ -494,6 +496,7 @@ async function fetchItems() {
     statusEl.textContent = "Search failed.";
   }
 }
+
 
       // -------------------------------------------------------
       // SECTION 22: SEARCH DEBOUNCE
