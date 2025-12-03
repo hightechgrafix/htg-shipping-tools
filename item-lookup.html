@@ -431,67 +431,69 @@ function render(rows) {
   nextBtn.disabled = page + 1 >= totalPages;
 }
       // -------------------------------------------------------
-      // SECTION 21: FETCH ITEMS
-      // -------------------------------------------------------
-      async function fetchItems() {
-        const style = itemInput.value.trim();
-        const desc = descInput.value.trim();
+// SECTION 21: FETCH ITEMS (CASE-INSENSITIVE SEARCH FIXED)
+// -------------------------------------------------------
+async function fetchItems() {
+  const style = itemInput.value.trim();
+  const desc  = descInput.value.trim();
 
-        if (!shippingLevelsLoaded) {
-          await loadShippingLevels();
-        }
+  if (!shippingLevelsLoaded) {
+    await loadShippingLevels();
+  }
 
-        const url = new URL(API_ITEMS);
-        url.searchParams.set(
-          "select",
-          "vendor,style_num,product_title,product_description,size,piece_weight"
-        );
+  const url = new URL(API_ITEMS);
+  url.searchParams.set(
+    "select",
+    "vendor,style_num,product_title,product_description,size,piece_weight"
+  );
 
-        if (style.length > 0) {
-          url.searchParams.set("style_num", `eq.${style}`);
-        } else if (desc.length >= 2) {
-          const like = `*${desc}*`;
-          url.searchParams.set(
-            "or",
-            `(product_title.ilike.${like},product_description.ilike.${like})`
-          );
-        } else {
-          tableWrap.style.display = "none";
-          tbody.innerHTML = "";
-          statusEl.textContent =
-            "Type an Item # (exact) or at least 2 characters in Description.";
-          return;
-        }
+  if (style.length > 0) {
+    // Case-insensitive exact style match
+    url.searchParams.set("style_num", `ilike.${style}`);
+  } else if (desc.length >= 2) {
+    // Case-insensitive description search
+    const like = `*${desc}*`;
+    url.searchParams.set(
+      "or",
+      `(product_title.ilike.${like},product_description.ilike.${like})`
+    );
+  } else {
+    tableWrap.style.display = "none";
+    tbody.innerHTML = "";
+    statusEl.textContent =
+      "Type an Item # (exact) or at least 2 characters in Description.";
+    return;
+  }
 
-        if (sortKey !== "ship_level") {
-          url.searchParams.set(
-            "order",
-            `${sortKey}.${sortAsc ? "asc" : "desc"}`
-          );
-        }
+  if (sortKey !== "ship_level") {
+    url.searchParams.set(
+      "order",
+      `${sortKey}.${sortAsc ? "asc" : "desc"}`
+    );
+  }
 
-        url.searchParams.set("limit", "1000");
+  url.searchParams.set("limit", "1000");
 
-        try {
-          const res = await fetch(url.toString(), {
-            headers: {
-              apikey: SUPABASE_ANON,
-              Authorization: `Bearer ${SUPABASE_ANON}`,
-            },
-            cache: "no-store",
-          });
+  try {
+    const res = await fetch(url.toString(), {
+      headers: {
+        apikey: SUPABASE_ANON,
+        Authorization: `Bearer ${SUPABASE_ANON}`,
+      },
+      cache: "no-store",
+    });
 
-          if (!res.ok) throw new Error("API error");
+    if (!res.ok) throw new Error("API error");
 
-          currentRows = await res.json();
-          page = 0;
-          render(currentRows);
-        } catch (err) {
-          console.error("Item fetch failed:", err);
-          tableWrap.style.display = "none";
-          statusEl.textContent = "Search failed.";
-        }
-      }
+    currentRows = await res.json();
+    page = 0;
+    render(currentRows);
+  } catch (err) {
+    console.error("Item fetch failed:", err);
+    tableWrap.style.display = "none";
+    statusEl.textContent = "Search failed.";
+  }
+}
 
       // -------------------------------------------------------
       // SECTION 22: SEARCH DEBOUNCE
