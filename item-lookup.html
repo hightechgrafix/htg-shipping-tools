@@ -513,59 +513,62 @@
         }
       }
 
-      // -------------------------------------------------------
-      // SECTION 22: SEARCH DEBOUNCE
-      // -------------------------------------------------------
-      const runSearch = (() => {
-        let t;
-        return () => {
-          clearTimeout(t);
-          t = setTimeout(fetchItems, 160);
-        };
-      })();
+         // -------------------------------------------------------
+    // SECTION 22: SEARCH DEBOUNCE
+    // -------------------------------------------------------
+    const runSearch = (() => {
+      let t;
+      return () => {
+        clearTimeout(t);
+        t = setTimeout(fetchItems, 160);
+      };
+    })();
 
-      // -------------------------------------------------------
-      // SECTION 23: EVENT LISTENERS
-      // -------------------------------------------------------
-      clearBtn.addEventListener("click", () => {
-        itemInput.value = "";
-        descInput.value = "";
-        currentRows = [];
-        page = 0;
-        tbody.innerHTML = "";
-        tableWrap.style.display = "none";
-        statusEl.textContent = "Type an Item # (exact) or at least 2 characters in Description.";
-        pageTop.textContent = "";
-        pageBottom.textContent = "";
-        pageJump.innerHTML = "";
-      });
+    // -------------------------------------------------------
+    // SECTION 23: EVENT LISTENERS
+    // -------------------------------------------------------
+    clearBtn.addEventListener("click", () => {
+      itemInput.value = "";
+      descInput.value = "";
+      currentRows = [];
+      page = 0;
+      tbody.innerHTML = "";
+      tableWrap.style.display = "none";
+      statusEl.textContent =
+        "Type an Item # (exact) or at least 2 characters in Description.";
 
-      itemInput.addEventListener("input", runSearch);
-      descInput.addEventListener("input", runSearch);
-
-      prevBtn.addEventListener("click", () => {
-        if (page > 0) {
-          page--;
-          render(currentRows);
-        }
-      });
-
-      nextBtn.addEventListener("click", () => {
-        if ((page + 1) * pageSize < currentRows.length) {
-          page++;
-          render(currentRows);
-        }
-      });
-
-      pageJump.addEventListener("change", () => {
-        page = parseInt(pageJump.value, 10) || 0;
-        render(currentRows);
-      });
+      pageTop.textContent = "";
+      pageBottom.textContent = "";
+      pageJump.innerHTML = "";
     });
 
-    // =========================================================
-    // SECTION 24: END OF SCRIPT
-    // =========================================================
-  </script>
+    itemInput.addEventListener("input", runSearch);
+    descInput.addEventListener("input", runSearch);
+
+    prevBtn.addEventListener("click", () => {
+      if (page > 0) {
+        page--;
+        render(currentRows);
+      }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      if ((page + 1) * pageSize < currentRows.length) {
+        page++;
+        render(currentRows);
+      }
+    });
+
+    pageJump.addEventListener("change", () => {
+      page = parseInt(pageJump.value, 10) || 0;
+      render(currentRows);
+    });
+  }); // <--- THIS closes DOMContentLoaded correctly
+
+  // =========================================================
+  // SECTION 24: END OF SCRIPT
+  // =========================================================
+</script>
 </body>
 </html>
+
