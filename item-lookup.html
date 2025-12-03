@@ -1,292 +1,611 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Item Weight & Shipping Lookup</title>
-<style>
-  body {font-family: Arial, Helvetica, sans-serif; background: #fff; color: #111; margin: 0; padding: 24px;}
-  .container {max-width: 1100px; margin: 0 auto;}
-  h1 {color: #000; margin-bottom: 4px;}
-  .sub {color:#555; margin:0 0 18px; font-size:14px;}
-  .search-bar {display: grid; grid-template-columns: 1fr 1fr 120px; gap: 10px; margin-bottom: 10px;}
-  input, button {padding: 10px; border-radius: 8px; font-size: 15px; box-sizing:border-box;}
-  input {border: 1px solid #ccc;}
-  input:focus {border-color:#c40000; outline:none; box-shadow:0 0 0 2px rgba(196,0,0,.15);}
-  button {background: #c40000; color: #fff; border: 1px solid #c40000; cursor: pointer; font-weight:600;}
-  button:hover {filter: brightness(0.93);}
-  table {width: 100%; border-collapse: collapse; margin-top: 10px;}
-  th, td {border: 1px solid #ddd; padding: 8px; text-align: left; font-size:13px;}
-  th {background: #f4f4f4; cursor: pointer; user-select:none;}
-  tr:hover td {background: #f9f9f9;}
-  .muted {color: #555; font-size: 13px; margin-top:4px;}
-  .badge {display:inline-block; padding:1px 6px; border-radius:999px; border:1px solid #ddd; font-size:11px; background:#fafafa;}
-  #tableWrap {display:none;}
-  @media (max-width:760px){
-    .search-bar {grid-template-columns: 1fr;}
-    th, td {font-size:12px;}
-  }
-</style>
+  <!-- =========================================================
+       SECTION 1: DOCUMENT HEAD
+       ========================================================= -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Item Weight & Shipping Lookup</title>
+
+  <!-- =========================================================
+       SECTION 2: PAGE STYLES
+       ========================================================= -->
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #fff;
+      color: #111;
+      margin: 0;
+      padding: 24px;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #000;
+      margin-bottom: 4px;
+    }
+    .sub {
+      color: #555;
+      margin: 0 0 18px;
+      font-size: 14px;
+    }
+    .search-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr 120px;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    input,
+    button,
+    select {
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+    input {
+      border: 1px solid #ccc;
+    }
+    input:focus {
+      border-color: #c40000;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(196, 0, 0, 0.15);
+    }
+    button {
+      background: #c40000;
+      color: #fff;
+      border: 1px solid #c40000;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover {
+      filter: brightness(0.93);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+      font-size: 13px;
+    }
+    th {
+      background: #f4f4f4;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+    }
+    tr:hover td {
+      background: #f9f9f9;
+    }
+    .muted {
+      color: #555;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 999px;
+      border: 1px solid #ddd;
+      font-size: 11px;
+      background: #fafafa;
+    }
+    #tableWrap {
+      display: none;
+    }
+    .pagination {
+      margin-top: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .pagination button {
+      font-size: 14px;
+    }
+    .page-info {
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .sort-icon {
+      font-size: 12px;
+      margin-left: 6px;
+      color: #aaa;
+    }
+    th.active {
+      background-color: #c40000;
+      color: #fff;
+    }
+    th.active .sort-icon {
+      color: #fff;
+    }
+    @media (max-width: 760px) {
+      .search-bar {
+        grid-template-columns: 1fr;
+      }
+      th,
+      td {
+        font-size: 12px;
+      }
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-  <h1>Item Weight & Shipping Lookup</h1>
-  <p class="sub">
-    Search by <strong>Item # (exact)</strong> or <strong>Description keywords</strong>.  
-    Results include vendor, weight, and shipping/handling levels.
-  </p>
+  <!-- =========================================================
+       SECTION 3: PAGE HEADER
+       ========================================================= -->
+  <div class="container">
+    <h1>Item Weight & Shipping Lookup</h1>
+    <p class="sub">
+      Search by <strong>Item # (exact)</strong> or <strong>Description keywords</strong>.<br>
+      Results include vendor, weight (3 decimals), and shipping/handling levels.
+    </p>
 
-  <div class="search-bar">
-    <input type="text" id="itemInput" placeholder="Item # (exact)">
-    <input type="text" id="descInput" placeholder="Description keywords">
-    <button id="clearBtn">Clear</button>
+    <!-- =========================================================
+         SECTION 4: SEARCH BAR
+         ========================================================= -->
+    <div class="search-bar">
+      <input type="text" id="itemInput" placeholder="Item # (exact)">
+      <input type="text" id="descInput" placeholder="Description keywords">
+      <button id="clearBtn">Clear</button>
+    </div>
+
+    <!-- =========================================================
+         SECTION 5: STATUS MESSAGE
+         ========================================================= -->
+    <div id="status" class="muted">
+      Type an Item # (exact) or at least 2 characters in Description.
+    </div>
+
+    <!-- =========================================================
+         SECTION 6: TABLE WRAPPER
+         ========================================================= -->
+    <div id="tableWrap">
+      <!-- =======================================================
+           SECTION 7: PAGINATION (TOP)
+           ======================================================= -->
+      <div class="pagination">
+        <div class="page-info" id="pageTop"></div>
+        <select id="pageJump"></select>
+      </div>
+
+      <!-- =======================================================
+           SECTION 8: RESULTS TABLE
+           ======================================================= -->
+      <table id="resultTable">
+        <thead>
+          <tr>
+            <th data-k="vendor">
+              Vendor <span class="sort-icon">⬍</span>
+            </th>
+            <th data-k="style_num">
+              Style # <span class="sort-icon">⬍</span>
+            </th>
+            <th data-k="product_title">
+              Title <span class="sort-icon">⬍</span>
+            </th>
+            <th data-k="size">
+              Size <span class="sort-icon">⬍</span>
+            </th>
+            <th data-k="piece_weight">
+              Weight (lb) <span class="sort-icon">⬍</span>
+            </th>
+            <th data-k="ship_level">
+              Ship Level <span class="sort-icon">⬍</span>
+            </th>
+            <th>Shipping $ min</th>
+            <th>Shipping $/Item</th>
+            <th>Handling $ min</th>
+            <th>Handling $/Item</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <!-- =======================================================
+           SECTION 9: PAGINATION (BOTTOM)
+           ======================================================= -->
+      <div class="pagination">
+        <button id="prevBtn">Previous</button>
+        <div class="page-info" id="pageBottom"></div>
+        <button id="nextBtn">Next</button>
+      </div>
+    </div>
   </div>
-  <div id="status" class="muted">Type an Item # (exact) or at least 2 characters in Description.</div>
 
-  <div id="tableWrap">
-    <table id="resultTable">
-     <thead>
-  <tr>
-    <th data-k="vendor">Vendor</th>
-    <th data-k="style_num">Style #</th>
-    <th data-k="product_title">Title</th>
-    <th data-k="size">Size</th>
-    <th data-k="piece_weight">Weight (lb)</th>
-    <th>Ship level</th>
-    <th>Shipping $ min</th>
-    <th>Shipping $/Item</th>
-    <th>Handling $ min</th>
-    <th>Handling $/Item</th>
-  </tr>
-</thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</div>
+  <!-- =========================================================
+       SECTION 10: END OF PAGE HTML
+       ========================================================= -->
 
-<script>
-  // ====== SET THESE TWO VALUES TO YOUR PROJECT ======
-  const SUPABASE_URL  = "https://sbfslzwnkztmodnlsigq.supabase.co";
-  const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
-  // ==================================================
+  <!-- =========================================================
+       SECTION 11: SCRIPT START
+       ========================================================= -->
+  <script>
+    // =========================================================
+    // SECTION 12: CONFIG CONSTANTS
+    // =========================================================
+    const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
+    const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
+    const API_ITEMS = `${SUPABASE_URL}/rest/v1/items_unified`;
+    const API_LEVELS = `${SUPABASE_URL}/rest/v1/shipping_levels`;
 
-  const API_ITEMS   = `${SUPABASE_URL}/rest/v1/items_unified`;
-  const API_LEVELS  = `${SUPABASE_URL}/rest/v1/shipping_levels`;
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const itemInput  = document.getElementById("itemInput");
-    const descInput  = document.getElementById("descInput");
-    const clearBtn   = document.getElementById("clearBtn");
-    const tableWrap  = document.getElementById("tableWrap");
-    const tbody      = document.querySelector("#resultTable tbody");
-    const statusEl   = document.getElementById("status");
-
+    // Default sort: Style # ascending
     let sortKey = "style_num";
     let sortAsc = true;
 
+    // Pagination: 50 items per page (configurable)
+    let page = 0;
+    const pageSize = 50;
+    let totalPages = 0;
+
+    // =========================================================
+    // SECTION 13: GLOBAL STATE VARIABLES
+    // =========================================================
     let shippingLevels = [];
     let shippingLevelsLoaded = false;
+    let currentRows = [];
 
-    async function loadShippingLevels(){
-      try {
-        const url = new URL(API_LEVELS);
-      url.searchParams.set("select","shipping_level,min_weight,max_weight,shipping_per_item,shipping_min,handling_per_item,handling_min");
-        url.searchParams.set("order","min_weight.asc");
-        const res = await fetch(url.toString(), {
-          headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` },
-          cache: "no-store"
+    // =========================================================
+    // SECTION 14: PAGE INIT
+    // =========================================================
+    document.addEventListener("DOMContentLoaded", () => {
+      // -------------------------------------------------------
+      // SECTION 15: DOM ELEMENT REFERENCES
+      // -------------------------------------------------------
+      const itemInput = document.getElementById("itemInput");
+      const descInput = document.getElementById("descInput");
+      const clearBtn = document.getElementById("clearBtn");
+      const tableWrap = document.getElementById("tableWrap");
+      const tbody = document.querySelector("#resultTable tbody");
+      const statusEl = document.getElementById("status");
+      const prevBtn = document.getElementById("prevBtn");
+      const nextBtn = document.getElementById("nextBtn");
+      const pageTop = document.getElementById("pageTop");
+      const pageBottom = document.getElementById("pageBottom");
+      const pageJump = document.getElementById("pageJump");
+
+      // -------------------------------------------------------
+      // SECTION 16: INITIAL SORT HEADER STATE
+      // -------------------------------------------------------
+      function setInitialSortHeader() {
+        const headers = document.querySelectorAll("th[data-k]");
+        headers.forEach(header => {
+          header.classList.remove("active");
+          const icon = header.querySelector(".sort-icon");
+          if (icon) icon.textContent = "⬍";
         });
-        if(!res.ok) throw new Error("shipping levels failed");
-        shippingLevels = await res.json();
-        shippingLevelsLoaded = true;
-      } catch(err){
-        console.error("Failed to load shipping levels", err);
-        shippingLevels = [];
-        shippingLevelsLoaded = false;
-      }
-    }
-
-    // kick off loading levels in background
-    loadShippingLevels();
-
-    function findShippingForWeight(weight){
-      const w = Number(weight || 0);
-      if (!shippingLevels.length || !isFinite(w)) return null;
-      return shippingLevels.find(level =>
-        w >= Number(level.min_weight) && w <= Number(level.max_weight)
-      ) || null;
-    }
-
-    function syncBoxes(){
-      const styleHasText = itemInput.value.trim().length > 0;
-      const descHasText  = descInput.value.trim().length > 0;
-
-      if (styleHasText){
-        // Item # takes priority
-        descInput.value = "";
-        descInput.disabled = true;
-      } else {
-        descInput.disabled = false;
-      }
-
-      if (descHasText){
-        // Description-only search
-        itemInput.value = "";
-        itemInput.disabled = true;
-      } else {
-        itemInput.disabled = false;
-      }
-    }
-
-    function render(rows){
-      tbody.innerHTML = "";
-      rows.forEach(r=>{
-        const tr = document.createElement("tr");
-        const lb = Number(r.piece_weight || 0);
-        const ship = findShippingForWeight(lb);
-
-      tr.innerHTML = `
-  <td><span class="badge">${r.vendor || ""}</span></td>
-  <td>${r.style_num || ""}</td>
-  <td>${r.product_title || ""}</td>
-  <td>${r.size || ""}</td>
-  <td>${lb ? lb.toFixed(2) : ""}</td>
-  <td>${ship ? `Level ${ship.shipping_level}` : ""}</td>
-
-  <td>${ship ? `$${ship.shipping_min.toFixed(2)}` : ""}</td>
-  <td>${ship ? `$${ship.shipping_per_item.toFixed(2)}` : ""}</td>
-
-  <td>${ship ? `$${ship.handling_min.toFixed(2)}` : ""}</td>
-  <td>${ship ? `$${ship.handling_per_item.toFixed(2)}` : ""}</td>
-`;
-        tbody.appendChild(tr);
-      });
-      statusEl.textContent = rows.length ? `${rows.length} item(s) found` : "No results";
-    }
-
-    async function fetchExactItem(styleRaw){
-      const style = styleRaw.trim().replace(/[\s\-]+/g, "");
-      const url = new URL(API_ITEMS);
-      url.searchParams.set("select","vendor,style_num,product_title,product_description,size,piece_weight");
-      url.searchParams.set("style_num", `ilike.${style}`);
-      url.searchParams.set("order", `${sortKey}.${sortAsc ? "asc" : "desc"}`);
-      url.searchParams.set("limit","200");
-
-      const res = await fetch(url.toString(), {
-        headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` },
-        cache: "no-store"
-      });
-      if(!res.ok){
-        const txt = await res.text();
-        console.error("Exact item error", res.status, txt);
-        throw new Error("API error");
-      }
-      return res.json();
-    }
-
-    async function fetchByDescription(term){
-      const url = new URL(API_ITEMS);
-      url.searchParams.set("select","vendor,style_num,product_title,product_description,size,piece_weight");
-      url.searchParams.set("limit","200");
-      const like = `*${term}*`;
-      url.searchParams.set("or", `(product_title.ilike.${like},product_description.ilike.${like})`);
-      url.searchParams.set("order", `${sortKey}.${sortAsc ? "asc" : "desc"}`);
-
-      const res = await fetch(url.toString(), {
-        headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` },
-        cache: "no-store"
-      });
-      if(!res.ok){
-        const txt = await res.text();
-        console.error("Description search error", res.status, txt);
-        throw new Error("API error");
-      }
-      return res.json();
-    }
-
-    function debounce(fn, ms=160){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
-
-    const runSearch = debounce(async ()=>{
-      syncBoxes();
-
-      const style = itemInput.value.trim();
-      const desc  = descInput.value.trim();
-
-      // ensure shipping levels attempt at least once
-      if (!shippingLevelsLoaded && !shippingLevels.length){
-        await loadShippingLevels();
-      }
-
-      // 1) Item # first if present
-      if (style.length > 0){
-        statusEl.textContent = "Searching by exact Item #…";
-        try{
-          const rows = await fetchExactItem(style);
-          tableWrap.style.display = rows.length ? "block" : "none";
-          render(rows);
-        }catch(e){
-          console.error(e);
-          tableWrap.style.display = "none";
-          statusEl.textContent = "Search failed.";
+        const initialHeader = document.querySelector(`th[data-k="${sortKey}"]`);
+        if (initialHeader) {
+          initialHeader.classList.add("active");
+          const icon = initialHeader.querySelector(".sort-icon");
+          if (icon) icon.textContent = sortAsc ? "▲" : "▼";
         }
-        return;
       }
+      setInitialSortHeader();
 
-      // 2) Description if 2+ chars
-      if (desc.length >= 2){
-        statusEl.textContent = "Searching by description…";
-        try{
-          const rows = await fetchByDescription(desc);
-          tableWrap.style.display = rows.length ? "block" : "none";
-          render(rows);
-        }catch(e){
-          console.error(e);
-          tableWrap.style.display = "none";
-          statusEl.textContent = "Search failed.";
+      // -------------------------------------------------------
+      // SECTION 17: SORTING HEADER EVENTS
+      // -------------------------------------------------------
+      document.querySelectorAll("th[data-k]").forEach(th => {
+        th.addEventListener("click", () => {
+          const key = th.dataset.k;
+          if (!key) return;
+
+          if (sortKey === key) {
+            sortAsc = !sortAsc;
+          } else {
+            sortKey = key;
+            sortAsc = true;
+          }
+
+          document.querySelectorAll("th[data-k]").forEach(header => {
+            header.classList.remove("active");
+            const icon = header.querySelector(".sort-icon");
+            if (icon) icon.textContent = "⬍";
+          });
+
+          th.classList.add("active");
+          const icon = th.querySelector(".sort-icon");
+          if (icon) icon.textContent = sortAsc ? "▲" : "▼";
+
+          page = 0;
+          render(currentRows);
+        });
+      });
+
+      // -------------------------------------------------------
+      // SECTION 18: LOAD SHIPPING LEVELS
+      // -------------------------------------------------------
+      async function loadShippingLevels() {
+        try {
+          const url = new URL(API_LEVELS);
+          url.searchParams.set("select", "*");
+          url.searchParams.set("order", "min_weight.asc");
+
+          const res = await fetch(url.toString(), {
+            headers: {
+              apikey: SUPABASE_ANON,
+              Authorization: `Bearer ${SUPABASE_ANON}`
+            },
+            cache: "no-store"
+          });
+
+          if (!res.ok) throw new Error("shipping levels failed");
+          shippingLevels = await res.json();
+          shippingLevelsLoaded = true;
+        } catch (err) {
+          console.error("Failed to load shipping levels", err);
+          shippingLevels = [];
+          shippingLevelsLoaded = false;
         }
-        return;
       }
 
-      // 3) Nothing to search
-      tableWrap.style.display = "none";
-      tbody.innerHTML = "";
-      statusEl.textContent = "Type an Item # (exact) or at least 2 characters in Description.";
-    }, 160);
+      // -------------------------------------------------------
+      // SECTION 19: FIND SHIPPING LEVEL MATCH
+      // -------------------------------------------------------
+      function findShippingForWeight(weight) {
+        const w = Number(weight);
 
-    // Clear button
-    clearBtn.addEventListener("click", () => {
-      itemInput.value = "";
-      descInput.value = "";
-      tbody.innerHTML = "";
-      tableWrap.style.display = "none";
-      statusEl.textContent = "Type an Item # (exact) or at least 2 characters in Description.";
-      itemInput.disabled = false;
-      descInput.disabled = false;
-    });
+        // If weight is not valid, null, or <= 0, treat as no shipping level
+        if (!shippingLevels.length || !isFinite(w) || w <= 0) return null;
 
-    // Wire inputs
-    itemInput.addEventListener("input", runSearch);
-    descInput.addEventListener("input", runSearch);
+        // Inclusive of both min and max
+        return (
+          shippingLevels.find(level => {
+            const min = Number(level.min_weight);
+            const max = Number(level.max_weight);
+            return w >= min && w <= max;
+          }) || null
+        );
+      }
 
-    // Clickable headers for sorting
-    document.querySelectorAll("th[data-k]").forEach(th => {
-      th.addEventListener("click", () => {
-        const key = th.dataset.k;
-        if (!key) return;
+      // -------------------------------------------------------
+      // SECTION 20: RENDER TABLE
+      // -------------------------------------------------------
+      function render(rows) {
+        tbody.innerHTML = "";
 
-        if (sortKey === key) {
-          sortAsc = !sortAsc;
+        if (!rows || !rows.length) {
+          tableWrap.style.display = "none";
+          statusEl.textContent = "No results";
+          pageTop.textContent = "";
+          pageBottom.textContent = "";
+          pageJump.innerHTML = "";
+          return;
+        }
+
+        // Calculate total pages based on pageSize
+        totalPages = Math.ceil(rows.length / pageSize);
+        if (page >= totalPages) page = totalPages - 1;
+        if (page < 0) page = 0;
+
+        // Slice for current page
+        const start = page * pageSize;
+        const end = start + pageSize;
+        const paged = rows.slice(start, end);
+
+        // Sort the current page based on active sort key
+        paged.sort((a, b) => {
+          let aVal;
+          let bVal;
+
+          if (sortKey === "ship_level") {
+            const aShip = findShippingForWeight(a.piece_weight);
+            const bShip = findShippingForWeight(b.piece_weight);
+            aVal = aShip ? Number(aShip.shipping_level) : 9999;
+            bVal = bShip ? Number(bShip.shipping_level) : 9999;
+          } else {
+            aVal = a[sortKey];
+            bVal = b[sortKey];
+          }
+
+          if (typeof aVal === "string") aVal = aVal.toLowerCase();
+          if (typeof bVal === "string") bVal = bVal.toLowerCase();
+
+          if (aVal === bVal) return 0;
+          if (sortAsc) {
+            return aVal > bVal ? 1 : -1;
+          } else {
+            return aVal < bVal ? 1 : -1;
+          }
+        });
+
+        // Build table rows
+        paged.forEach(r => {
+          const ship = findShippingForWeight(r.piece_weight);
+
+          // Weight display: 3 decimals if valid, otherwise blank
+          let weightDisplay = "";
+          const rawWeight = Number(r.piece_weight);
+          if (isFinite(rawWeight) && rawWeight > 0) {
+            weightDisplay = rawWeight.toFixed(3);
+          }
+
+          // Only show shipping/handling columns if we have a matching level
+          let shipLevelText = "";
+          let shipMinText = "";
+          let shipPerItemText = "";
+          let handlingMinText = "";
+          let handlingPerItemText = "";
+
+          if (ship) {
+            const sMin = Number(ship.shipping_min);
+            const sPer = Number(ship.shipping_per_item);
+            const hMin = Number(ship.handling_min);
+            const hPer = Number(ship.handling_per_item);
+
+            shipLevelText = `Level ${ship.shipping_level}`;
+            shipMinText = isFinite(sMin) ? `$${sMin.toFixed(2)}` : "";
+            shipPerItemText = isFinite(sPer) ? `$${sPer.toFixed(2)}` : "";
+            handlingMinText = isFinite(hMin) ? `$${hMin.toFixed(2)}` : "";
+            handlingPerItemText = isFinite(hPer) ? `$${hPer.toFixed(2)}` : "";
+          }
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td><span class="badge">${r.vendor || ""}</span></td>
+            <td>${r.style_num || ""}</td>
+            <td>${r.product_title || ""}</td>
+            <td>${r.size || ""}</td>
+            <td>${weightDisplay}</td>
+            <td>${shipLevelText}</td>
+            <td>${shipMinText}</td>
+            <td>${shipPerItemText}</td>
+            <td>${handlingMinText}</td>
+            <td>${handlingPerItemText}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        // Show table
+        tableWrap.style.display = "block";
+        statusEl.textContent = `${rows.length} item(s) found`;
+
+        // Update pagination UI
+        pageTop.textContent = `Page ${page + 1} of ${totalPages}`;
+        pageBottom.textContent = `Page ${page + 1} of ${totalPages}`;
+        pageJump.innerHTML = "";
+
+        for (let i = 0; i < totalPages; i++) {
+          const opt = document.createElement("option");
+          opt.value = i;
+          opt.textContent = `Go to page ${i + 1}`;
+          if (i === page) opt.selected = true;
+          pageJump.appendChild(opt);
+        }
+
+        prevBtn.disabled = page === 0;
+        nextBtn.disabled = page + 1 >= totalPages;
+      }
+
+      // -------------------------------------------------------
+      // SECTION 21: FETCH ITEMS
+      // -------------------------------------------------------
+      async function fetchItems() {
+        const style = itemInput.value.trim();
+        const desc = descInput.value.trim();
+
+        if (!shippingLevelsLoaded) {
+          await loadShippingLevels();
+        }
+
+        const url = new URL(API_ITEMS);
+        url.searchParams.set(
+          "select",
+          "vendor,style_num,product_title,product_description,size,piece_weight"
+        );
+
+        // Exact match on style_num when Item # is entered
+        if (style.length > 0) {
+          url.searchParams.set("style_num", `eq.${style}`);
+        } else if (desc.length >= 2) {
+          const like = `*${desc}*`;
+          // Description keywords search (title + description)
+          url.searchParams.set(
+            "or",
+            `(product_title.ilike.${like},product_description.ilike.${like})`
+          );
         } else {
-          sortKey = key;
-          sortAsc = true;
+          tableWrap.style.display = "none";
+          tbody.innerHTML = "";
+          statusEl.textContent =
+            "Type an Item # (exact) or at least 2 characters in Description.";
+          return;
         }
-        runSearch();
+
+        // Order by current sort key when not sorting client-side by ship_level
+        if (sortKey !== "ship_level") {
+          url.searchParams.set("order", `${sortKey}.${sortAsc ? "asc" : "desc"}`);
+        }
+
+        // Cap at 1000 results from Supabase
+        url.searchParams.set("limit", "1000");
+
+        try {
+          const res = await fetch(url.toString(), {
+            headers: {
+              apikey: SUPABASE_ANON,
+              Authorization: `Bearer ${SUPABASE_ANON}`
+            },
+            cache: "no-store"
+          });
+
+          if (!res.ok) throw new Error("API error");
+          currentRows = await res.json();
+          page = 0; // reset to first page on new search
+          render(currentRows);
+        } catch (e) {
+          console.error(e);
+          tableWrap.style.display = "none";
+          statusEl.textContent = "Search failed.";
+        }
+      }
+
+      // -------------------------------------------------------
+      // SECTION 22: SEARCH DEBOUNCE
+      // -------------------------------------------------------
+      const runSearch = (() => {
+        let t;
+        return () => {
+          clearTimeout(t);
+          t = setTimeout(() => fetchItems(), 160);
+        };
+      })();
+
+      // -------------------------------------------------------
+      // SECTION 23: EVENT LISTENERS (SEARCH, PAGINATION, CLEAR)
+      // -------------------------------------------------------
+      clearBtn.addEventListener("click", () => {
+        itemInput.value = "";
+        descInput.value = "";
+        currentRows = [];
+        page = 0;
+        tbody.innerHTML = "";
+        tableWrap.style.display = "none";
+        statusEl.textContent =
+          "Type an Item # (exact) or at least 2 characters in Description.";
+        pageTop.textContent = "";
+        pageBottom.textContent = "";
+        pageJump.innerHTML = "";
       });
+
+      itemInput.addEventListener("input", runSearch);
+      descInput.addEventListener("input", runSearch);
+
+      prevBtn.addEventListener("click", () => {
+        if (page > 0) {
+          page--;
+          render(currentRows);
+        }
+      });
+
+      nextBtn.addEventListener("click", () => {
+        if ((page + 1) * pageSize < currentRows.length) {
+          page++;
+          render(currentRows);
+        }
+      });
+
+      pageJump.addEventListener("change", () => {
+        page = parseInt(pageJump.value, 10) || 0;
+        render(currentRows);
+      });
+
+      // End of DOMContentLoaded
     });
 
-    // Hide table initially
-    tableWrap.style.display = "none";
-  });
-</script>
+    // =========================================================
+    // SECTION 24: END OF SCRIPT
+    // =========================================================
+  </script>
 </body>
 </html>
