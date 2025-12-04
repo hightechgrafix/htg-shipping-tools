@@ -510,45 +510,74 @@ async function fetchItems() {
       })();
 
       // -------------------------------------------------------
-      // SECTION 23: EVENT LISTENERS
-      // -------------------------------------------------------
-      clearBtn.addEventListener("click", () => {
-        itemInput.value = "";
-        descInput.value = "";
-        currentRows = [];
-        page = 0;
-        tbody.innerHTML = "";
-        tableWrap.style.display = "none";
-        statusEl.textContent =
-          "Type an Item # (exact) or at least 2 characters in Description.";
+// SECTION 23: EVENT LISTENERS (DISABLE OTHER SEARCH BOX)
+// -------------------------------------------------------
+clearBtn.addEventListener("click", () => {
+  itemInput.value = "";
+  descInput.value = "";
 
-        pageTop.textContent = "";
-        pageBottom.textContent = "";
-        pageJump.innerHTML = "";
-      });
+  itemInput.disabled = false;
+  descInput.disabled = false;
 
-      itemInput.addEventListener("input", runSearch);
-      descInput.addEventListener("input", runSearch);
+  itemInput.placeholder = "Item #";
+  descInput.placeholder = "Description keywords";
 
-      prevBtn.addEventListener("click", () => {
-        if (page > 0) {
-          page--;
-          render(currentRows);
-        }
-      });
+  currentRows = [];
+  page = 0;
+  tbody.innerHTML = "";
+  tableWrap.style.display = "none";
+  statusEl.textContent =
+    "Type an Item # (exact) or at least 2 characters in Description.";
+  pageTop.textContent = "";
+  pageBottom.textContent = "";
+  pageJump.innerHTML = "";
+});
 
-      nextBtn.addEventListener("click", () => {
-        if ((page + 1) * pageSize < currentRows.length) {
-          page++;
-          render(currentRows);
-        }
-      });
+// When user types into ITEM #
+itemInput.addEventListener("input", () => {
+  if (itemInput.value.trim().length > 0) {
+    descInput.disabled = true;
+    descInput.placeholder = "Clear Item # to search by description";
+  } else {
+    descInput.disabled = false;
+    descInput.placeholder = "Description keywords";
+  }
 
-      pageJump.addEventListener("change", () => {
-        page = parseInt(pageJump.value, 10) || 0;
-        render(currentRows);
-      });
-    }); <!-- THIS NOW MATCHES THE OPENING DOMContentLoaded -->
+  runSearch();
+});
+
+// When user types into DESCRIPTION
+descInput.addEventListener("input", () => {
+  if (descInput.value.trim().length > 0) {
+    itemInput.disabled = true;
+    itemInput.placeholder = "Clear description to search by item number";
+  } else {
+    itemInput.disabled = false;
+    itemInput.placeholder = "Item #";
+  }
+
+  runSearch();
+});
+
+// Pagination
+prevBtn.addEventListener("click", () => {
+  if (page > 0) {
+    page--;
+    render(currentRows);
+  }
+});
+
+nextBtn.addEventListener("click", () => {
+  if ((page + 1) * pageSize < currentRows.length) {
+    page++;
+    render(currentRows);
+  }
+});
+
+pageJump.addEventListener("change", () => {
+  page = parseInt(pageJump.value, 10) || 0;
+  render(currentRows);
+});
 
     // =========================================================
     // SECTION 24: END OF SCRIPT
