@@ -162,26 +162,39 @@
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
     async function fetchLevels() {
-      const { data, error } = await supabase.from('shipping_levels').select('*').order('min_weight');
-      if (error) return console.error(error);
-      const tbody = document.getElementById('shipping-body');
-      data.forEach((level, index) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>Level ${index + 1}</td>
-          <td>${level.min_weight} – ${level.max_weight}</td>
-          <td><input type="number" min="0" value="0" data-index="${index}" /></td>
-          <td>$${level.shipping_per_item.toFixed(2)}</td>
-          <td>$${level.shipping_min.toFixed(2)}</td>
-          <td>$${level.handling_per_item.toFixed(2)}</td>
-          <td>$${level.handling_min.toFixed(2)}</td>
-          <td id="ship-${index}">$0.00</td>
-          <td id="handle-${index}">$0.00</td>
-        `;
-        tbody.appendChild(row);
-      });
-      addListeners(data);
-    }
+  const { data, error } = await supabase
+    .from('shipping_levels')
+    .select('*')
+    .order('min_weight', { ascending: true });
+
+  if (error || !data) {
+    alert('Error loading shipping levels from Supabase.');
+    console.error('Supabase error:', error);
+    return;
+  }
+
+  const tbody = document.getElementById('shipping-body');
+  tbody.innerHTML = ''; // Clear any existing rows just in case
+
+  data.forEach((level, index) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>Level ${level.shipping_level}</td>
+      <td>${level.min_weight} – ${level.max_weight}</td>
+      <td><input type="number" min="0" value="0" data-index="${index}" /></td>
+      <td>$${parseFloat(level.shipping_per_item).toFixed(2)}</td>
+      <td>$${parseFloat(level.shipping_min).toFixed(2)}</td>
+      <td>$${parseFloat(level.handling_per_item).toFixed(2)}</td>
+      <td>$${parseFloat(level.handling_min).toFixed(2)}</td>
+      <td id="ship-${index}">$0.00</td>
+      <td id="handle-${index}">$0.00</td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  addListeners(data);
+}
+
 
     function addListeners(levels) {
       const inputs = document.querySelectorAll('input[type="number"]');
