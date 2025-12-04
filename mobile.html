@@ -63,6 +63,31 @@
       color: #c40000;
       font-size: 15px;
     }
+   .pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #ddd;
+}
+
+.pagination button {
+  background: #c40000;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.page-info {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
+ 
   </style>
 </head>
 <body>
@@ -78,6 +103,12 @@
     <div id="status" class="status-text">Start typing to search…</div>
 
     <div id="results"></div>
+    <div id="pagination" class="pagination" style="display:none;">
+  <button id="prevBtn">Previous</button>
+  <span id="pageInfo" class="page-info"></span>
+  <button id="nextBtn">Next</button>
+</div>
+
   </div>
 
   <script>
@@ -146,14 +177,38 @@
       }
 
       const data = await res.json();
+      page = 0;
       renderResults(data);
     }
 
-    function renderResults(rows) {
+    let currentRows = [];
+let page = 0;
+const pageSize = 5;
+
+function renderResults(rows) {
   const resultsEl = document.getElementById("results");
+  const paginationEl = document.getElementById("pagination");
+  const pageInfoEl = document.getElementById("pageInfo");
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+
+  currentRows = rows; // Save for pagination
+  const totalPages = Math.ceil(rows.length / pageSize);
+
+  // Pagination display
+  paginationEl.style.display = rows.length ? "flex" : "none";
+  pageInfoEl.textContent = `Page ${page + 1} of ${totalPages}`;
+  prevBtn.disabled = page === 0;
+  nextBtn.disabled = page + 1 >= totalPages;
+
+  // Slice current page
+  const start = page * pageSize;
+  const end = start + pageSize;
+  const slice = rows.slice(start, end);
+
   resultsEl.innerHTML = "";
 
-  rows.forEach((item) => {
+  slice.forEach((item) => {
     const weight = parseFloat(item.piece_weight) || 0;
     const level = shippingLevels.find(lvl => weight >= lvl.min_weight && weight <= lvl.max_weight);
     
@@ -188,7 +243,6 @@
   });
 }
 
-
     document.getElementById("itemInput").addEventListener("input", fetchItems);
     document.getElementById("descInput").addEventListener("input", fetchItems);
     document.getElementById("clearBtn").addEventListener("click", () => {
@@ -197,6 +251,20 @@
       document.getElementById("results").innerHTML = "";
       document.getElementById("status").textContent = "Start typing to search…";
     });
+    document.getElementById("prevBtn").addEventListener("click", () => {
+  if (page > 0) {
+    page--;
+    renderResults(currentRows);
+  }
+});
+
+document.getElementById("nextBtn").addEventListener("click", () => {
+  if ((page + 1) * pageSize < currentRows.length) {
+    page++;
+    renderResults(currentRows);
+  }
+});
+
   </script>
 </body>
 </html>
