@@ -509,75 +509,83 @@ async function fetchItems() {
         };
       })();
 
+            // -------------------------------------------------------
+      // SECTION 23: EVENT LISTENERS (DISABLE OTHER SEARCH BOX)
       // -------------------------------------------------------
-// SECTION 23: EVENT LISTENERS (DISABLE OTHER SEARCH BOX)
-// -------------------------------------------------------
-clearBtn.addEventListener("click", () => {
-  itemInput.value = "";
-  descInput.value = "";
+      clearBtn.addEventListener("click", () => {
+        itemInput.value = "";
+        descInput.value = "";
 
-  itemInput.disabled = false;
-  descInput.disabled = false;
+        itemInput.disabled = false;
+        descInput.disabled = false;
 
-  itemInput.placeholder = "Item #";
-  descInput.placeholder = "Description keywords";
+        itemInput.placeholder = "Item #";
+        descInput.placeholder = "Description keywords";
 
-  currentRows = [];
-  page = 0;
-  tbody.innerHTML = "";
-  tableWrap.style.display = "none";
-  statusEl.textContent =
-    "Type an Item # (exact) or at least 2 characters in Description.";
-  pageTop.textContent = "";
-  pageBottom.textContent = "";
-  pageJump.innerHTML = "";
-});
+        currentRows = [];
+        page = 0;
+        tbody.innerHTML = "";
+        tableWrap.style.display = "none";
+        statusEl.textContent =
+          "Type an Item # (exact) or at least 2 characters in Description.";
+        pageTop.textContent = "";
+        pageBottom.textContent = "";
+        pageJump.innerHTML = "";
+      });
 
-// When user types into ITEM #
-itemInput.addEventListener("input", () => {
-  if (itemInput.value.trim().length > 0) {
-    descInput.disabled = true;
-    descInput.placeholder = "Clear Item # to search by description";
-  } else {
-    descInput.disabled = false;
-    descInput.placeholder = "Description keywords";
-  }
+      // When user types into ITEM #
+      itemInput.addEventListener("input", () => {
+        if (itemInput.value.trim().length > 0) {
+          descInput.disabled = true;
+          descInput.placeholder = "Clear Item # to search by description";
+        } else {
+          descInput.disabled = false;
+          descInput.placeholder = "Description keywords";
+        }
 
-  runSearch();
-});
+        runSearch();
+      });
 
-// When user types into DESCRIPTION
-descInput.addEventListener("input", () => {
-  if (descInput.value.trim().length > 0) {
-    itemInput.disabled = true;
-    itemInput.placeholder = "Clear description to search by item number";
-  } else {
-    itemInput.disabled = false;
-    itemInput.placeholder = "Item #";
-  }
+      // When user types into DESCRIPTION
+      descInput.addEventListener("input", () => {
+        if (descInput.value.trim().length > 0) {
+          itemInput.disabled = true;
+          itemInput.placeholder = "Clear description to search by item number";
+        } else {
+          itemInput.disabled = false;
+          itemInput.placeholder = "Item #";
+        }
 
-  runSearch();
-});
+        runSearch();
+      });
 
-// Pagination
-prevBtn.addEventListener("click", () => {
-  if (page > 0) {
-    page--;
-    render(currentRows);
-  }
-});
+      // Pagination buttons
+      prevBtn.addEventListener("click", () => {
+        if (page > 0) {
+          page--;
+          render(currentRows);
+        }
+      });
 
-nextBtn.addEventListener("click", () => {
-  if ((page + 1) * pageSize < currentRows.length) {
-    page++;
-    render(currentRows);
-  }
-});
+      nextBtn.addEventListener("click", () => {
+        if ((page + 1) * pageSize < currentRows.length) {
+          page++;
+          render(currentRows);
+        }
+      });
 
-pageJump.addEventListener("change", () => {
-  page = parseInt(pageJump.value, 10) || 0;
-  render(currentRows);
-});
+      pageJump.addEventListener("change", () => {
+        page = parseInt(pageJump.value, 10) || 0;
+        render(currentRows);
+      });
+    }); // END DOMContentLoaded
+
+    // =========================================================
+    // SECTION 24: END OF SCRIPT
+    // =========================================================
+  </script>
+</body>
+</html>
 
     // =========================================================
     // SECTION 24: END OF SCRIPT
