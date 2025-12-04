@@ -409,17 +409,104 @@ document.getElementById("thHandItem").addEventListener("click", () => applySort(
       }
 
            // =========================================================
-// SECTION 20: RENDER TABLE (UPDATED WITH QUOTE LOGIC)
+// SECTION 20: RENDER TABLE (SORTING + QUOTE LOGIC)
 // =========================================================
 function render(rows) {
   tbody.innerHTML = "";
-  tableWrap.style.display = rows.length ? "block" : "none";
 
-  const totalPages = Math.ceil(rows.length / pageSize);
+  if (!rows || !rows.length) {
+    tableWrap.style.display = "none";
+    statusEl.textContent = "No results";
+    pageTop.textContent = "";
+    pageBottom.textContent = "";
+    pageJump.innerHTML = "";
+    return;
+  }
+
+  // Total pages and clamp current page
+  totalPages = Math.ceil(rows.length / pageSize);
+  if (page < 0) page = 0;
+  if (page >= totalPages) page = totalPages - 1;
+
+  // Slice for this page
   const start = page * pageSize;
   const end = start + pageSize;
-  const slice = rows.slice(start, end);
+  const paged = rows.slice(start, end);
 
+  // -------- SORT LOGIC APPLIED TO CURRENT PAGE --------
+  paged.sort((a, b) => {
+    let aVal, bVal;
+
+    if (sortKey === "ship_level") {
+      const sa = findShippingForWeight(a.piece_weight);
+      const sb = findShippingForWeight(b.piece_weight);
+      aVal = sa ? Number(sa.shipping_level) : 9999;
+      bVal = sb ? Number(sb.shipping_level) : 9999;
+    } else {
+      aVal = a[sortKey];
+      bVal = b[sortKey];
+    }
+
+    // Normalize strings
+    if (typeof aVal === "string") aVal = aVal.toLowerCase();
+    if (typeof bVal === "string") bVal = bVal.toLowerCase();
+
+    if (aVal === bVal) return 0;
+    return sortAsc
+      ? aVal > bVal
+        ? 1
+        : -1
+      : aVal < bVal
+      ? 1
+      : -1;
+  });
+
+  // Render rows
+  paged.forEach((item) => {
+    const tr = document.createElement("tr");
+
+    const weight = parseFloat(item.piece_weight) || 0;
+    const levelObj = findShippingForWeight(weight);
+
+    let levelLabel, shipMin, shipItem, handMin, handItem;
+
+    if (!levelObj) {
+      // QUOTE MODE
+      levelLabel =
+        '<span class="quote-label" title="This item requires a manual shipping quote due to weight.">Shipping Quote Required</span>';
+      shipMin = "—";
+      shipItem = "—";
+      handMin = "—";
+      handItem = "—";
+    } else {
+      levelLabel = `Level ${levelObj.shipping_level}`;
+      shipMin = `$${Number(levelObj.shipping_min).toFixed(2)}`;
+      shipItem = `$${Number(levelObj.shipping_per_item).toFixed(2)}`;
+      handMin = `$${Number(levelObj.handling_min).toFixed(2)}`;
+      handItem = `$${Number(levelObj.handling_per_item).toFixed(2)}`;
+    }
+
+    tr.innerHTML = `
+      <td><button class="vendor-btn">${item.vendor || ""}</button></td>
+      <td>${item.style_num || ""}</td>
+      <td>${item.product_title || ""}</td>
+      <td>${item.size || ""}</td>
+      <td>${weight ? weight.toFixed(3) : ""}</td>
+      <td>${levelLabel}</td>
+      <td>${shipMin}</td>
+      <td>${shipItem}</td>
+      <td>${handMin}</td>
+      <td>${handItem}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+
+  // Show table + status
+  tableWrap.style.display = "block";
+  statusEl.textContent = `${rows.length} item(s) found`;
+
+  // Pagination UI
   pageTop.textContent = `Page ${page + 1} of ${totalPages}`;
   pageBottom.textContent = `Page ${page + 1} of ${totalPages}`;
 
@@ -432,55 +519,10 @@ function render(rows) {
     pageJump.appendChild(opt);
   }
 
-  slice.forEach((item) => {
-    const tr = document.createElement("tr");
-
-    const weight = parseFloat(item.piece_weight) || 0;
-    const levelObj = shippingLevels.find(
-      (lvl) => weight >= lvl.min_weight && weight <= lvl.max_weight
-    );
-
-    let levelLabel, shipMin, shipItem, handMin, handItem;
-
-    if (!levelObj) {
-      // ---------- QUOTE MODE ----------
-      levelLabel = `
-        <span class="quote-label" title="This item requires a manual shipping quote due to weight.">
-          Shipping Quote Required
-        </span>
-      `;
-      shipMin = "—";
-      shipItem = "—";
-      handMin = "—";
-      handItem = "—";
-    } else {
-      // ---------- NORMAL LEVEL ----------
-      levelLabel = `Level ${levelObj.shipping_level}`;
-      shipMin = `$${levelObj.shipping_min.toFixed(2)}`;
-      shipItem = `$${levelObj.shipping_per_item.toFixed(2)}`;
-      handMin = `$${levelObj.handling_min.toFixed(2)}`;
-      handItem = `$${levelObj.handling_per_item.toFixed(2)}`;
-    }
-
-    tr.innerHTML = `
-      <td><button class="vendor-btn">${item.vendor}</button></td>
-      <td>${item.style_num}</td>
-      <td>${item.product_title}</td>
-      <td>${item.size}</td>
-      <td>${weight.toFixed(3)}</td>
-      <td>${levelLabel}</td>
-      <td>${shipMin}</td>
-      <td>${shipItem}</td>
-      <td>${handMin}</td>
-      <td>${handItem}</td>
-    `;
-
-    tbody.appendChild(tr);
-  });
-
   prevBtn.disabled = page === 0;
   nextBtn.disabled = page + 1 >= totalPages;
 }
+
      // -------------------------------------------------------
 // SECTION 21: FETCH ITEMS (Item # now case-insensitive)
 // -------------------------------------------------------
