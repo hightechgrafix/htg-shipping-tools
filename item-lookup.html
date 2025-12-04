@@ -286,25 +286,45 @@
       const pageBottom = document.getElementById("pageBottom");
       const pageJump = document.getElementById("pageJump");
 
-      // -------------------------------------------------------
-      // SECTION 16: SORTING HEADER UI INIT
-      // -------------------------------------------------------
-      function setInitialSortHeader() {
-        const headers = document.querySelectorAll("th[data-k]");
-        headers.forEach((h) => {
-          h.classList.remove("active");
-          const icon = h.querySelector(".sort-icon");
-          if (icon) icon.textContent = "⬍";
-        });
+// =========================================================
+// GLOBAL SORT STATE  (must appear BEFORE Section 16)
+// =========================================================
+let sortKey = "style";
+let sortAsc = true;
 
-        const initialHeader = document.querySelector(`th[data-k="${sortKey}"]`);
-        if (initialHeader) {
-          initialHeader.classList.add("active");
-          const icon = initialHeader.querySelector(".sort-icon");
-          if (icon) icon.textContent = sortAsc ? "▲" : "▼";
-        }
-      }
-      setInitialSortHeader();
+// Mapping: header -> field in item row
+const SORT_MAP = {
+  style: "style_num",
+  title: "product_title",
+  size: "size",
+  weight: "piece_weight",
+  level: "shipping_level",
+  shipmin: "shipping_min",
+  shipitem: "shipping_per_item",
+  handmin: "handling_min",
+  handitem: "handling_per_item",
+};
+
+      // -------------------------------------------------------
+// SECTION 16: SORTING HEADER UI INIT
+// -------------------------------------------------------
+function setInitialSortHeader() {
+  const headers = document.querySelectorAll("th[data-k]");
+  headers.forEach((h) => {
+    h.classList.remove("active");
+    const icon = h.querySelector(".sort-icon");
+    if (icon) icon.textContent = "⬍";
+  });
+
+  const initialHeader = document.querySelector(`th[data-k="${sortKey}"]`);
+  if (initialHeader) {
+    initialHeader.classList.add("active");
+    const icon = initialHeader.querySelector(".sort-icon");
+    if (icon) icon.textContent = sortAsc ? "▲" : "▼";
+  }
+}
+setInitialSortHeader();
+
 
       // =========================================================
 // SECTION 17: SORTING (FULL FIX)
