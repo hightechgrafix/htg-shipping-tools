@@ -87,7 +87,11 @@
   font-weight: bold;
   color: #333;
 }
- 
+ .tier-line {
+  color: #c40000;
+  font-weight: bold;
+}
+
   </style>
 </head>
 <body>
@@ -234,7 +238,7 @@ function renderResults(rows) {
       <div>Title: ${item.product_title}</div>
       <div>Size: ${item.size}</div>
       <div>Weight: ${weight.toFixed(3)} lb</div>
-      <div>Shipping Tier: ${tierText}</div>
+      <div class="tier-line">Shipping Tier: ${tierText}</div>
       <div><strong>Shipping:</strong> ${shipMin} min / ${shipItem} per item</div>
       <div><strong>Handling:</strong> ${handMin} min / ${handItem} per item</div>
     `;
