@@ -150,27 +150,44 @@
     }
 
     function renderResults(rows) {
-      const resultsEl = document.getElementById("results");
-      resultsEl.innerHTML = "";
+  const resultsEl = document.getElementById("results");
+  resultsEl.innerHTML = "";
 
-      rows.forEach((item) => {
-        const weight = parseFloat(item.piece_weight) || 0;
-        const level = shippingLevels.find(lvl => weight >= lvl.min_weight && weight <= lvl.max_weight);
-        
-        const card = document.createElement("div");
-        card.className = "item-card";
+  rows.forEach((item) => {
+    const weight = parseFloat(item.piece_weight) || 0;
+    const level = shippingLevels.find(lvl => weight >= lvl.min_weight && weight <= lvl.max_weight);
+    
+    let tierText = "Quote Required";
+    let shipMin = "—";
+    let shipItem = "—";
+    let handMin = "—";
+    let handItem = "—";
 
-        card.innerHTML = `
-          <div><strong>${item.style_num}</strong> · ${item.vendor}</div>
-          <div>Title: ${item.product_title}</div>
-          <div>Size: ${item.size}</div>
-          <div>Weight: ${weight.toFixed(3)} lb</div>
-          <div>Shipping Tier: ${level ? `Level ${level.shipping_level}` : "Quote Required"}</div>
-        `;
-
-        resultsEl.appendChild(card);
-      });
+    if (level) {
+      tierText = `Level ${level.shipping_level}`;
+      shipMin = `$${Number(level.shipping_min).toFixed(2)}`;
+      shipItem = `$${Number(level.shipping_per_item).toFixed(2)}`;
+      handMin = `$${Number(level.handling_min).toFixed(2)}`;
+      handItem = `$${Number(level.handling_per_item).toFixed(2)}`;
     }
+
+    const card = document.createElement("div");
+    card.className = "item-card";
+
+    card.innerHTML = `
+      <div><strong>${item.style_num}</strong> · ${item.vendor}</div>
+      <div>Title: ${item.product_title}</div>
+      <div>Size: ${item.size}</div>
+      <div>Weight: ${weight.toFixed(3)} lb</div>
+      <div>Shipping Tier: ${tierText}</div>
+      <div><strong>Shipping:</strong> ${shipMin} min / ${shipItem} per item</div>
+      <div><strong>Handling:</strong> ${handMin} min / ${handItem} per item</div>
+    `;
+
+    resultsEl.appendChild(card);
+  });
+}
+
 
     document.getElementById("itemInput").addEventListener("input", fetchItems);
     document.getElementById("descInput").addEventListener("input", fetchItems);
