@@ -303,35 +303,64 @@
       }
       setInitialSortHeader();
 
-      // -------------------------------------------------------
-      // SECTION 17: SORTING LOGIC
-      // -------------------------------------------------------
-      document.querySelectorAll("th[data-k]").forEach((th) => {
-        th.addEventListener("click", () => {
-          const key = th.dataset.k;
-          if (!key) return;
+      // =========================================================
+// SECTION 17: SORTING (FIXED FOR NEW COLUMN ORDER)
+// =========================================================
 
-          if (sortKey === key) {
-            sortAsc = !sortAsc;
-          } else {
-            sortKey = key;
-            sortAsc = true;
-          }
+// Mapping: header -> field in item row
+const SORT_MAP = {
+  style: "style_num",
+  title: "product_title",
+  size: "size",
+  weight: "piece_weight",
+  level: "shipping_level",
+  shipmin: "shipping_min",
+  shipitem: "shipping_per_item",
+  handmin: "handling_min",
+  handitem: "handling_per_item",
+};
 
-          document.querySelectorAll("th[data-k]").forEach((h) => {
-            h.classList.remove("active");
-            const icon = h.querySelector(".sort-icon");
-            if (icon) icon.textContent = "⬍";
-          });
+// Reset all header highlight styles
+function resetSortClasses() {
+  document.querySelectorAll("th").forEach((th) => th.classList.remove("active"));
+}
 
-          th.classList.add("active");
-          const icon = th.querySelector(".sort-icon");
-          if (icon) icon.textContent = sortAsc ? "▲" : "▼";
+function applySort(key) {
+  sortKey = key;
+  sortAsc = !sortAsc;
 
-          page = 0;
-          render(currentRows);
-        });
-      });
+  currentRows.sort((a, b) => {
+    const field = SORT_MAP[key];
+    let x = a[field];
+    let y = b[field];
+
+    // numeric sort when possible
+    const nx = parseFloat(x);
+    const ny = parseFloat(y);
+    if (!isNaN(nx) && !isNaN(ny)) {
+      return sortAsc ? nx - ny : ny - nx;
+    }
+
+    // fallback: string sort
+    x = (x || "").toString().toLowerCase();
+    y = (y || "").toString().toLowerCase();
+    return sortAsc ? x.localeCompare(y) : y.localeCompare(x);
+  });
+
+  render(currentRows);
+}
+
+// Attach handlers
+document.getElementById("thStyle").addEventListener("click", () => applySort("style"));
+document.getElementById("thTitle").addEventListener("click", () => applySort("title"));
+document.getElementById("thSize").addEventListener("click", () => applySort("size"));
+document.getElementById("thWeight").addEventListener("click", () => applySort("weight"));
+document.getElementById("thLevel").addEventListener("click", () => applySort("level"));
+document.getElementById("thShipMin").addEventListener("click", () => applySort("shipmin"));
+document.getElementById("thShipItem").addEventListener("click", () => applySort("shipitem"));
+document.getElementById("thHandMin").addEventListener("click", () => applySort("handmin"));
+document.getElementById("thHandItem").addEventListener("click", () => applySort("handitem"));
+
 
       // -------------------------------------------------------
       // SECTION 18: LOAD SHIPPING LEVELS
