@@ -243,14 +243,54 @@ function renderResults(rows) {
   });
 }
 
-    document.getElementById("itemInput").addEventListener("input", fetchItems);
-    document.getElementById("descInput").addEventListener("input", fetchItems);
+    const itemInput = document.getElementById("itemInput");
+const descInput = document.getElementById("descInput");
+
+// When user types into the Item # box
+itemInput.addEventListener("input", () => {
+  const value = itemInput.value.trim();
+
+  if (value.length > 0) {
+    descInput.disabled = true;
+    descInput.placeholder = "Clear Item # to search by description";
+  } else {
+    descInput.disabled = false;
+    descInput.placeholder = "Description keywords";
+  }
+
+  fetchItems(); // Run the search
+});
+
+// When user types into the Description box
+descInput.addEventListener("input", () => {
+  const value = descInput.value.trim();
+
+  if (value.length > 0) {
+    itemInput.disabled = true;
+    itemInput.placeholder = "Clear description to search by Item #";
+  } else {
+    itemInput.disabled = false;
+    itemInput.placeholder = "Item # (exact)";
+  }
+
+  fetchItems(); // Run the search
+});
+
     document.getElementById("clearBtn").addEventListener("click", () => {
-      document.getElementById("itemInput").value = "";
-      document.getElementById("descInput").value = "";
-      document.getElementById("results").innerHTML = "";
-      document.getElementById("status").textContent = "Start typing to search…";
-    });
+  itemInput.value = "";
+  descInput.value = "";
+
+  itemInput.disabled = false;
+  descInput.disabled = false;
+
+  itemInput.placeholder = "Item # (exact)";
+  descInput.placeholder = "Description keywords";
+
+  document.getElementById("results").innerHTML = "";
+  document.getElementById("status").textContent = "Start typing to search…";
+  document.getElementById("pagination").style.display = "none";
+});
+
     document.getElementById("prevBtn").addEventListener("click", () => {
   if (page > 0) {
     page--;
