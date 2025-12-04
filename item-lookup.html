@@ -141,7 +141,21 @@
         font-size: 12px;
       }
     }
-  </style>
+ /* Fix vendor button — make it look like a label, not a button */
+.vendor-btn {
+  background: #c40000;
+  border: none;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 22px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: default !important;   /* arrow cursor, not clickable */
+  pointer-events: none;         /* cannot be clicked */
+  user-select: none;
+}
+
+ </style>
 </head>
 
 <body>
