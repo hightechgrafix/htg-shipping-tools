@@ -645,6 +645,15 @@ async function fetchItems() {
         page = parseInt(pageJump.value, 10) || 0;
         render(currentRows);
       });
+      
+      // Highlight default sort column on first load
+const defaultTh = document.querySelector(`th[data-k="${sortKey}"]`);
+if (defaultTh) {
+  defaultTh.classList.add("active");
+
+  const icon = defaultTh.querySelector(".sort-icon");
+  if (icon) icon.textContent = sortAsc ? "↑" : "↓";
+}
     }); // END DOMContentLoaded
 
     // =========================================================
