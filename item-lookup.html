@@ -1,11 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- =========================================================
-       SECTION 1: DOCUMENT HEAD
-       ========================================================= -->
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Item Weight & Shipping Lookup</title>
 
   <!-- =========================================================
@@ -90,20 +87,24 @@
       font-size: 13px;
       margin-top: 4px;
     }
-   .badge {
-  background: #c40000;
-  padding: 6px 12px;
-  border-radius: 22px;
-  display: inline-block;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: default !important;  /* force arrow cursor, not hand */
-  user-select: none;
-}
-
-    #tableWrap {
-      display: none;
+    .vendor-pill {
+      background: #c40000;
+      padding: 6px 12px;
+      border-radius: 22px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: default;
+      user-select: none;
+      border: none;
+    }
+    .quote-label {
+      background: #222;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      display: inline-block;
     }
     .pagination {
       margin-top: 12px;
@@ -113,320 +114,227 @@
       flex-wrap: wrap;
       gap: 10px;
     }
-    .pagination button {
-      font-size: 14px;
-    }
-    .page-info {
-      font-size: 14px;
-      font-weight: bold;
-    }
-    .sort-icon {
-      font-size: 12px;
-      margin-left: 6px;
-      color: #aaa;
-    }
     th.active {
-      background-color: #c40000;
+      background: #c40000;
       color: #fff;
+    }
+    th .sort-icon {
+      margin-left: 6px;
+      font-size: 11px;
+      color: #777;
     }
     th.active .sort-icon {
       color: #fff;
     }
     @media (max-width: 760px) {
-      .search-bar {
-        grid-template-columns: 1fr;
-      }
-      th,
-      td {
-        font-size: 12px;
-      }
+      .search-bar { grid-template-columns: 1fr; }
+      th, td { font-size: 12px; }
     }
- /* Fix vendor button — make it look like a label, not a button */
-.vendor-btn {
-  background: #c40000;
-  border: none;
-  color: #fff;
-  padding: 6px 12px;
-  border-radius: 22px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: default !important;   /* arrow cursor, not clickable */
-  pointer-events: none;         /* cannot be clicked */
-  user-select: none;
-}
-
- </style>
+  </style>
 </head>
-
 <body>
-  <!-- =========================================================
-       SECTION 3: PAGE HEADER
-       ========================================================= -->
-  <div class="container">
-    <h1>Item Weight & Shipping Lookup</h1>
-    <p class="sub">
-      Search by <strong>Item # (exact)</strong> or <strong>Description keywords</strong>.<br />
-     Results include vendor, weight, and shipping/handling levels.
+<div class="container">
+  <h1>Item Weight & Shipping Lookup</h1>
+  <p class="sub">Search by <b>Item # (exact)</b> or <b>Description keywords</b>.<br>Results include vendor, weight (3 decimals), and shipping/handling levels.</p>
 
-    </p>
-
-    <!-- =========================================================
-         SECTION 4: SEARCH BAR
-         ========================================================= -->
-    <div class="search-bar">
-      <input type="text" id="itemInput" placeholder="Item # (exact)">
-      <input type="text" id="descInput" placeholder="Description keywords">
-      <button id="clearBtn">Clear</button>
-    </div>
-
-    <!-- =========================================================
-         SECTION 5: STATUS MESSAGE
-         ========================================================= -->
-    <div id="status" class="muted">
-      Type an Item # (exact) or at least 2 characters in Description.
-    </div>
-
-    <!-- =========================================================
-         SECTION 6: TABLE WRAPPER
-         ========================================================= -->
-    <div id="tableWrap">
-      <!-- =======================================================
-           SECTION 7: PAGINATION (TOP)
-           ======================================================= -->
-      <div class="pagination">
-        <div class="page-info" id="pageTop"></div>
-        <select id="pageJump"></select>
-      </div>
-
-      <!-- =======================================================
-           SECTION 8: RESULTS TABLE
-           ======================================================= -->
-      <table id="resultTable">
-      <thead>
-  <tr>
-    <th id="thVendor" data-k="vendor">Vendor <span class="sort-icon">⬍</span></th>
-    <th id="thStyle" data-k="style_num">Style # <span class="sort-icon">⬍</span></th>
-    <th id="thTitle" data-k="product_title">Title <span class="sort-icon">⬍</span></th>
-    <th id="thSize" data-k="size">Size <span class="sort-icon">⬍</span></th>
-    <th id="thWeight" data-k="piece_weight">Weight (lb) <span class="sort-icon">⬍</span></th>
-    <th id="thLevel" data-k="ship_level">Ship Level <span class="sort-icon">⬍</span></th>
-
-    <!-- shipping / handling -->
-    <th id="thShipMin">Shipping $ min</th>
-    <th id="thShipItem">Shipping $/Item</th>
-    <th id="thHandMin">Handling $ min</th>
-    <th id="thHandItem">Handling $/Item</th>
-  </tr>
-</thead>
-
-        <tbody></tbody>
-      </table>
-
-      <!-- =======================================================
-           SECTION 9: PAGINATION (BOTTOM)
-           ======================================================= -->
-      <div class="pagination">
-        <button id="prevBtn">Previous</button>
-        <div class="page-info" id="pageBottom"></div>
-        <button id="nextBtn">Next</button>
-      </div>
-    </div>
+  <!-- SEARCH BAR -->
+  <div class="search-bar">
+    <input id="itemInput" placeholder="Clear description to search by item number" />
+    <input id="descInput" placeholder="Description keywords" />
+    <button id="clearBtn">Clear</button>
   </div>
 
-  <!-- =========================================================
-       SECTION 10: END OF PAGE HTML
-       ========================================================= -->
+  <div id="status" class="muted">Type an Item # (exact) or at least 2 characters in Description.</div>
 
-  <!-- =========================================================
-       SECTION 11: SCRIPT START
-       ========================================================= -->
-  <script>
-    // =========================================================
-// SECTION 12: CONFIG CONSTANTS + GLOBAL SORT STATE
-// =========================================================
+  <!-- TABLE -->
+  <div id="tableWrap" style="display:none;">
+    <table id="resultTable">
+      <thead>
+        <tr>
+          <th data-k="vendor">Vendor <span class="sort-icon">⬍</span></th>
+          <th data-k="style_num">Style # <span class="sort-icon">⬍</span></th>
+          <th data-k="product_title">Title <span class="sort-icon">⬍</span></th>
+          <th data-k="size">Size <span class="sort-icon">⬍</span></th>
+          <th data-k="piece_weight">Weight (lb) <span class="sort-icon">⬍</span></th>
+          <th data-k="ship_level">Ship Level <span class="sort-icon">⬍</span></th>
+          <th data-k="ship_min">Shipping $ min <span class="sort-icon">⬍</span></th>
+          <th data-k="ship_item">Shipping $/Item <span class="sort-icon">⬍</span></th>
+          <th data-k="hand_min">Handling $ min <span class="sort-icon">⬍</span></th>
+          <th data-k="hand_item">Handling $/Item <span class="sort-icon">⬍</span></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="pagination">
+      <button id="prevBtn">Previous</button>
+      <span id="pageTop" class="page-info"></span>
+      <select id="pageJump"></select>
+      <span id="pageBottom" class="page-info"></span>
+      <button id="nextBtn">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     SCRIPT START
+========================================================= -->
+<script>
+// SECTION 12: CONSTANTS
 const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
-const SUPABASE_ANON =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
-
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
 const API_ITEMS = `${SUPABASE_URL}/rest/v1/items_unified`;
 const API_LEVELS = `${SUPABASE_URL}/rest/v1/shipping_levels`;
 
-// Global sorting defaults
-let sortKey = "style_num";   // <— Default sort (confirmed by you)
+// SORT DEFAULTS
+let sortKey = "style_num";
 let sortAsc = true;
 
-// Pagination
+// PAGINATION
 let page = 0;
 const pageSize = 50;
-let totalPages = 0;
+let currentRows = [];
+let shippingLevels = [];
+let shippingLevelsLoaded = false;
 
-    // =========================================================
-    // SECTION 13: GLOBAL STATE
-    // =========================================================
-    let shippingLevels = [];
-    let shippingLevelsLoaded = false;
-    let currentRows = [];
+// SECTION 16: SORT MAP
+const SORT_MAP = {
+  vendor: r => r.vendor?.toLowerCase() || "",
+  style_num: r => r.style_num?.toLowerCase() || "",
+  product_title: r => r.product_title?.toLowerCase() || "",
+  size: r => r.size?.toLowerCase() || "",
+  piece_weight: r => parseFloat(r.piece_weight) || 0,
 
-   // =========================================================
-// SECTION 14: PAGE INIT
-// =========================================================
-document.addEventListener("DOMContentLoaded", () => {
+  ship_level: r => {
+    const w = parseFloat(r.piece_weight) || 0;
+    const lvl = shippingLevels.find(l => w >= l.min_weight && w <= l.max_weight);
+    return lvl ? Number(lvl.shipping_level) : 9999;
+  },
+  ship_min: r => {
+    const w = parseFloat(r.piece_weight) || 0;
+    const lvl = shippingLevels.find(l => w >= l.min_weight && w <= l.max_weight);
+    return lvl ? Number(lvl.shipping_min) : Infinity;
+  },
+  ship_item: r => {
+    const w = parseFloat(r.piece_weight) || 0;
+    const lvl = shippingLevels.find(l => w >= l.min_weight && w <= l.max_weight);
+    return lvl ? Number(lvl.shipping_per_item) : Infinity;
+  },
+  hand_min: r => {
+    const w = parseFloat(r.piece_weight) || 0;
+    const lvl = shippingLevels.find(l => w >= l.min_weight && w <= l.max_weight);
+    return lvl ? Number(lvl.handling_min) : Infinity;
+  },
+  hand_item: r => {
+    const w = parseFloat(r.piece_weight) || 0;
+    const lvl = shippingLevels.find(l => w >= l.min_weight && w <= l.max_weight);
+    return lvl ? Number(lvl.handling_per_item) : Infinity;
+  },
+};
 
-  // -------------------------------------------------------
-  // SECTION 15: DOM ELEMENT REFERENCES
-  // -------------------------------------------------------
-  const itemInput = document.getElementById("itemInput");
-  const descInput = document.getElementById("descInput");
-  const clearBtn = document.getElementById("clearBtn");
-  const tableWrap = document.getElementById("tableWrap");
-  const tbody = document.querySelector("#resultTable tbody");
-  const statusEl = document.getElementById("status");
-  const prevBtn = document.getElementById("prevBtn");
-  const nextBtn = document.getElementById("nextBtn");
-  const pageTop = document.getElementById("pageTop");
-  const pageBottom = document.getElementById("pageBottom");
-  const pageJump = document.getElementById("pageJump");
-
-  // =========================================================
-  // SECTION 16: GLOBAL SORT DEFAULTS + SORT MAP
-  // =========================================================
-  let sortKey = "style_num";
-  let sortAsc = true;
-
-  const SORT_MAP = {
-    vendor: (row) => row.vendor?.toLowerCase() || "",
-    style_num: (row) => row.style_num?.toLowerCase() || "",
-    product_title: (row) => row.product_title?.toLowerCase() || "",
-    size: (row) => row.size?.toLowerCase() || "",
-    piece_weight: (row) => parseFloat(row.piece_weight) || 0,
-
-    ship_level: (row) => {
-      const w = parseFloat(row.piece_weight) || 0;
-      const lvl = shippingLevels.find(l => w >= l.min_weight && w <= l.max_weight);
-      return lvl ? Number(lvl.shipping_level) : 9999;
-    },
-    ship_min: (row) => {
-      const w = parseFloat(row.piece_weight) || 0;
-      const lvl = shippingLevels.find(l => w >= l.min_weight && w <= l.max_weight);
-      return lvl ? Number(lvl.shipping_min) : Infinity;
-    },
-    ship_item: (row) => {
-      const w = parseFloat(row.piece_weight) || 0;
-      const lvl = shippingLevels.find(l => w >= l.min_weight && w <= l.max_weight);
-      return lvl ? Number(lvl.shipping_per_item) : Infinity;
-    },
-    hand_min: (row) => {
-      const w = parseFloat(row.piece_weight) || 0;
-      const lvl = shippingLevels.find(l => w >= l.min_weight && w <= l.max_weight);
-      return lvl ? Number(lvl.handling_min) : Infinity;
-    },
-    hand_item: (row) => {
-      const w = parseFloat(row.piece_weight) || 0;
-      const lvl = shippingLevels.find(l => w >= l.min_weight && w <= l.max_weight);
-      return lvl ? Number(lvl.handling_per_item) : Infinity;
-    }
-  };
-
-  // =========================================================
-  // SECTION 17: SORT HANDLERS
-  // =========================================================
-  function updateSortHeader() {
-    document.querySelectorAll("th[data-k]").forEach(h => {
-      h.classList.remove("active");
-      const icon = h.querySelector(".sort-icon");
-      if (icon) icon.textContent = "⬍";
-    });
-
-    const active = document.querySelector(`th[data-k="${sortKey}"]`);
-    if (active) {
-      active.classList.add("active");
-      const icon = active.querySelector(".sort-icon");
-      if (icon) icon.textContent = sortAsc ? "▲" : "▼";
-    }
-  }
-
-  function applySort(key) {
-    if (sortKey === key) {
-      sortAsc = !sortAsc;
-    } else {
-      sortKey = key;
-      sortAsc = true;
-    }
-
-    currentRows.sort((a, b) => {
-      const get = SORT_MAP[key];
-      const A = get(a);
-      const B = get(b);
-      if (A === B) return 0;
-      return sortAsc ? (A > B ? 1 : -1) : (A < B ? 1 : -1);
-    });
-
-    updateSortHeader();
-    render(currentRows);
-  }
-
+// UPDATE SORT HEADER
+function updateSortHeader() {
   document.querySelectorAll("th[data-k]").forEach(th => {
-    th.addEventListener("click", () => applySort(th.dataset.k));
+    th.classList.remove("active");
+    const icon = th.querySelector(".sort-icon");
+    if (icon) icon.textContent = "⬍";
+  });
+  const active = document.querySelector(`th[data-k="${sortKey}"]`);
+  if (active) {
+    active.classList.add("active");
+    const icon = active.querySelector(".sort-icon");
+    if (icon) icon.textContent = sortAsc ? "▲" : "▼";
+  }
+}
+
+// APPLY SORT
+function applySort(key) {
+  if (sortKey === key) {
+    sortAsc = !sortAsc;
+  } else {
+    sortKey = key;
+    sortAsc = true;
+  }
+
+  currentRows.sort((a, b) => {
+    const A = SORT_MAP[key](a);
+    const B = SORT_MAP[key](b);
+    if (A === B) return 0;
+    return sortAsc ? (A > B ? 1 : -1) : (A < B ? 1 : -1);
   });
 
-  updateSortHeader(); // initialize sort arrows
+  updateSortHeader();
+  render(currentRows);
+}
 
-});
+// LOAD SHIPPING LEVELS
+async function loadShippingLevels() {
+  try {
+    const url = new URL(API_LEVELS);
+    url.searchParams.set("select", "*");
+    url.searchParams.set("order", "min_weight.asc");
 
-      // -------------------------------------------------------
-      // SECTION 18: LOAD SHIPPING LEVELS
-      // -------------------------------------------------------
-      async function loadShippingLevels() {
-        try {
-          const url = new URL(API_LEVELS);
-          url.searchParams.set("select", "*");
-          url.searchParams.set("order", "min_weight.asc");
-
-          const res = await fetch(url.toString(), {
-            headers: {
-              apikey: SUPABASE_ANON,
-              Authorization: `Bearer ${SUPABASE_ANON}`,
-            },
-            cache: "no-store",
-          });
-
-          if (!res.ok) throw new Error("shipping levels failed");
-          shippingLevels = await res.json();
-          shippingLevelsLoaded = true;
-        } catch (err) {
-          console.error("Failed to load shipping levels:", err);
-          shippingLevels = [];
-          shippingLevelsLoaded = false;
-        }
+    const res = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_ANON,
+        Authorization: `Bearer ${SUPABASE_ANON}`
       }
+    });
 
-      // -------------------------------------------------------
-      // SECTION 19: FIND SHIPPING LEVEL FOR WEIGHT
-      // -------------------------------------------------------
-      function findShippingForWeight(weight) {
-        const w = Number(weight);
-        if (!shippingLevels.length || !isFinite(w) || w <= 0) return null;
+    if (!res.ok) throw new Error("level load fail");
+    shippingLevels = await res.json();
+    shippingLevelsLoaded = true;
+  } catch {
+    shippingLevels = [];
+  }
+}
 
-        return (
-          shippingLevels.find((lvl) => {
-            const min = Number(lvl.min_weight);
-            const max = Number(lvl.max_weight);
-            return w >= min && w <= max;
-          }) || null
-        );
+// FETCH ITEMS
+async function fetchItems() {
+  const styleRaw = itemInput.value.trim();
+  const desc = descInput.value.trim();
+  const style = styleRaw.toUpperCase();
+
+  if (!shippingLevelsLoaded) await loadShippingLevels();
+
+  const url = new URL(API_ITEMS);
+  url.searchParams.set("select", "vendor,style_num,product_title,product_description,size,piece_weight");
+
+  if (style.length > 0) {
+    url.searchParams.set("style_num", `eq.${style}`);
+  } else if (desc.length >= 2) {
+    url.searchParams.set("or", `(product_title.ilike.*${desc}*,product_description.ilike.*${desc}*)`);
+  } else {
+    tableWrap.style.display = "none";
+    tbody.innerHTML = "";
+    statusEl.textContent = "Type an Item # (exact) or at least 2 characters in Description.";
+    return;
+  }
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_ANON,
+        Authorization: `Bearer ${SUPABASE_ANON}`
       }
+    });
 
-           // =========================================================
-// SECTION 20: RENDER TABLE (UPDATED WITH QUOTE LOGIC)
-// =========================================================
+    currentRows = await res.json();
+    page = 0;
+    render(currentRows);
+  } catch {
+    statusEl.textContent = "Search failed.";
+  }
+}
+
+// RENDER TABLE
 function render(rows) {
   tbody.innerHTML = "";
   tableWrap.style.display = rows.length ? "block" : "none";
 
   const totalPages = Math.ceil(rows.length / pageSize);
   const start = page * pageSize;
-  const end = start + pageSize;
-  const slice = rows.slice(start, end);
+  const slice = rows.slice(start, start + pageSize);
 
   pageTop.textContent = `Page ${page + 1} of ${totalPages}`;
   pageBottom.textContent = `Page ${page + 1} of ${totalPages}`;
@@ -440,38 +348,27 @@ function render(rows) {
     pageJump.appendChild(opt);
   }
 
-  slice.forEach((item) => {
+  slice.forEach(item => {
     const tr = document.createElement("tr");
 
     const weight = parseFloat(item.piece_weight) || 0;
-    const levelObj = shippingLevels.find(
-      (lvl) => weight >= lvl.min_weight && weight <= lvl.max_weight
-    );
+    const lvl = shippingLevels.find(l => weight >= l.min_weight && weight <= l.max_weight);
 
     let levelLabel, shipMin, shipItem, handMin, handItem;
 
-    if (!levelObj) {
-      // ---------- QUOTE MODE ----------
-      levelLabel = `
-        <span class="quote-label" title="This item requires a manual shipping quote due to weight.">
-          Shipping Quote Required
-        </span>
-      `;
-      shipMin = "—";
-      shipItem = "—";
-      handMin = "—";
-      handItem = "—";
+    if (!lvl) {
+      levelLabel = `<span class="quote-label" title="This item requires a manual shipping quote due to weight.">Shipping Quote Required</span>`;
+      shipMin = shipItem = handMin = handItem = "—";
     } else {
-      // ---------- NORMAL LEVEL ----------
-      levelLabel = `Level ${levelObj.shipping_level}`;
-      shipMin = `$${levelObj.shipping_min.toFixed(2)}`;
-      shipItem = `$${levelObj.shipping_per_item.toFixed(2)}`;
-      handMin = `$${levelObj.handling_min.toFixed(2)}`;
-      handItem = `$${levelObj.handling_per_item.toFixed(2)}`;
+      levelLabel = `Level ${lvl.shipping_level}`;
+      shipMin = `$${lvl.shipping_min.toFixed(2)}`;
+      shipItem = `$${lvl.shipping_per_item.toFixed(2)}`;
+      handMin = `$${lvl.handling_min.toFixed(2)}`;
+      handItem = `$${lvl.handling_per_item.toFixed(2)}`;
     }
 
     tr.innerHTML = `
-      <td><button class="vendor-btn">${item.vendor}</button></td>
+      <td><span class="vendor-pill">${item.vendor}</span></td>
       <td>${item.style_num}</td>
       <td>${item.product_title}</td>
       <td>${item.size}</td>
@@ -487,163 +384,44 @@ function render(rows) {
   });
 
   prevBtn.disabled = page === 0;
-  nextBtn.disabled = page + 1 >= totalPages;
+  nextBtn.disabled = (page + 1) * pageSize >= rows.length;
 }
-     // -------------------------------------------------------
-// SECTION 21: FETCH ITEMS (Item # now case-insensitive)
-// -------------------------------------------------------
-async function fetchItems() {
-  const styleRaw = itemInput.value.trim();
-  const desc     = descInput.value.trim();
 
-  // Force style number to uppercase so search is not case-sensitive
-  const style = styleRaw.toUpperCase();
+// EVENT LISTENERS
+itemInput.addEventListener("input", fetchItems);
+descInput.addEventListener("input", fetchItems);
+clearBtn.addEventListener("click", () => {
+  itemInput.value = "";
+  descInput.value = "";
+  currentRows = [];
+  tbody.innerHTML = "";
+  tableWrap.style.display = "none";
+  statusEl.textContent = "Type an Item # (exact) or at least 2 characters in Description.";
+});
 
-  if (!shippingLevelsLoaded) {
-    await loadShippingLevels();
-  }
+document.querySelectorAll("th[data-k]").forEach(th => {
+  th.addEventListener("click", () => applySort(th.dataset.k));
+});
 
-  const url = new URL(API_ITEMS);
-  url.searchParams.set(
-    "select",
-    "vendor,style_num,product_title,product_description,size,piece_weight"
-  );
-
-  if (style.length > 0) {
-    // Exact match on uppercase style_num (user can type any case)
-    url.searchParams.set("style_num", `eq.${style}`);
-  } else if (desc.length >= 2) {
-    const like = `*${desc}*`;
-    url.searchParams.set(
-      "or",
-      `(product_title.ilike.${like},product_description.ilike.${like})`
-    );
-  } else {
-    tableWrap.style.display = "none";
-    tbody.innerHTML = "";
-    statusEl.textContent =
-      "Type an Item # (exact) or at least 2 characters in Description.";
-    return;
-  }
-
-  if (sortKey !== "ship_level") {
-    url.searchParams.set(
-      "order",
-      `${sortKey}.${sortAsc ? "asc" : "desc"}`
-    );
-  }
-
-  url.searchParams.set("limit", "1000");
-
-  try {
-    const res = await fetch(url.toString(), {
-      headers: {
-        apikey: SUPABASE_ANON,
-        Authorization: `Bearer ${SUPABASE_ANON}`,
-      },
-      cache: "no-store",
-    });
-
-    if (!res.ok) throw new Error("API error");
-
-    currentRows = await res.json();
-    page = 0;
+prevBtn.addEventListener("click", () => {
+  if (page > 0) {
+    page--;
     render(currentRows);
-  } catch (err) {
-    console.error("Item fetch failed:", err);
-    tableWrap.style.display = "none";
-    statusEl.textContent = "Search failed.";
   }
-}
+});
 
+nextBtn.addEventListener("click", () => {
+  if ((page + 1) * pageSize < currentRows.length) {
+    page++;
+    render(currentRows);
+  }
+});
 
-      // -------------------------------------------------------
-      // SECTION 22: SEARCH DEBOUNCE
-      // -------------------------------------------------------
-      const runSearch = (() => {
-        let t;
-        return () => {
-          clearTimeout(t);
-          t = setTimeout(fetchItems, 160);
-        };
-      })();
+pageJump.addEventListener("change", () => {
+  page = parseInt(pageJump.value, 10) || 0;
+  render(currentRows);
+});
 
-            // -------------------------------------------------------
-      // SECTION 23: EVENT LISTENERS (DISABLE OTHER SEARCH BOX)
-      // -------------------------------------------------------
-      clearBtn.addEventListener("click", () => {
-        itemInput.value = "";
-        descInput.value = "";
-
-        itemInput.disabled = false;
-        descInput.disabled = false;
-
-        itemInput.placeholder = "Item #";
-        descInput.placeholder = "Description keywords";
-
-        currentRows = [];
-        page = 0;
-        tbody.innerHTML = "";
-        tableWrap.style.display = "none";
-        statusEl.textContent =
-          "Type an Item # (exact) or at least 2 characters in Description.";
-        pageTop.textContent = "";
-        pageBottom.textContent = "";
-        pageJump.innerHTML = "";
-      });
-
-      // When user types into ITEM #
-      itemInput.addEventListener("input", () => {
-        if (itemInput.value.trim().length > 0) {
-          descInput.disabled = true;
-          descInput.placeholder = "Clear Item # to search by description";
-        } else {
-          descInput.disabled = false;
-          descInput.placeholder = "Description keywords";
-        }
-
-        runSearch();
-      });
-
-      // When user types into DESCRIPTION
-      descInput.addEventListener("input", () => {
-        if (descInput.value.trim().length > 0) {
-          itemInput.disabled = true;
-          itemInput.placeholder = "Clear description to search by item number";
-        } else {
-          itemInput.disabled = false;
-          itemInput.placeholder = "Item #";
-        }
-
-        runSearch();
-      });
-
-      // Pagination buttons
-      prevBtn.addEventListener("click", () => {
-        if (page > 0) {
-          page--;
-          render(currentRows);
-        }
-      });
-
-      nextBtn.addEventListener("click", () => {
-        if ((page + 1) * pageSize < currentRows.length) {
-          page++;
-          render(currentRows);
-        }
-      });
-
-      pageJump.addEventListener("change", () => {
-        page = parseInt(pageJump.value, 10) || 0;
-        render(currentRows);
-      });
-    }); // END DOMContentLoaded
-
-    // =========================================================
-    // SECTION 24: END OF SCRIPT
-    // =========================================================
-  </script>
+</script>
 </body>
 </html>
-
-     
