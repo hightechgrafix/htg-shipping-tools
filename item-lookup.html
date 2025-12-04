@@ -126,7 +126,7 @@
       color: #aaa;
     }
     th.active {
-      background-color: #c40000;
+      background-color: #B6282C;
       color: #fff;
     }
     th.active .sort-icon {
@@ -353,6 +353,22 @@ function applySort(key) {
     if (valA === valB) return 0;
     return sortAsc ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
   });
+
+  // === NEW: Apply .active to the correct <th> and clear others ===
+  document.querySelectorAll("th[data-k]").forEach((th) => {
+    th.classList.remove("active");
+
+    const icon = th.querySelector(".sort-icon");
+    if (icon) icon.textContent = "⬍"; // reset icon
+  });
+
+  const activeTh = document.querySelector(`th[data-k="${key}"]`);
+  if (activeTh) {
+    activeTh.classList.add("active");
+
+    const icon = activeTh.querySelector(".sort-icon");
+    if (icon) icon.textContent = sortAsc ? "↑" : "↓";
+  }
 
   render(currentRows);
 }
