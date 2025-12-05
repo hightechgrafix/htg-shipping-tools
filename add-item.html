@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Add User Item</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body style="font-family: Arial; max-width: 500px; margin: 40px auto;">
+
+  <h2>Add User Item</h2>
+
+  <form id="itemForm">
+    <label>Vendor (required)<br>
+      <input type="text" id="vendor" required>
+    </label><br><br>
+
+    <label>Style Number (required)<br>
+      <input type="text" id="style_num" required>
+    </label><br><br>
+
+    <label>Product Title<br>
+      <input type="text" id="product_title">
+    </label><br><br>
+
+    <label>Piece Weight<br>
+      <input type="number" step="0.0001" id="piece_weight">
+    </label><br><br>
+
+    <label>Size<br>
+      <input type="text" id="size">
+    </label><br><br>
+
+    <button type="submit">Save Item</button>
+  </form>
+
+  <p id="status" style="margin-top:20px;"></p>
+
+  <script>
+    const supabase = supabase.createClient(
+      'https://sbfslzwnkztmodnlsigq.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg'
+    );
+
+    document.getElementById('itemForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const status = document.getElementById('status');
+      status.textContent = "Saving...";
+
+      const vendor = document.getElementById('vendor').value;
+      const style_num = document.getElementById('style_num').value;
+      const product_title = document.getElementById('product_title').value;
+      const piece_weight = document.getElementById('piece_weight').value;
+      const size = document.getElementById('size').value;
+
+      const { data, error } = await supabase
+        .from('user_added_items')
+        .insert([
+          {
+            vendor,
+            style_num,
+            product_title,
+            piece_weight: piece_weight ? Number(piece_weight) : null,
+            size
+          }
+        ]);
+
+      if (error) {
+        status.textContent = "Error: " + error.message;
+      } else {
+        status.textContent = "Item saved successfully!";
+        document.getElementById('itemForm').reset();
+      }
+    });
+  </script>
+
+</body>
+</html>
