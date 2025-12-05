@@ -266,24 +266,37 @@
     }
 
     function downloadPDF() {
-      const logo = document.getElementById('pdf-logo');
-      logo.style.display = 'block';
-      generatePDF();
-    }
+  const logo = document.getElementById('pdf-logo');
+  logo.style.display = 'block';
 
-    function generatePDF() {
-  const element = document.getElementById('pdf-content');
-  const opt = {
-    margin: 0.5,
-    filename: `shipping-summary-${new Date().toISOString().slice(0,10)}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-  };
-  html2pdf().set(opt).from(element).save().then(() => {
-    document.getElementById('pdf-logo').style.display = 'none';
-  });
+  // Delay PDF generation slightly to ensure layout is rendered
+  setTimeout(() => {
+    generatePDF();
+  }, 300);
 }
+
+
+   function generatePDF() {
+  const element = document.getElementById('pdf-content');
+
+  const opt = {
+    margin: [0.5, 0.5, 0.5, 0.5], // top, left, bottom, right
+    filename: `shipping-summary-${new Date().toISOString().slice(0, 10)}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+  };
+
+  html2pdf()
+    .set(opt)
+    .from(element)
+    .save()
+    .then(() => {
+      document.getElementById('pdf-logo').style.display = 'none';
+    });
+}
+
 
 function clearCalculator() {
   const inputs = document.querySelectorAll('input[type="number"]');
