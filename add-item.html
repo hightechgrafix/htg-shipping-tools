@@ -36,7 +36,7 @@
   <p id="status" style="margin-top:20px;"></p>
 
   <script>
-    const supabase = supabase.createClient(
+    const client = supabase.createClient(
       'https://sbfslzwnkztmodnlsigq.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg'
     );
@@ -53,7 +53,7 @@
       const piece_weight = document.getElementById('piece_weight').value;
       const size = document.getElementById('size').value;
 
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from('user_added_items')
         .insert([
           {
