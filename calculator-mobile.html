@@ -166,6 +166,10 @@
     </div>
   </div>
 
+  <button class="pdf-button" onclick="clearCalculator()" style="margin-right: 1rem; background-color: #555;">
+  Clear
+</button>
+
   <button class="pdf-button" onclick="downloadPDF()">Download PDF</button>
 
   <script>
@@ -276,6 +280,24 @@
         document.getElementById('pdf-logo').style.display = 'none';
       });
     }
+function clearCalculator() {
+  const inputs = document.querySelectorAll('input[type="number"]');
+  inputs.forEach(input => input.value = 0);
+
+  // Reset totals to $0.00
+  const spans = document.querySelectorAll('[id^="ship-"], [id^="handle-"]');
+  spans.forEach(span => span.textContent = '$0.00');
+
+  document.getElementById('shipping-before-credit').textContent = '$0.00';
+  document.getElementById('shipping-credit').textContent = '0.00';
+  document.getElementById('total-shipping').textContent = '$0.00';
+  document.getElementById('total-handling').textContent = '$0.00';
+  document.getElementById('grand-total').textContent = '$0.00';
+  document.getElementById('timestamp').textContent = '';
+
+  // Recalculate with all zeros to ensure clean state
+  fetchLevels();
+}
 
     fetchLevels();
   </script>
