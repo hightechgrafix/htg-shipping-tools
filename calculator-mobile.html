@@ -130,7 +130,11 @@
 </head>
 <body>
   <h1>Shipping & Handling Calculator</h1>
-<div id="mobile-cards"></div>
+<div id="pdf-content">
+  <img class="pdf-logo" id="pdf-logo" src="https://irp.cdn-website.com/81de5be8/dms3rep/multi/logo_horiz_2021_black.png" alt="Logo" />
+  <div id="mobile-cards"></div>
+</div>
+
 
   <div id="pdf-content">
     <img class="pdf-logo" id="pdf-logo" src="https://irp.cdn-website.com/81de5be8/dms3rep/multi/logo_horiz_2021_black.png" alt="Logo">
@@ -268,18 +272,19 @@
     }
 
     function generatePDF() {
-      const element = document.getElementById('pdf-content');
-      const opt = {
-        margin: 0.5,
-        filename: `shipping-summary-${new Date().toISOString().slice(0,10)}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-      };
-      html2pdf().set(opt).from(element).save().then(() => {
-        document.getElementById('pdf-logo').style.display = 'none';
-      });
-    }
+  const element = document.getElementById('pdf-content');
+  const opt = {
+    margin: 0.5,
+    filename: `shipping-summary-${new Date().toISOString().slice(0,10)}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+  };
+  html2pdf().set(opt).from(element).save().then(() => {
+    document.getElementById('pdf-logo').style.display = 'none';
+  });
+}
+
 function clearCalculator() {
   const inputs = document.querySelectorAll('input[type="number"]');
   inputs.forEach(input => input.value = 0);
