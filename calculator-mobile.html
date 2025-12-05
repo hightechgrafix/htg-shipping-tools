@@ -228,11 +228,24 @@
 
 
     function addListeners(levels) {
-      const inputs = document.querySelectorAll('input[type="number"]');
-      inputs.forEach(input => {
-        input.addEventListener('input', () => calculate(levels));
-      });
-    }
+  const inputs = document.querySelectorAll('input[type="number"]');
+
+  inputs.forEach(input => {
+    // Recalculate on change
+    input.addEventListener('input', () => calculate(levels));
+
+    // Select everything when entering the field
+    input.addEventListener('focus', function () {
+      this.select();
+    });
+
+    // Some mobile browsers require 'click' as well
+    input.addEventListener('click', function () {
+      this.select();
+    });
+  });
+}
+
 
     function calculate(levels) {
       let totalShipping = 0;
