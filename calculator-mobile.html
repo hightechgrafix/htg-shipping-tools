@@ -139,44 +139,43 @@
 </head>
 <body>
   <h1>Shipping & Handling Calculator</h1>
+<h1>Shipping & Handling Calculator</h1>
 <div id="pdf-content">
-  <img class="pdf-logo" id="pdf-logo" src="https://irp.cdn-website.com/81de5be8/dms3rep/multi/logo_horiz_2021_black.png" alt="Logo" />
+  <img class="pdf-logo" id="pdf-logo"
+       src="https://irp.cdn-website.com/81de5be8/dms3rep/multi/logo_horiz_2021_black.png"
+       alt="Logo">
+
   <div id="mobile-cards"></div>
+
+  <h2>Summary</h2>
+  <div class="credit-note">
+    *Free shipping credit (Level 1) only applies if invoice total is $100 or more.
+  </div>
+  <div class="summary">
+    <div class="summary-row">
+      <div class="summary-label">Calculated Shipping:</div>
+      <div class="summary-value" id="shipping-before-credit">$0.00</div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-label">Free Shipping Credit (Level 1):</div>
+      <div class="summary-value credit">–$<span id="shipping-credit">0.00</span></div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-label">Total Shipping After Credit:</div>
+      <div class="summary-value" id="total-shipping">$0.00</div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-label">Total Handling:</div>
+      <div class="summary-value" id="total-handling">$0.00</div>
+    </div>
+    <div class="summary-row" style="border-top: 1px solid #ccc; padding-top: 0.5rem; margin-top: 0.8rem;">
+      <div class="summary-label">Grand Total:</div>
+      <div class="summary-value" id="grand-total">$0.00</div>
+    </div>
+    <div class="timestamp" id="timestamp"></div>
+  </div>
 </div>
 
-
-  <div id="pdf-content">
-    <img class="pdf-logo" id="pdf-logo" src="https://irp.cdn-website.com/81de5be8/dms3rep/multi/logo_horiz_2021_black.png" alt="Logo">
-
-    
-
-    <h2>Summary</h2>
-    <div class="credit-note">
-      *Free shipping credit (Level 1) only applies if invoice total is $100 or more.
-    </div>
-    <div class="summary">
-      <div class="summary-row">
-        <div class="summary-label">Calculated Shipping:</div>
-        <div class="summary-value" id="shipping-before-credit">$0.00</div>
-      </div>
-      <div class="summary-row">
-        <div class="summary-label">Free Shipping Credit (Level 1):</div>
-        <div class="summary-value credit">–$<span id="shipping-credit">0.00</span></div>
-      </div>
-      <div class="summary-row">
-        <div class="summary-label">Total Shipping After Credit:</div>
-        <div class="summary-value" id="total-shipping">$0.00</div>
-      </div>
-      <div class="summary-row">
-        <div class="summary-label">Total Handling:</div>
-        <div class="summary-value" id="total-handling">$0.00</div>
-      </div>
-      <div class="summary-row" style="border-top: 1px solid #ccc; padding-top: 0.5rem; margin-top: 0.8rem;">
-        <div class="summary-label">Grand Total:</div>
-        <div class="summary-value" id="grand-total">$0.00</div>
-      </div>
-      <div class="timestamp" id="timestamp"></div>
-    </div>
   </div>
 
   <button class="pdf-button" onclick="clearCalculator()" style="margin-right: 1rem; background-color: #000;">
