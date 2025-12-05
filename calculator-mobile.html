@@ -71,6 +71,15 @@
     .summary-value.credit {
       color: #b6282c;
     }
+    @media print {
+  body {
+    overflow: visible !important;
+  }
+  .summary {
+    page-break-inside: avoid;
+  }
+}
+
     .timestamp {
       font-size: 0.9rem;
       margin-top: 1rem;
@@ -277,7 +286,9 @@
 
 
    function generatePDF() {
-  const element = document.getElementById('pdf-content');
+  window.scrollTo(0, 0);
+
+    const element = document.getElementById('pdf-content');
 
   const opt = {
     margin: [0.5, 0.5, 0.5, 0.5], // top, left, bottom, right
