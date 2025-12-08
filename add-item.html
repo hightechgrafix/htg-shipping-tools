@@ -2,27 +2,30 @@
 
 <script>
   // Initialize Supabase
-  const client = supabase.createClient(
+     const client = supabase.createClient(
     'https://sbfslzwnkztmodnlsigq.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg'
   );
 
-  // PAGE GUARD: Block the page if user is not logged in
+  // PAGE GUARD — redirect if not logged in
   async function guardPage() {
     const { data } = await client.auth.getSession();
     if (!data.session) {
       window.location.replace("login.html");
-      return;
     }
   }
 
-  // Run immediately
   guardPage();
 
+  // WAIT FOR PAGE TO LOAD BEFORE USING DOM
+  document.addEventListener('DOMContentLoaded', function () {
 
-  // HANDLE FORM SUBMISSION
-  document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('itemForm').addEventListener('submit', async function(e) {
+    const form = document.getElementById('itemForm');
+
+    // SAFETY CHECK — If form doesn't exist, stop
+    if (!form) return;
+
+    form.addEventListener('submit', async function(e) {
       e.preventDefault();
 
       const status = document.getElementById('status');
@@ -38,7 +41,7 @@
       const { data: sessionData } = await client.auth.getSession();
       const user_id = sessionData?.session?.user?.id || null;
 
-      // Insert the new item
+      // Insert new item
       const { data, error } = await client
         .from('user_added_items')
         .insert([
@@ -56,8 +59,9 @@
         status.textContent = "Error: " + error.message;
       } else {
         status.textContent = "Item saved successfully!";
-        document.getElementById('itemForm').reset();
+        form.reset();
       }
     });
+
   });
 </script>
