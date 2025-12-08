@@ -35,44 +35,62 @@
 
   <p id="status" style="margin-top:20px;"></p>
 
-  <script>
-    const client = supabase.createClient(
-      'https://sbfslzwnkztmodnlsigq.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg'
-    );
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
-    document.getElementById('itemForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
+<script>
+  // Initialize Supabase
+  const client = supabase.createClient(
+    'https://sbfslzwnkztmodnlsigq.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg'
+  );
 
-      const status = document.getElementById('status');
-      status.textContent = "Saving...";
+  // BLOCK THE PAGE IF USER IS NOT LOGGED IN
+  client.auth.getSession().then(({ data }) => {
+    if (!data.session) {
+      window.location.href = "login.html";
+    }
+  });
 
-      const vendor = document.getElementById('vendor').value;
-      const style_num = document.getElementById('style_num').value;
-      const product_title = document.getElementById('product_title').value;
-      const piece_weight = document.getElementById('piece_weight').value;
-      const size = document.getElementById('size').value;
+  // HANDLE THE FORM SUBMISSION
+  document.getElementById('itemForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
 
-      const { data, error } = await client
-        .from('user_added_items')
-        .insert([
-          {
-            vendor,
-            style_num,
-            product_title,
-            piece_weight: piece_weight ? Number(piece_weight) : null,
-            size
-          }
-        ]);
+    const status = document.getElementById('status');
+    status.textContent = "Saving...";
 
-      if (error) {
-        status.textContent = "Error: " + error.message;
-      } else {
-        status.textContent = "Item saved successfully!";
-        document.getElementById('itemForm').reset();
-      }
-    });
-  </script>
+    const vendor = document.getElementById('vendor').value;
+    const style_num = document.getElementById('style_num').value;
+    const product_title = document.getElementById('product_title').value;
+    const piece_weight = document.getElementById('piece_weight').value;
+    const size = document.getElementById('size').value;
+
+   // Get the logged-in user's session
+const { data: sessionData } = await client.auth.getSession();
+const user_id = sessionData?.session?.user?.id || null;
+
+// Insert item
+const { data, error } = await client
+  .from('user_added_items')
+  .insert([
+    {
+      vendor,
+      style_num,
+      product_title,
+      piece_weight: piece_weight ? Number(piece_weight) : null,
+      size,
+      created_by: user_id   // ← NEW: track who submitted it
+    }
+  ]);
+
+if (error) {
+  status.textContent = "Error: " + error.message;
+} else {
+  status.textContent = "Item saved successfully!";
+  document.getElementById('itemForm').reset();
+}
+
+</script>
+
 
 </body>
 </html>

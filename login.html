@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>HTG Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body style="font-family: Arial; max-width: 400px; margin: 40px auto;">
+
+  <h2>Team Login</h2>
+
+  <form id="loginForm">
+    <label>Email<br>
+      <input type="email" id="email" required>
+    </label><br><br>
+
+    <label>Password<br>
+      <input type="password" id="password" required>
+    </label><br><br>
+
+    <button type="submit">Login</button>
+  </form>
+
+  <p id="status"></p>
+
+  <script>
+    const client = supabase.createClient(
+      'YOUR_SUPABASE_URL',
+      'YOUR_SUPABASE_ANON_KEY'
+    );
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      const { data, error } = await client.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        document.getElementById('status').textContent = "Login failed: " + error.message;
+      } else {
+        document.getElementById('status').textContent = "Login successful!";
+        window.location.href = "add-item.html";
+      }
+    });
+  </script>
+
+</body>
+</html>
