@@ -1,78 +1,109 @@
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Add User Item</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
 
-<script>
-  // Initialize Supabase
-     const client = supabase.createClient(
-    'https://sbfslzwnkztmodnlsigq.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg'
-  );
+<body style="font-family: Arial; max-width: 500px; margin: 40px auto;">
 
-  // PAGE GUARD — redirect if not logged in
-  async function guardPage() {
-  const { data, error } = await client.auth.getSession();
+  <h2>Add User Item</h2>
 
-  // If session lookup fails, do NOT block page
-  if (error) {
-    console.error("Session error:", error);
-    return;
-  }
+  <form id="itemForm">
+    <label>Vendor (required)<br>
+      <input type="text" id="vendor" required>
+    </label><br><br>
 
-  // If no session, redirect
-  if (!data.session) {
-    window.location.href = "login.html";
-  }
-}
+    <label>Style Number (required)<br>
+      <input type="text" id="style_num" required>
+    </label><br><br>
+
+    <label>Product Title<br>
+      <input type="text" id="product_title">
+    </label><br><br>
+
+    <label>Piece Weight<br>
+      <input type="number" step="0.0001" id="piece_weight">
+    </label><br><br>
+
+    <label>Size<br>
+      <input type="text" id="size">
+    </label><br><br>
+
+    <button type="submit">Save Item</button>
+  </form>
+
+  <p id="status" style="margin-top:20px;"></p>
 
 
-  document.addEventListener('DOMContentLoaded', () => {
-  guardPage();
-});
+  <!-- SCRIPT BLOCK -->
+  <script>
+    // Initialize Supabase
+    const client = supabase.createClient(
+      'https://sbfslzwnkztmodnlsigq.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg'
+    );
 
-  // WAIT FOR PAGE TO LOAD BEFORE USING DOM
-  document.addEventListener('DOMContentLoaded', function () {
-
-    const form = document.getElementById('itemForm');
-
-    // SAFETY CHECK — If form doesn't exist, stop
-    if (!form) return;
-
-    form.addEventListener('submit', async function(e) {
-      e.preventDefault();
-
-      const status = document.getElementById('status');
-      status.textContent = "Saving...";
-
-      const vendor = document.getElementById('vendor').value;
-      const style_num = document.getElementById('style_num').value;
-      const product_title = document.getElementById('product_title').value;
-      const piece_weight = document.getElementById('piece_weight').value;
-      const size = document.getElementById('size').value;
-
-      // Get logged-in user
-      const { data: sessionData } = await client.auth.getSession();
-      const user_id = sessionData?.session?.user?.id || null;
-
-      // Insert new item
-      const { data, error } = await client
-        .from('user_added_items')
-        .insert([
-          {
-            vendor,
-            style_num,
-            product_title,
-            piece_weight: piece_weight ? Number(piece_weight) : null,
-            size,
-            created_by: user_id
-          }
-        ]);
-
+    // PAGE GUARD — redirect if not logged in
+    async function guardPage() {
+      const { data, error } = await client.auth.getSession();
       if (error) {
-        status.textContent = "Error: " + error.message;
-      } else {
-        status.textContent = "Item saved successfully!";
-        form.reset();
+        console.error("Session error:", error);
+        return;
       }
-    });
+      if (!data.session) {
+        window.location.href = "login.html";
+      }
+    }
 
-  });
-</script>
+    // WAIT FOR PAGE + FORMS TO LOAD
+    document.addEventListener('DOMContentLoaded', function () {
+
+      guardPage(); // run guard check after page loads
+
+      const form = document.getElementById('itemForm');
+      if (!form) return;
+
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const status = document.getElementById('status');
+        status.textContent = "Saving...";
+
+        const vendor = document.getElementById('vendor').value;
+        const style_num = document.getElementById('style_num').value;
+        const product_title = document.getElementById('product_title').value;
+        const piece_weight = document.getElementById('piece_weight').value;
+        const size = document.getElementById('size').value;
+
+        // Get logged-in user
+        const { data: sessionData } = await client.auth.getSession();
+        const user_id = sessionData?.session?.user?.id || null;
+
+        // Insert the new item
+        const { error } = await client
+          .from('user_added_items')
+          .insert([
+            {
+              vendor,
+              style_num,
+              product_title,
+              piece_weight: piece_weight ? Number(piece_weight) : null,
+              size,
+              created_by: user_id
+            }
+          ]);
+
+        if (error) {
+          status.textContent = "Error: " + error.message;
+        } else {
+          status.textContent = "Item saved successfully!";
+          form.reset();
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
