@@ -9,13 +9,24 @@
 
   // PAGE GUARD — redirect if not logged in
   async function guardPage() {
-    const { data } = await client.auth.getSession();
-    if (!data.session) {
-      window.location.replace("login.html");
-    }
+  const { data, error } = await client.auth.getSession();
+
+  // If session lookup fails, do NOT block page
+  if (error) {
+    console.error("Session error:", error);
+    return;
   }
 
+  // If no session, redirect
+  if (!data.session) {
+    window.location.href = "login.html";
+  }
+}
+
+
+  document.addEventListener('DOMContentLoaded', () => {
   guardPage();
+});
 
   // WAIT FOR PAGE TO LOAD BEFORE USING DOM
   document.addEventListener('DOMContentLoaded', function () {
