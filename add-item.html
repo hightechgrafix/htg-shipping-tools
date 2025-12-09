@@ -79,7 +79,7 @@
 
         // Get logged-in user
         const { data: sessionData } = await client.auth.getSession();
-        const user_id = sessionData?.session?.user?.id || null;
+        const user_name = sessionData?.session?.user?.email || null;
 
         // Insert the new item
         const { error } = await client
@@ -91,7 +91,7 @@
               product_title,
               piece_weight: piece_weight ? Number(piece_weight) : null,
               size,
-              created_by: user_id
+              created_by: user_name
             }
           ]);
 
