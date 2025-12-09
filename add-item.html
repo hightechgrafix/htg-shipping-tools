@@ -12,8 +12,10 @@
 
   <form id="itemForm">
     <label>Vendor (required)<br>
-      <input type="text" id="vendor" required>
-    </label><br><br>
+  <select id="vendor" required>
+    <option value="">Loading vendors…</option>
+  </select>
+</label><br><br>
 
     <label>Style Number (required)<br>
       <input type="text" id="style_num" required>
@@ -57,10 +59,37 @@
       }
     }
 
+// Load vendors from Supabase
+async function loadVendors() {
+  const dropdown = document.getElementById('vendor');
+
+  const { data, error } = await client
+    .from('vendors')        // your table name
+    .select('name')         // your column name
+    .eq('is_active', true)  // optional filter
+    .order('name', { ascending: true });
+
+  if (error) {
+    console.error("Error loading vendors:", error);
+    dropdown.innerHTML = `<option value="">Error loading vendors</option>`;
+    return;
+  }
+
+  dropdown.innerHTML = `<option value="">Select a vendor</option>`;
+
+  data.forEach(row => {
+    const opt = document.createElement('option');
+    opt.value = row.name;
+    opt.textContent = row.name;
+    dropdown.appendChild(opt);
+  });
+}
+
     // WAIT FOR PAGE + FORMS TO LOAD
     document.addEventListener('DOMContentLoaded', function () {
 
       guardPage(); // run guard check after page loads
+    loadVendors();  // load vendor list into dropdown
 
       const form = document.getElementById('itemForm');
       if (!form) return;
