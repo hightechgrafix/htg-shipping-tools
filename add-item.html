@@ -30,8 +30,11 @@
     </label><br><br>
 
     <label>Size<br>
-      <input type="text" id="size">
-    </label><br><br>
+  <select id="size" required>
+    <option value="">Loading sizes…</option>
+  </select>
+</label><br><br>
+
 
     <button type="submit">Save Item</button>
   </form>
@@ -58,6 +61,31 @@
         window.location.href = "login.html";
       }
     }
+
+async function loadSizes() {
+  const dropdown = document.getElementById('size');
+
+  const { data, error } = await client
+    .from('sizes')          // your table name
+    .select('name')         // the column you created
+    .eq('is_active', true)  // optional filter
+    .order('name', { ascending: true });
+
+  if (error) {
+    console.error("Error loading sizes:", error);
+    dropdown.innerHTML = `<option value="">Error loading sizes</option>`;
+    return;
+  }
+
+  dropdown.innerHTML = `<option value="">Select a size</option>`;
+
+  data.forEach(row => {
+    const opt = document.createElement('option');
+    opt.value = row.name;
+    opt.textContent = row.name;
+    dropdown.appendChild(opt);
+  });
+}
 
 // Load vendors from Supabase
 async function loadVendors() {
@@ -90,6 +118,7 @@ async function loadVendors() {
 
       guardPage(); // run guard check after page loads
     loadVendors();  // load vendor list into dropdown
+    loadSizes();  // load sizes from dropdown
 
       const form = document.getElementById('itemForm');
       if (!form) return;
