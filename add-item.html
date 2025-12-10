@@ -4,7 +4,11 @@
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <meta charset="UTF-8">
   <title>Add User Item</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+    window.supabase = { createClient };
+  </script>
+
 </head>
 
 <body style="font-family: Arial; max-width: 500px; margin: 40px auto;">
@@ -13,10 +17,10 @@
 
   <form id="itemForm">
     <label>Vendor (required)<br>
-  <select id="vendor" required>
-    <option value="">Loading vendors…</option>
-  </select>
-</label><br><br>
+      <select id="vendor" required>
+      <option value="">Loading vendors…</option>
+      </select>
+    </label><br><br>
 
     <label>Style Number (required)<br>
       <input type="text" id="style_num" required>
@@ -60,9 +64,9 @@
   <!-- SCRIPT BLOCK -->
   <script>
     // Initialize Supabase
-    const client = supabase.createClient(
-      'https://sbfslzwnkztmodnlsigq.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg'
+   const client = supabase.createClient(
+     "https://sbfslzwnkztmodnlsigq.supabase.co",
+     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg"
     );
 
     // PAGE GUARD — redirect if not logged in
