@@ -4,113 +4,112 @@
   <meta charset="utf-8" />
   <title>HTG Team Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
+<style>
+  * {
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #111827;
-      color: #f9fafb;
-    }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff; /* White background */
+    color: #111827;
+  }
 
-    .wrapper {
-      width: 100%;
-      max-width: 420px;
-      padding: 16px;
-    }
+  .wrapper {
+    width: 100%;
+    max-width: 420px;
+    padding: 16px;
+  }
 
-    .card {
-      background: #020617;
-      border-radius: 12px;
-      padding: 24px 20px 20px;
-      box-shadow: 0 10px 40px rgba(15, 23, 42, 0.7);
-      border: 1px solid #1f2937;
-    }
+  .card {
+    background: #e5e7eb; /* Grey box */
+    border-radius: 12px;
+    padding: 24px 20px 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    border: 1px solid #d1d5db;
+  }
 
-    h1 {
-      font-size: 1.3rem;
-      margin: 0 0 0.5rem;
-      text-align: center;
-    }
+  h1 {
+    font-size: 1.3rem;
+    margin: 0 0 0.5rem;
+    text-align: center;
+    color: #111827;
+  }
 
-    .subtitle {
-      font-size: 0.8rem;
-      color: #9ca3af;
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
+  .subtitle {
+    font-size: 0.8rem;
+    color: #4b5563;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
 
-    label {
-      display: block;
-      font-size: 0.8rem;
-      margin-bottom: 0.25rem;
-    }
+  label {
+    display: block;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+    color: #111827;
+  }
 
-    input[type="email"],
-    input[type="password"] {
-      width: 100%;
-      padding: 0.5rem 0.6rem;
-      border-radius: 8px;
-      border: 1px solid #374151;
-      background: #020617;
-      color: #f9fafb;
-      font-size: 0.9rem;
-      margin-bottom: 0.9rem;
-    }
+  input[type="email"],
+  input[type="password"] {
+    width: 100%;
+    padding: 0.6rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid #9ca3af;
+    background: #ffffff;
+    color: #111827;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
 
-    input:focus {
-      outline: 2px solid #38bdf8;
-      outline-offset: 1px;
-      border-color: #38bdf8;
-    }
+  input:focus {
+    outline: 2px solid #b6282c; /* HTG Red Focus */
+    border-color: #b6282c;
+  }
 
-    button[type="submit"] {
-      width: 100%;
-      border: none;
-      border-radius: 999px;
-      padding: 0.6rem;
-      background: #38bdf8;
-      color: #020617;
-      font-weight: 600;
-      font-size: 0.9rem;
-      cursor: pointer;
-      margin-top: 0.25rem;
-    }
+  button[type="submit"] {
+    width: 100%;
+    border: none;
+    border-radius: 999px;
+    padding: 0.7rem;
+    background: #b6282c; /* HTG Red */
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    margin-top: 0.25rem;
+  }
 
-    button[type="submit"]:hover {
-      background: #0ea5e9;
-    }
+  button[type="submit"]:hover {
+    background: #9b1f24; /* Slightly darker hover */
+  }
 
-    button[type="submit"]:disabled {
-      opacity: 0.6;
-      cursor: default;
-    }
+  button[type="submit"]:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
 
-    .status {
-      margin-top: 0.75rem;
-      font-size: 0.8rem;
-      min-height: 1.1rem;
-    }
+  .status {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    min-height: 1.1rem;
+    text-align: center;
+  }
 
-    .status.error {
-      color: #f97373;
-    }
+  .status.error {
+    color: #b91c1c;
+  }
 
-    .status.success {
-      color: #4ade80;
-    }
+  .status.success {
+    color: #15803d;
+  }
+</style>
 
-    .status.info {
-      color: #e5e7eb;
-    }
-  </style>
 </head>
 <body>
   <div class="wrapper">
