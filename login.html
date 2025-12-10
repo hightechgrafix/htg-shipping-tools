@@ -108,6 +108,32 @@
   .status.success {
     color: #15803d;
   }
+
+  .menu-btn {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: #b6282c; /* HTG red */
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.menu-btn:hover {
+  background: #9b1f24;
+}
+
+.menu-btn.logout {
+  background: #4b5563; /* grey logout */
+}
+
+.menu-btn.logout:hover {
+  background: #374151;
+}
+
 </style>
 
 </head>
@@ -128,6 +154,18 @@
       </form>
 
       <p id="status" class="status"></p>
+
+      <!-- Menu shown AFTER login -->
+      <div id="menu" style="display: none; text-align: center; margin-top: 1.5rem;">
+        <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: #111827;">HTG Tools Menu</h2>
+
+        <button class="menu-btn" onclick="location.href='/add-item.html'">Add Item</button>
+        <button class="menu-btn" onclick="location.href='/item-lookup.html'">Item Lookup</button>
+        <button class="menu-btn" onclick="location.href='/index.html'">Shipping Calculator</button>
+
+        <button class="menu-btn logout" id="logout-btn" style="margin-top: 2rem;">Log Out</button>
+      </div>
+
     </div>
   </div>
 
@@ -170,17 +208,21 @@
       const email = session.user?.email || "";
       setStatus("Logged in as " + email, "success");
 
-      // Look for redirect param, eg: /login.html?redirect=/index.html
-      const params = new URLSearchParams(window.location.search);
-      const redirect = params.get("redirect");
+      // Hide login form
+      document.getElementById("login-form").style.display = "none";
 
-      if (redirect) {
-        window.location.href = redirect;
-      } else {
-        // Later you can uncomment this line when you have a main menu page
-        // window.location.href = "/index.html";
-      }
+      // Show menu
+      const menu = document.getElementById("menu");
+      menu.style.display = "block";
+
+      // Logout button
+      const logoutBtn = document.getElementById("logout-btn");
+      logoutBtn.addEventListener("click", async () => {
+        await supabase.auth.signOut();
+        location.reload();
+      });
     }
+
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
