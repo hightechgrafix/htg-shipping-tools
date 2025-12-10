@@ -1,52 +1,218 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <title>HTG Login</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <meta charset="utf-8" />
+  <title>HTG Team Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #111827;
+      color: #f9fafb;
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 420px;
+      padding: 16px;
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 12px;
+      padding: 24px 20px 20px;
+      box-shadow: 0 10px 40px rgba(15, 23, 42, 0.7);
+      border: 1px solid #1f2937;
+    }
+
+    h1 {
+      font-size: 1.3rem;
+      margin: 0 0 0.5rem;
+      text-align: center;
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      margin-bottom: 0.25rem;
+    }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.5rem 0.6rem;
+      border-radius: 8px;
+      border: 1px solid #374151;
+      background: #020617;
+      color: #f9fafb;
+      font-size: 0.9rem;
+      margin-bottom: 0.9rem;
+    }
+
+    input:focus {
+      outline: 2px solid #38bdf8;
+      outline-offset: 1px;
+      border-color: #38bdf8;
+    }
+
+    button[type="submit"] {
+      width: 100%;
+      border: none;
+      border-radius: 999px;
+      padding: 0.6rem;
+      background: #38bdf8;
+      color: #020617;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-top: 0.25rem;
+    }
+
+    button[type="submit"]:hover {
+      background: #0ea5e9;
+    }
+
+    button[type="submit"]:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .status {
+      margin-top: 0.75rem;
+      font-size: 0.8rem;
+      min-height: 1.1rem;
+    }
+
+    .status.error {
+      color: #f97373;
+    }
+
+    .status.success {
+      color: #4ade80;
+    }
+
+    .status.info {
+      color: #e5e7eb;
+    }
+  </style>
 </head>
-<body style="font-family: Arial; max-width: 400px; margin: 40px auto;">
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <h1>HTG Team Login</h1>
+      <p class="subtitle">For internal use only</p>
 
-  <h2>Team Login</h2>
+      <form id="login-form">
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="email" required />
 
-  <form id="loginForm">
-    <label>Email<br>
-      <input type="email" id="email" required>
-    </label><br><br>
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" required />
 
-    <label>Password<br>
-      <input type="password" id="password" required>
-    </label><br><br>
+        <button id="submit-btn" type="submit">Log in</button>
+      </form>
 
-    <button type="submit">Login</button>
-  </form>
+      <p id="status" class="status"></p>
+    </div>
+  </div>
 
-  <p id="status"></p>
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-  <script>
-    const client = supabase.createClient(
-    'https://sbfslzwnkztmodnlsigq.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg'
-  );
+    // 1) Fill these in from your Supabase settings
+    const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
 
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+    const form = document.getElementById("login-form");
+    const statusEl = document.getElementById("status");
+    const submitBtn = document.getElementById("submit-btn");
 
-      const { data, error } = await client.auth.signInWithPassword({
+    function setStatus(message, type = "") {
+      statusEl.textContent = message;
+      statusEl.className = "status " + type;
+    }
+
+    function setLoading(isLoading) {
+      submitBtn.disabled = isLoading;
+      submitBtn.textContent = isLoading ? "Signing in..." : "Log in";
+    }
+
+    // Optional: if a session already exists, you can auto redirect
+    async function checkExistingSession() {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error(error);
+        return;
+      }
+      if (data.session) {
+        handleLoggedIn(data.session);
+      }
+    }
+
+    function handleLoggedIn(session) {
+      const email = session.user?.email || "";
+      setStatus("Logged in as " + email, "success");
+
+      // Look for redirect param, eg: /login.html?redirect=/index.html
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get("redirect");
+
+      if (redirect) {
+        window.location.href = redirect;
+      } else {
+        // Later you can uncomment this line when you have a main menu page
+        // window.location.href = "/index.html";
+      }
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      setStatus("", "");
+      setLoading(true);
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password
+        password,
       });
 
-      if (error) {
-        document.getElementById('status').textContent = "Login failed: " + error.message;
-      } else {
-        document.getElementById('status').textContent = "Login successful!";
-        window.location.href = "add-item.html";
-      }
-    });
-  </script>
+      setLoading(false);
 
+      if (error) {
+        console.error("Login error:", error);
+        setStatus(error.message || "Login failed", "error");
+        return;
+      }
+
+      if (!data.session) {
+        setStatus("Login failed: no session returned", "error");
+        return;
+      }
+
+      handleLoggedIn(data.session);
+    });
+
+    checkExistingSession();
+  </script>
 </body>
 </html>
