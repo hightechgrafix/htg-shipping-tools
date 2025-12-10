@@ -246,7 +246,6 @@
 }
 
     // =========================================================
-
     // SECTION 12: CONFIG CONSTANTS
     // =========================================================
     const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
@@ -276,66 +275,66 @@
     // SECTION 14: PAGE INIT
     // =========================================================
     document.addEventListener("DOMContentLoaded", () => {
-      // -------------------------------------------------------
-      // SECTION 15: DOM ELEMENT REFERENCES
-      // -------------------------------------------------------
-      const itemInput = document.getElementById("itemInput");
-      const descInput = document.getElementById("descInput");
-      const clearBtn = document.getElementById("clearBtn");
-      const tableWrap = document.getElementById("tableWrap");
-      const tbody = document.querySelector("#resultTable tbody");
-      const statusEl = document.getElementById("status");
-      const prevBtn = document.getElementById("prevBtn");
-      const nextBtn = document.getElementById("nextBtn");
-      const pageTop = document.getElementById("pageTop");
-      const pageBottom = document.getElementById("pageBottom");
-      const pageJump = document.getElementById("pageJump");
+    // -------------------------------------------------------
+    // SECTION 15: DOM ELEMENT REFERENCES
+    // -------------------------------------------------------
+    const itemInput = document.getElementById("itemInput");
+    const descInput = document.getElementById("descInput");
+    const clearBtn = document.getElementById("clearBtn");
+    const tableWrap = document.getElementById("tableWrap");
+    const tbody = document.querySelector("#resultTable tbody");
+    const statusEl = document.getElementById("status");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const pageTop = document.getElementById("pageTop");
+    const pageBottom = document.getElementById("pageBottom");
+    const pageJump = document.getElementById("pageJump");
 
 
-      // =========================================================
-// SECTION 17: SORTING (FULL FIX)
-// =========================================================
+    // =========================================================
+    // SECTION 17: SORTING (FULL FIX)
+    // =========================================================
 
-// Which column is currently sorted?
+    // Which column is currently sorted?
 
-// Mapping: data-k -> raw field (or special)
-const SORT_MAP = {
-  vendor: (row) => row.vendor,
-  style_num: (row) => row.style_num,
-  product_title: (row) => row.product_title,
-  size: (row) => row.size,
-  piece_weight: (row) => parseFloat(row.piece_weight) || 0,
+    // Mapping: data-k -> raw field (or special)
+    const SORT_MAP = {
+    vendor: (row) => row.vendor,
+    style_num: (row) => row.style_num,
+    product_title: (row) => row.product_title,
+    size: (row) => row.size,
+    piece_weight: (row) => parseFloat(row.piece_weight) || 0,
 
   // Shipping fields require calculating the shipping level object
-  ship_level: (row) => {
+    ship_level: (row) => {
     const w = parseFloat(row.piece_weight) || 0;
     const lvl = shippingLevels.find(
       (l) => w >= l.min_weight && w <= l.max_weight
     );
     return lvl ? Number(lvl.shipping_level) : 9999; // Quote rows last
-  },
-  ship_min: (row) => {
+    },
+    ship_min: (row) => {
     const w = parseFloat(row.piece_weight) || 0;
     const lvl = shippingLevels.find(
       (l) => w >= l.min_weight && w <= l.max_weight
     );
     return lvl ? Number(lvl.shipping_min) : Infinity;
-  },
-  ship_item: (row) => {
+    },
+    ship_item: (row) => {
     const w = parseFloat(row.piece_weight) || 0;
     const lvl = shippingLevels.find(
       (l) => w >= l.min_weight && w <= l.max_weight
     );
     return lvl ? Number(lvl.shipping_per_item) : Infinity;
-  },
-  hand_min: (row) => {
+    },
+    hand_min: (row) => {
     const w = parseFloat(row.piece_weight) || 0;
     const lvl = shippingLevels.find(
       (l) => w >= l.min_weight && w <= l.max_weight
     );
     return lvl ? Number(lvl.handling_min) : Infinity;
-  },
-  hand_item: (row) => {
+    },
+    hand_item: (row) => {
     const w = parseFloat(row.piece_weight) || 0;
     const lvl = shippingLevels.find(
       (l) => w >= l.min_weight && w <= l.max_weight
@@ -385,50 +384,50 @@ document.querySelectorAll("th[data-k]").forEach((th) => {
 });
 
 
-      // -------------------------------------------------------
-      // SECTION 18: LOAD SHIPPING LEVELS
-      // -------------------------------------------------------
-      async function loadShippingLevels() {
-        try {
-          const url = new URL(API_LEVELS);
-          url.searchParams.set("select", "*");
-          url.searchParams.set("order", "min_weight.asc");
+  // -------------------------------------------------------
+  // SECTION 18: LOAD SHIPPING LEVELS
+  // -------------------------------------------------------
+  async function loadShippingLevels() {
+    try {
+      const url = new URL(API_LEVELS);
+      url.searchParams.set("select", "*");
+      url.searchParams.set("order", "min_weight.asc");
 
-          const res = await fetch(url.toString(), {
-            headers: {
-              apikey: SUPABASE_ANON,
-              Authorization: `Bearer ${SUPABASE_ANON}`,
-            },
-            cache: "no-store",
-          });
+      const res = await fetch(url.toString(), {
+        headers: {
+          apikey: SUPABASE_ANON,
+          Authorization: `Bearer ${SUPABASE_ANON}`,
+        },
+        cache: "no-store",
+      });
 
-          if (!res.ok) throw new Error("shipping levels failed");
-          shippingLevels = await res.json();
-          shippingLevelsLoaded = true;
-        } catch (err) {
-          console.error("Failed to load shipping levels:", err);
-          shippingLevels = [];
-          shippingLevelsLoaded = false;
-        }
-      }
+      if (!res.ok) throw new Error("shipping levels failed");
+      shippingLevels = await res.json();
+      shippingLevelsLoaded = true;
+    } catch (err) {
+      console.error("Failed to load shipping levels:", err);
+      shippingLevels = [];
+      shippingLevelsLoaded = false;
+    }
+  }
 
-      // -------------------------------------------------------
-      // SECTION 19: FIND SHIPPING LEVEL FOR WEIGHT
-      // -------------------------------------------------------
-      function findShippingForWeight(weight) {
-        const w = Number(weight);
-        if (!shippingLevels.length || !isFinite(w) || w <= 0) return null;
+  // -------------------------------------------------------
+  // SECTION 19: FIND SHIPPING LEVEL FOR WEIGHT
+  // -------------------------------------------------------
+  function findShippingForWeight(weight) {
+    const w = Number(weight);
+    if (!shippingLevels.length || !isFinite(w) || w <= 0) return null;
 
-        return (
-          shippingLevels.find((lvl) => {
-            const min = Number(lvl.min_weight);
-            const max = Number(lvl.max_weight);
-            return w >= min && w <= max;
-          }) || null
-        );
-      }
+    return (
+      shippingLevels.find((lvl) => {
+        const min = Number(lvl.min_weight);
+        const max = Number(lvl.max_weight);
+        return w >= min && w <= max;
+      }) || null
+    );
+  }
 
-           // =========================================================
+// =========================================================
 // SECTION 20: RENDER TABLE (UPDATED WITH QUOTE LOGIC)
 // =========================================================
 function render(rows) {
@@ -501,7 +500,8 @@ function render(rows) {
   prevBtn.disabled = page === 0;
   nextBtn.disabled = page + 1 >= totalPages;
 }
-     // -------------------------------------------------------
+
+// -------------------------------------------------------
 // SECTION 21: FETCH ITEMS (Item # now case-insensitive)
 // -------------------------------------------------------
 async function fetchItems() {
@@ -569,88 +569,88 @@ async function fetchItems() {
 }
 
 
-      // -------------------------------------------------------
-      // SECTION 22: SEARCH DEBOUNCE
-      // -------------------------------------------------------
-      const runSearch = (() => {
-        let t;
-        return () => {
-          clearTimeout(t);
-          t = setTimeout(fetchItems, 160);
-        };
-      })();
+  // -------------------------------------------------------
+  // SECTION 22: SEARCH DEBOUNCE
+  // -------------------------------------------------------
+  const runSearch = (() => {
+    let t;
+    return () => {
+      clearTimeout(t);
+      t = setTimeout(fetchItems, 160);
+    };
+  })();
 
-            // -------------------------------------------------------
-      // SECTION 23: EVENT LISTENERS (DISABLE OTHER SEARCH BOX)
-      // -------------------------------------------------------
-      clearBtn.addEventListener("click", () => {
-        itemInput.value = "";
-        descInput.value = "";
+  // -------------------------------------------------------
+  // SECTION 23: EVENT LISTENERS (DISABLE OTHER SEARCH BOX)
+  // -------------------------------------------------------
+  clearBtn.addEventListener("click", () => {
+    itemInput.value = "";
+    descInput.value = "";
 
-        itemInput.disabled = false;
-        descInput.disabled = false;
+    itemInput.disabled = false;
+    descInput.disabled = false;
 
-        itemInput.placeholder = "Item #";
-        descInput.placeholder = "Description keywords";
+    itemInput.placeholder = "Item #";
+    descInput.placeholder = "Description keywords";
 
-        currentRows = [];
-        page = 0;
-        tbody.innerHTML = "";
-        tableWrap.style.display = "none";
-        statusEl.textContent =
-          "Type an Item # (exact) or at least 2 characters in Description.";
-        pageTop.textContent = "";
-        pageBottom.textContent = "";
-        pageJump.innerHTML = "";
-      });
+    currentRows = [];
+    page = 0;
+    tbody.innerHTML = "";
+    tableWrap.style.display = "none";
+    statusEl.textContent =
+      "Type an Item # (exact) or at least 2 characters in Description.";
+    pageTop.textContent = "";
+    pageBottom.textContent = "";
+    pageJump.innerHTML = "";
+  });
 
-      // When user types into ITEM #
-      itemInput.addEventListener("input", () => {
-        if (itemInput.value.trim().length > 0) {
-          descInput.disabled = true;
-          descInput.placeholder = "Clear Item # to search by description";
-        } else {
-          descInput.disabled = false;
-          descInput.placeholder = "Description keywords";
-        }
+  // When user types into ITEM #
+  itemInput.addEventListener("input", () => {
+    if (itemInput.value.trim().length > 0) {
+      descInput.disabled = true;
+      descInput.placeholder = "Clear Item # to search by description";
+    } else {
+      descInput.disabled = false;
+      descInput.placeholder = "Description keywords";
+    }
 
-        runSearch();
-      });
+    runSearch();
+  });
 
-      // When user types into DESCRIPTION
-      descInput.addEventListener("input", () => {
-        if (descInput.value.trim().length > 0) {
-          itemInput.disabled = true;
-          itemInput.placeholder = "Clear description to search by item number";
-        } else {
-          itemInput.disabled = false;
-          itemInput.placeholder = "Item #";
-        }
+  // When user types into DESCRIPTION
+  descInput.addEventListener("input", () => {
+    if (descInput.value.trim().length > 0) {
+      itemInput.disabled = true;
+      itemInput.placeholder = "Clear description to search by item number";
+    } else {
+      itemInput.disabled = false;
+      itemInput.placeholder = "Item #";
+    }
 
-        runSearch();
-      });
+    runSearch();
+  });
 
-      // Pagination buttons
-      prevBtn.addEventListener("click", () => {
-        if (page > 0) {
-          page--;
-          render(currentRows);
-        }
-      });
+  // Pagination buttons
+  prevBtn.addEventListener("click", () => {
+    if (page > 0) {
+      page--;
+      render(currentRows);
+    }
+  });
 
-      nextBtn.addEventListener("click", () => {
-        if ((page + 1) * pageSize < currentRows.length) {
-          page++;
-          render(currentRows);
-        }
-      });
+  nextBtn.addEventListener("click", () => {
+    if ((page + 1) * pageSize < currentRows.length) {
+      page++;
+      render(currentRows);
+    }
+  });
 
-      pageJump.addEventListener("change", () => {
-        page = parseInt(pageJump.value, 10) || 0;
-        render(currentRows);
-      });
-      
-      // Highlight default sort column on first load
+  pageJump.addEventListener("change", () => {
+    page = parseInt(pageJump.value, 10) || 0;
+    render(currentRows);
+  });
+  
+  // Highlight default sort column on first load
 const defaultTh = document.querySelector(`th[data-k="${sortKey}"]`);
 if (defaultTh) {
   defaultTh.classList.add("active");
@@ -658,12 +658,13 @@ if (defaultTh) {
   const icon = defaultTh.querySelector(".sort-icon");
   if (icon) icon.textContent = sortAsc ? "↑" : "↓";
 }
-    }); // END DOMContentLoaded
+    }); 
+  // END DOMContentLoaded
 
-    // =========================================================
-    // SECTION 24: END OF SCRIPT
-    // =========================================================
-  </script>
+  // =========================================================
+  // SECTION 24: END OF SCRIPT
+  // =========================================================
+</script>
 </body>
 </html>
 

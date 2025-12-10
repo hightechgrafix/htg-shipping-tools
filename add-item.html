@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <meta charset="UTF-8">
   <title>Add User Item</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -38,6 +39,20 @@
 
     <button type="submit">Save Item</button>
   </form>
+
+  <hr style="margin: 40px 0;">
+
+  <h2>Bulk Import Items (CSV Upload)</h2>
+
+  <p>Upload a CSV file with the columns:</p>
+  <p><code>vendor,style_num,product_title,piece_weight,size</code></p>
+
+  <input type="file" id="csvFile" accept=".csv"><br><br>
+
+  <button id="importBtn">Import CSV</button>
+
+  <p id="bulkStatus" style="margin-top:20px; font-weight: bold;"></p>
+
 
   <p id="status" style="margin-top:20px;"></p>
 
@@ -113,55 +128,111 @@ async function loadVendors() {
   });
 }
 
-    // WAIT FOR PAGE + FORMS TO LOAD
-    document.addEventListener('DOMContentLoaded', function () {
+  // WAIT FOR PAGE + FORMS TO LOAD
+  document.addEventListener('DOMContentLoaded', function () {
 
-      guardPage(); // run guard check after page loads
-    loadVendors();  // load vendor list into dropdown
-    loadSizes();  // load sizes from dropdown
+    guardPage(); // run guard check after page loads
+  loadVendors();  // load vendor list into dropdown
+  loadSizes();  // load sizes from dropdown
 
-      const form = document.getElementById('itemForm');
-      if (!form) return;
+    const form = document.getElementById('itemForm');
+    if (!form) return;
 
-      form.addEventListener('submit', async function(e) {
-        e.preventDefault();
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
 
-        const status = document.getElementById('status');
-        status.textContent = "Saving...";
+      const status = document.getElementById('status');
+      status.textContent = "Saving...";
 
-        const vendor = document.getElementById('vendor').value;
-        const style_num = document.getElementById('style_num').value;
-        const product_title = document.getElementById('product_title').value;
-        const piece_weight = document.getElementById('piece_weight').value;
-        const size = document.getElementById('size').value;
+      const vendor = document.getElementById('vendor').value;
+      const style_num = document.getElementById('style_num').value;
+      const product_title = document.getElementById('product_title').value;
+      const piece_weight = document.getElementById('piece_weight').value;
+      const size = document.getElementById('size').value;
 
-        // Get logged-in user
-        const { data: sessionData } = await client.auth.getSession();
-        const user_name = sessionData?.session?.user?.email || null;
+      // Get logged-in user
+      const { data: sessionData } = await client.auth.getSession();
+      const user_name = sessionData?.session?.user?.email || null;
 
-        // Insert the new item
-        const { error } = await client
-          .from('user_added_items')
-          .insert([
-            {
-              vendor,
-              style_num,
-              product_title,
-              piece_weight: piece_weight ? Number(piece_weight) : null,
-              size,
-              created_by: user_name
-            }
-          ]);
+      // Insert the new item
+      const { error } = await client
+        .from('user_added_items')
+        .insert([
+          {
+            vendor,
+            style_num,
+            product_title,
+            piece_weight: piece_weight ? Number(piece_weight) : null,
+            size,
+            created_by: user_name
+          }
+        ]);
 
-        if (error) {
-          status.textContent = "Error: " + error.message;
-        } else {
-          status.textContent = "Item saved successfully!";
-          form.reset();
-        }
-      });
+      if (error) {
+        status.textContent = "Error: " + error.message;
+      } else {
+        status.textContent = "Item saved successfully!";
+        form.reset();
+      }
     });
-  </script>
+  });
+  
+// =========================
+// BULK CSV IMPORT HANDLER
+// =========================
+
+document.getElementById('importBtn').addEventListener('click', async () => {
+  const file = document.getElementById('csvFile').files[0];
+  const bulkStatus = document.getElementById('bulkStatus');
+
+  if (!file) {
+    bulkStatus.textContent = "Please choose a CSV file first.";
+    return;
+  }
+
+  bulkStatus.textContent = "Processing CSV...";
+
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: async function(results) {
+
+      const rows = results.data;
+
+      // Get logged-in user info for created_by
+      const { data: sessionData } = await client.auth.getSession();
+      const user_name =
+        sessionData?.session?.user?.user_metadata?.name ||
+        sessionData?.session?.user?.email ||
+        null;
+
+      // Convert CSV rows into Supabase-ready objects
+      const formattedRows = rows.map(r => ({
+        vendor: r.vendor,
+        style_num: r.style_num,
+        product_title: r.product_title,
+        piece_weight: r.piece_weight ? Number(r.piece_weight) : null,
+        size: r.size,
+        created_by: user_name
+      }));
+
+      // Bulk insert into Supabase
+      const { error } = await client
+        .from('user_added_items')
+        .insert(formattedRows);
+
+      if (error) {
+        console.error(error);
+        bulkStatus.textContent = "Error importing: " + error.message;
+      } else {
+        bulkStatus.textContent = 
+          "Successfully imported " + rows.length + " items!";
+      }
+    }
+  });
+});
+ 
+</script>
 
 </body>
 </html>
