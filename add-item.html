@@ -227,6 +227,7 @@ document.getElementById('importBtn').addEventListener('click', async () => {
       } else {
         bulkStatus.textContent = 
           "Successfully imported " + rows.length + " items!";
+        document.getElementById('csvFile').value = "";   // <-- clears the filename  
       }
     }
   });
