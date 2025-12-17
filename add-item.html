@@ -133,11 +133,12 @@ async function loadVendors() {
 }
 
   // WAIT FOR PAGE + FORMS TO LOAD
-  document.addEventListener('DOMContentLoaded', function () {
+ document.addEventListener('DOMContentLoaded', async function () {
+  await guardPage();   // wait for auth to resolve
+  loadVendors();       // now runs as authenticated user
+  loadSizes();
+});
 
-    guardPage(); // run guard check after page loads
-  loadVendors();  // load vendor list into dropdown
-  loadSizes();  // load sizes from dropdown
 
     const form = document.getElementById('itemForm');
     if (!form) return;
