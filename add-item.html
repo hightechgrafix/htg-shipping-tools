@@ -4,10 +4,7 @@
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <meta charset="UTF-8">
   <title>Add User Item</title>
-  <script type="module">
-    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-    window.supabase = { createClient };
-  </script>
+
 
 </head>
 
@@ -62,9 +59,11 @@
 
 
   <!-- SCRIPT BLOCK -->
-  <script>
+  <script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
   // Initialize Supabase
-  const client = supabase.createClient(
+  const client = createClient(
     "https://sbfslzwnkztmodnlsigq.supabase.co",
     "YeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg"
   );
