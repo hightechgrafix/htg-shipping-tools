@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Shipping Calculator</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     body {
@@ -160,133 +159,42 @@
 
   <button class="pdf-button" onclick="downloadPDF()">Download PDF</button>
 
-  <script>
-    const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
-    const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-    async function fetchLevels() {
-  const { data, error } = await supabase
-    .from('shipping_levels')
-    .select('*')
-    .order('min_weight', { ascending: true });
+  // Supabase config
+  const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
+  const SUPABASE_ANON = "YOUR_ANON_KEY";
 
-  if (error || !data) {
-    alert('Error loading shipping levels from Supabase.');
-    console.error('Supabase error:', error);
-    return;
+  // Create client (same style as login page)
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  // 🔐 AUTH GATE — THIS IS THE OPTIONAL STEP
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    window.location.href = "/login.html";
   }
 
-  const tbody = document.getElementById('shipping-body');
-  tbody.innerHTML = ''; // Clear any existing rows just in case
+  // -------------------------------
+  // Everything below runs ONLY
+  // if the user is logged in
+  // -------------------------------
 
-  data.forEach((level, index) => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>Level ${level.shipping_level}</td>
-      <td>${level.min_weight} – ${level.max_weight}</td>
-      <td><input type="number" min="0" value="0" data-index="${index}" /></td>
-      <td>$${parseFloat(level.shipping_per_item).toFixed(2)}</td>
-      <td>$${parseFloat(level.shipping_min).toFixed(2)}</td>
-      <td>$${parseFloat(level.handling_per_item).toFixed(2)}</td>
-      <td>$${parseFloat(level.handling_min).toFixed(2)}</td>
-      <td id="ship-${index}">$0.00</td>
-      <td id="handle-${index}">$0.00</td>
-    `;
-    tbody.appendChild(row);
-  });
+  async function fetchLevels() {
+    const { data, error } = await supabase
+      .from("shipping_levels")
+      .select("*")
+      .order("min_weight", { ascending: true });
 
-  addListeners(data);
-}
-
-
-    function addListeners(levels) {
-      const inputs = document.querySelectorAll('input[type="number"]');
-      inputs.forEach(input => {
-        input.addEventListener('input', () => calculate(levels));
-      });
+    if (error) {
+      console.error("Supabase error:", error);
+      alert("Error loading shipping levels");
+      return;
     }
 
-    function calculate(levels) {
-      let totalShipping = 0;
-      let totalHandling = 0;
-      let level1Shipping = 0;
-      let shippingCredit = 0;
+    const tbody = document.getElem
 
-      levels.forEach((level, index) => {
-        const qty = parseInt(document.querySelector(`input[data-index='${index}']`).value) || 0;
-        let rawShipping = qty * level.shipping_per_item;
-        let shipTotal = qty > 0 ? Math.max(rawShipping, level.shipping_min) : 0;
 
-        if (index === 0) {
-          level1Shipping = shipTotal;
-          shippingCredit = Math.min(200, level1Shipping);
-        }
-
-        const rawHandling = qty * level.handling_per_item;
-        const handleTotal = qty > 0 ? Math.max(rawHandling, level.handling_min) : 0;
-
-        document.getElementById(`ship-${index}`).textContent = `$${shipTotal.toFixed(2)}`;
-        document.getElementById(`handle-${index}`).textContent = `$${handleTotal.toFixed(2)}`;
-
-        totalShipping += shipTotal;
-        totalHandling += handleTotal;
-      });
-
-      const totalShippingAfterCredit = totalShipping - shippingCredit;
-      const grandTotal = Math.max(0, totalShippingAfterCredit + totalHandling);
-
-      document.getElementById('shipping-before-credit').textContent = `$${totalShipping.toFixed(2)}`;
-      document.getElementById('shipping-credit').textContent = shippingCredit.toFixed(2);
-      document.getElementById('total-shipping').textContent = `$${totalShippingAfterCredit.toFixed(2)}`;
-      document.getElementById('total-handling').textContent = `$${totalHandling.toFixed(2)}`;
-      document.getElementById('grand-total').textContent = `$${grandTotal.toFixed(2)}`;
-
-      const now = new Date();
-      const formatted = now.toLocaleString();
-      document.getElementById('timestamp').textContent = `Generated: ${formatted}`;
-    }
-
-    function downloadPDF() {
-      const logo = document.getElementById('pdf-logo');
-      logo.style.display = 'block';
-      generatePDF();
-    }
-
-    function generatePDF() {
-      const element = document.getElementById('pdf-content');
-      const opt = {
-        margin: 0.5,
-        filename: `shipping-summary-${new Date().toISOString().slice(0,10)}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-      };
-      html2pdf().set(opt).from(element).save().then(() => {
-        document.getElementById('pdf-logo').style.display = 'none';
-      });
-    }
-function clearCalculator() {
-  const inputs = document.querySelectorAll('input[type="number"]');
-  inputs.forEach(input => input.value = 0);
-
-  // Reset totals to $0.00
-  const spans = document.querySelectorAll('[id^="ship-"], [id^="handle-"]');
-  spans.forEach(span => span.textContent = '$0.00');
-
-  document.getElementById('shipping-before-credit').textContent = '$0.00';
-  document.getElementById('shipping-credit').textContent = '0.00';
-  document.getElementById('total-shipping').textContent = '$0.00';
-  document.getElementById('total-handling').textContent = '$0.00';
-  document.getElementById('grand-total').textContent = '$0.00';
-  document.getElementById('timestamp').textContent = '';
-
-  // Recalculate with all zeros to ensure clean state
-  fetchLevels();
-}
-
-    fetchLevels();
-  </script>
 
   <button 
     onclick="window.location.href='add-item.html'"  
