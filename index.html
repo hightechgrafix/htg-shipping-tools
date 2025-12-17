@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shipping Calculator</title>
+
+  <!-- PDF Export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <style>
     body {
       font-family: sans-serif;
@@ -101,11 +104,17 @@
     }
   </style>
 </head>
+
 <body>
-  <h1>Shipping & Handling Calculator</h1>
+  <h1>Shipping &amp; Handling Calculator</h1>
 
   <div id="pdf-content">
-    <img class="pdf-logo" id="pdf-logo" src="https://irp.cdn-website.com/81de5be8/dms3rep/multi/logo_horiz_2021_black.png" alt="Logo">
+    <img
+      class="pdf-logo"
+      id="pdf-logo"
+      src="https://irp.cdn-website.com/81de5be8/dms3rep/multi/logo_horiz_2021_black.png"
+      alt="Logo"
+    />
 
     <table id="shipping-table">
       <thead>
@@ -128,88 +137,51 @@
     <div class="credit-note">
       *Free shipping credit (Level 1) only applies if invoice total is $100 or more.
     </div>
+
     <div class="summary">
       <div class="summary-row">
         <div class="summary-label">Calculated Shipping:</div>
         <div class="summary-value" id="shipping-before-credit">$0.00</div>
       </div>
+
       <div class="summary-row">
         <div class="summary-label">Free Shipping Credit (Level 1):</div>
         <div class="summary-value credit">–$<span id="shipping-credit">0.00</span></div>
       </div>
+
       <div class="summary-row">
         <div class="summary-label">Total Shipping After Credit:</div>
         <div class="summary-value" id="total-shipping">$0.00</div>
       </div>
+
       <div class="summary-row">
         <div class="summary-label">Total Handling:</div>
         <div class="summary-value" id="total-handling">$0.00</div>
       </div>
+
       <div class="summary-row" style="border-top: 1px solid #ccc; padding-top: 0.5rem; margin-top: 0.8rem;">
         <div class="summary-label">Grand Total:</div>
         <div class="summary-value" id="grand-total">$0.00</div>
       </div>
+
       <div class="timestamp" id="timestamp"></div>
     </div>
   </div>
-  <br>
-  <button class="pdf-button" onclick="clearCalculator()" style="margin-right: 1rem; background-color: #000;">
-  Clear
-</button>
 
-  <button class="pdf-button" onclick="downloadPDF()">Download PDF</button>
+  <br />
 
-<script type="module">
-  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+  <button class="pdf-button" id="clear-btn" style="margin-right: 1rem; background-color: #000;">
+    Clear
+  </button>
 
-  const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
-  const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
+  <button class="pdf-button" id="pdf-btn">
+    Download PDF
+  </button>
 
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+  <br />
 
- // const { data: { session } } = await supabase.auth.getSession();
- // if (!session) window.location.href = "/login.html";
-
-  async function fetchLevels() {
-    const { data, error } = await supabase
-      .from("shipping_levels")
-      .select("*")
-      .order("min_weight", { ascending: true });
-      console.log("Shipping levels:", data);
-
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    const tbody = document.getElementById("shipping-body");
-    tbody.innerHTML = "";
-
-    data.forEach(level => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>Level ${level.shipping_level}</td>
-        <td>${level.min_weight} – ${level.max_weight}</td>
-        <td>0</td>
-        <td>$${level.shipping_per_item}</td>
-        <td>$${level.shipping_min}</td>
-        <td>$${level.handling_per_item}</td>
-        <td>$${level.handling_min}</td>
-        <td>$0.00</td>
-        <td>$0.00</td>
-      `;
-      tbody.appendChild(tr);
-    });
-    
-  }
-
-  fetchLevels();
-</script>
-
-
-  <button 
-    onclick="window.location.href='add-item.html'"  
+  <button
+    id="add-item-btn"
     style="
       background:#b6282c;
       color:#fff;
@@ -224,8 +196,8 @@
     Add Item
   </button>
 
-  <button 
-    onclick="window.location.href='login.html'" 
+  <button
+    id="back-btn"
     style="
       background:#b6282c;
       color:#fff;
@@ -240,7 +212,179 @@
     ← Back to Menu
   </button>
 
-  
-  
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    // ===== Supabase Config (use the SAME anon key as your login page) =====
+    const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true }
+    });
+
+    // ===== Require login (since you added login/menu gating) =====
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.href = "/login.html";
+    }
+
+    // ===== UI Navigation Buttons =====
+    document.getElementById("add-item-btn").addEventListener("click", () => {
+      window.location.href = "/add-item.html";
+    });
+
+    document.getElementById("back-btn").addEventListener("click", () => {
+      window.location.href = "/login.html";
+    });
+
+    // ===== Calculator Logic (restored from your original) =====
+    let cachedLevels = [];
+
+    async function fetchLevels() {
+      const { data, error } = await supabase
+        .from("shipping_levels")
+        .select("*")
+        .order("min_weight", { ascending: true });
+
+      if (error || !data) {
+        alert("Error loading shipping levels from Supabase.");
+        console.error("Supabase error:", error);
+        return;
+      }
+
+      cachedLevels = data;
+
+      const tbody = document.getElementById("shipping-body");
+      tbody.innerHTML = "";
+
+      data.forEach((level, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>Level ${level.shipping_level}</td>
+          <td>${level.min_weight} – ${level.max_weight}</td>
+          <td><input type="number" min="0" value="0" data-index="${index}" /></td>
+          <td>$${parseFloat(level.shipping_per_item).toFixed(2)}</td>
+          <td>$${parseFloat(level.shipping_min).toFixed(2)}</td>
+          <td>$${parseFloat(level.handling_per_item).toFixed(2)}</td>
+          <td>$${parseFloat(level.handling_min).toFixed(2)}</td>
+          <td id="ship-${index}">$0.00</td>
+          <td id="handle-${index}">$0.00</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      addListeners(data);
+      calculate(data); // initialize totals
+    }
+
+    function addListeners(levels) {
+      const inputs = document.querySelectorAll('input[type="number"]');
+      inputs.forEach((input) => {
+        input.addEventListener("input", () => calculate(levels));
+      });
+    }
+
+    function calculate(levels) {
+      let totalShipping = 0;
+      let totalHandling = 0;
+      let level1Shipping = 0;
+      let shippingCredit = 0;
+
+      levels.forEach((level, index) => {
+        const qty =
+          parseInt(document.querySelector(`input[data-index='${index}']`)?.value, 10) || 0;
+
+        const shippingPerItem = Number(level.shipping_per_item) || 0;
+        const shippingMin = Number(level.shipping_min) || 0;
+        const handlingPerItem = Number(level.handling_per_item) || 0;
+        const handlingMin = Number(level.handling_min) || 0;
+
+        const rawShipping = qty * shippingPerItem;
+        const shipTotal = qty > 0 ? Math.max(rawShipping, shippingMin) : 0;
+
+        // Level 1 credit (as you had it)
+        if (index === 0) {
+          level1Shipping = shipTotal;
+          shippingCredit = Math.min(200, level1Shipping);
+        }
+
+        const rawHandling = qty * handlingPerItem;
+        const handleTotal = qty > 0 ? Math.max(rawHandling, handlingMin) : 0;
+
+        const shipCell = document.getElementById(`ship-${index}`);
+        const handleCell = document.getElementById(`handle-${index}`);
+        if (shipCell) shipCell.textContent = `$${shipTotal.toFixed(2)}`;
+        if (handleCell) handleCell.textContent = `$${handleTotal.toFixed(2)}`;
+
+        totalShipping += shipTotal;
+        totalHandling += handleTotal;
+      });
+
+      const totalShippingAfterCredit = totalShipping - shippingCredit;
+      const grandTotal = Math.max(0, totalShippingAfterCredit + totalHandling);
+
+      document.getElementById("shipping-before-credit").textContent = `$${totalShipping.toFixed(2)}`;
+      document.getElementById("shipping-credit").textContent = shippingCredit.toFixed(2);
+      document.getElementById("total-shipping").textContent = `$${totalShippingAfterCredit.toFixed(2)}`;
+      document.getElementById("total-handling").textContent = `$${totalHandling.toFixed(2)}`;
+      document.getElementById("grand-total").textContent = `$${grandTotal.toFixed(2)}`;
+
+      const now = new Date();
+      document.getElementById("timestamp").textContent = `Generated: ${now.toLocaleString()}`;
+    }
+
+    function clearCalculator() {
+      const inputs = document.querySelectorAll('input[type="number"]');
+      inputs.forEach((input) => (input.value = 0));
+
+      // Reset per-row totals
+      const spans = document.querySelectorAll('[id^="ship-"], [id^="handle-"]');
+      spans.forEach((span) => (span.textContent = "$0.00"));
+
+      // Reset summary totals
+      document.getElementById("shipping-before-credit").textContent = "$0.00";
+      document.getElementById("shipping-credit").textContent = "0.00";
+      document.getElementById("total-shipping").textContent = "$0.00";
+      document.getElementById("total-handling").textContent = "$0.00";
+      document.getElementById("grand-total").textContent = "$0.00";
+      document.getElementById("timestamp").textContent = "";
+
+      // Re-fetch / re-render to ensure clean state
+      fetchLevels();
+    }
+
+    function downloadPDF() {
+      const logo = document.getElementById("pdf-logo");
+      logo.style.display = "block";
+      generatePDF();
+    }
+
+    function generatePDF() {
+      const element = document.getElementById("pdf-content");
+      const opt = {
+        margin: 0.5,
+        filename: `shipping-summary-${new Date().toISOString().slice(0, 10)}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "in", format: "letter", orientation: "portrait" }
+      };
+
+      html2pdf()
+        .set(opt)
+        .from(element)
+        .save()
+        .then(() => {
+          document.getElementById("pdf-logo").style.display = "none";
+        });
+    }
+
+    // ===== Wire up buttons (module-safe; no inline onclick needed) =====
+    document.getElementById("clear-btn").addEventListener("click", clearCalculator);
+    document.getElementById("pdf-btn").addEventListener("click", downloadPDF);
+
+    // ===== Start =====
+    fetchLevels();
+  </script>
 </body>
 </html>
