@@ -72,14 +72,21 @@
     // PAGE GUARD — redirect if not logged in
     async function guardPage() {
       const { data, error } = await client.auth.getSession();
+
       if (error) {
         console.error("Session error:", error);
-        return;
+        window.location.href = "login.html";
+        return false;
       }
+
       if (!data.session) {
         window.location.href = "login.html";
+        return false;
       }
+
+      return true;
     }
+
 
 async function loadSizes() {
   const dropdown = document.getElementById('size');
@@ -133,11 +140,14 @@ async function loadVendors() {
 }
 
   // WAIT FOR PAGE + FORMS TO LOAD
- document.addEventListener('DOMContentLoaded', async function () {
-  await guardPage();   // wait for auth to resolve
-  loadVendors();       // now runs as authenticated user
+  document.addEventListener('DOMContentLoaded', async function () {
+  const ok = await guardPage();
+  if (!ok) return;
+
+  loadVendors();
   loadSizes();
 });
+
 
 
     const form = document.getElementById('itemForm');
