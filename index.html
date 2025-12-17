@@ -162,23 +162,13 @@
 <script type="module">
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-  // Supabase config
   const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
-  const SUPABASE_ANON = "YOUR_ANON_KEY";
+  const SUPABASE_ANON = "PASTE_REAL_ANON_KEY_HERE";
 
-  // Create client (same style as login page)
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-  // 🔐 AUTH GATE — THIS IS THE OPTIONAL STEP
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    window.location.href = "/login.html";
-  }
-
-  // -------------------------------
-  // Everything below runs ONLY
-  // if the user is logged in
-  // -------------------------------
+  if (!session) window.location.href = "/login.html";
 
   async function fetchLevels() {
     const { data, error } = await supabase
@@ -187,13 +177,32 @@
       .order("min_weight", { ascending: true });
 
     if (error) {
-      console.error("Supabase error:", error);
-      alert("Error loading shipping levels");
+      console.error(error);
       return;
     }
 
-    const tbody = document.getElem
+    const tbody = document.getElementById("shipping-body");
+    tbody.innerHTML = "";
 
+    data.forEach(level => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>Level ${level.shipping_level}</td>
+        <td>${level.min_weight} – ${level.max_weight}</td>
+        <td>0</td>
+        <td>$${level.shipping_per_item}</td>
+        <td>$${level.shipping_min}</td>
+        <td>$${level.handling_per_item}</td>
+        <td>$${level.handling_min}</td>
+        <td>$0.00</td>
+        <td>$0.00</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  fetchLevels();
+</script>
 
 
   <button 
