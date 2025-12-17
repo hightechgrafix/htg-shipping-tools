@@ -63,97 +63,82 @@
 
   <!-- SCRIPT BLOCK -->
   <script>
-    // Initialize Supabase
-   const client = supabase.createClient(
-     "https://sbfslzwnkztmodnlsigq.supabase.co",
-     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg"
-    );
+  // Initialize Supabase
+  const client = supabase.createClient(
+    "https://sbfslzwnkztmodnlsigq.supabase.co",
+    "YOUR_ANON_KEY"
+  );
 
-    // PAGE GUARD — redirect if not logged in
-    async function guardPage() {
-      const { data, error } = await client.auth.getSession();
+  // PAGE GUARD
+  async function guardPage() {
+    const { data, error } = await client.auth.getSession();
 
-      if (error) {
-        console.error("Session error:", error);
-        window.location.href = "login.html";
-        return false;
-      }
+    if (error || !data.session) {
+      window.location.href = "login.html";
+      return false;
+    }
+    return true;
+  }
 
-      if (!data.session) {
-        window.location.href = "login.html";
-        return false;
-      }
+  async function loadSizes() {
+    const dropdown = document.getElementById('size');
 
-      return true;
+    const { data, error } = await client
+      .from('sizes')
+      .select('name')
+      .eq('is_active', true)
+      .order('name', { ascending: true });
+
+    if (error) {
+      console.error(error);
+      dropdown.innerHTML = `<option value="">Error loading sizes</option>`;
+      return;
     }
 
-
-async function loadSizes() {
-  const dropdown = document.getElementById('size');
-
-  const { data, error } = await client
-    .from('sizes')          // your table name
-    .select('name')         // the column you created
-    .eq('is_active', true)  // optional filter
-    .order('name', { ascending: true });
-
-  if (error) {
-    console.error("Error loading sizes:", error);
-    dropdown.innerHTML = `<option value="">Error loading sizes</option>`;
-    return;
+    dropdown.innerHTML = `<option value="">Select a size</option>`;
+    data.forEach(row => {
+      const opt = document.createElement('option');
+      opt.value = row.name;
+      opt.textContent = row.name;
+      dropdown.appendChild(opt);
+    });
   }
 
-  dropdown.innerHTML = `<option value="">Select a size</option>`;
+  async function loadVendors() {
+    const dropdown = document.getElementById('vendor');
 
-  data.forEach(row => {
-    const opt = document.createElement('option');
-    opt.value = row.name;
-    opt.textContent = row.name;
-    dropdown.appendChild(opt);
-  });
-}
+    const { data, error } = await client
+      .from('vendors')
+      .select('name')
+      .eq('is_active', true)
+      .order('name', { ascending: true });
 
-// Load vendors from Supabase
-async function loadVendors() {
-  const dropdown = document.getElementById('vendor');
+    if (error) {
+      console.error(error);
+      dropdown.innerHTML = `<option value="">Error loading vendors</option>`;
+      return;
+    }
 
-  const { data, error } = await client
-    .from('vendors')        // your table name
-    .select('name')         // your column name
-    .eq('is_active', true)  // optional filter
-    .order('name', { ascending: true });
-
-  if (error) {
-    console.error("Error loading vendors:", error);
-    dropdown.innerHTML = `<option value="">Error loading vendors</option>`;
-    return;
+    dropdown.innerHTML = `<option value="">Select a vendor</option>`;
+    data.forEach(row => {
+      const opt = document.createElement('option');
+      opt.value = row.name;
+      opt.textContent = row.name;
+      dropdown.appendChild(opt);
+    });
   }
 
-  dropdown.innerHTML = `<option value="">Select a vendor</option>`;
-
-  data.forEach(row => {
-    const opt = document.createElement('option');
-    opt.value = row.name;
-    opt.textContent = row.name;
-    dropdown.appendChild(opt);
-  });
-}
-
-  // WAIT FOR PAGE + FORMS TO LOAD
   document.addEventListener('DOMContentLoaded', async function () {
-  const ok = await guardPage();
-  if (!ok) return;
+    const ok = await guardPage();
+    if (!ok) return;
 
-  loadVendors();
-  loadSizes();
-});
-
-
+    await loadVendors();
+    await loadSizes();
 
     const form = document.getElementById('itemForm');
     if (!form) return;
 
-    form.addEventListener('submit', async function(e) {
+    form.addEventListener('submit', async function (e) {
       e.preventDefault();
 
       const status = document.getElementById('status');
@@ -165,90 +150,68 @@ async function loadVendors() {
       const piece_weight = document.getElementById('piece_weight').value;
       const size = document.getElementById('size').value;
 
-      // Get logged-in user
       const { data: sessionData } = await client.auth.getSession();
       const user_name = sessionData?.session?.user?.email || null;
 
-      // Insert the new item
       const { error } = await client
         .from('user_added_items')
-        .insert([
-          {
-            vendor,
-            style_num,
-            product_title,
-            piece_weight: piece_weight ? Number(piece_weight) : null,
-            size,
-            created_by: user_name
-          }
-        ]);
+        .insert([{
+          vendor,
+          style_num,
+          product_title,
+          piece_weight: piece_weight ? Number(piece_weight) : null,
+          size,
+          created_by: user_name
+        }]);
 
-      if (error) {
-        status.textContent = "Error: " + error.message;
-      } else {
-        status.textContent = "Item saved successfully!";
-        form.reset();
+      status.textContent = error
+        ? "Error: " + error.message
+        : "Item saved successfully!";
+      if (!error) form.reset();
+    });
+  });
+
+  // CSV IMPORT
+  document.getElementById('importBtn').addEventListener('click', async () => {
+    const file = document.getElementById('csvFile').files[0];
+    const bulkStatus = document.getElementById('bulkStatus');
+
+    if (!file) {
+      bulkStatus.textContent = "Please choose a CSV file first.";
+      return;
+    }
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async function (results) {
+        const rows = results.data;
+
+        const { data: sessionData } = await client.auth.getSession();
+        const user_name =
+          sessionData?.session?.user?.email || null;
+
+        const formattedRows = rows.map(r => ({
+          vendor: r.vendor,
+          style_num: r.style_num,
+          product_title: r.product_title,
+          piece_weight: r.piece_weight ? Number(r.piece_weight) : null,
+          size: r.size,
+          created_by: user_name
+        }));
+
+        const { error } = await client
+          .from('user_added_items')
+          .insert(formattedRows);
+
+        bulkStatus.textContent = error
+          ? "Error importing: " + error.message
+          : `Successfully imported ${rows.length} items!`;
       }
     });
   });
-  
-// =========================
-// BULK CSV IMPORT HANDLER
-// =========================
-
-document.getElementById('importBtn').addEventListener('click', async () => {
-  const file = document.getElementById('csvFile').files[0];
-  const bulkStatus = document.getElementById('bulkStatus');
-
-  if (!file) {
-    bulkStatus.textContent = "Please choose a CSV file first.";
-    return;
-  }
-
-  bulkStatus.textContent = "Processing CSV...";
-
-  Papa.parse(file, {
-    header: true,
-    skipEmptyLines: true,
-    complete: async function(results) {
-
-      const rows = results.data;
-
-      // Get logged-in user info for created_by
-      const { data: sessionData } = await client.auth.getSession();
-      const user_name =
-        sessionData?.session?.user?.user_metadata?.name ||
-        sessionData?.session?.user?.email ||
-        null;
-
-      // Convert CSV rows into Supabase-ready objects
-      const formattedRows = rows.map(r => ({
-        vendor: r.vendor,
-        style_num: r.style_num,
-        product_title: r.product_title,
-        piece_weight: r.piece_weight ? Number(r.piece_weight) : null,
-        size: r.size,
-        created_by: user_name
-      }));
-
-      // Bulk insert into Supabase
-      const { error } = await client
-        .from('user_added_items')
-        .insert(formattedRows);
-
-      if (error) {
-        console.error(error);
-        bulkStatus.textContent = "Error importing: " + error.message;
-      } else {
-        bulkStatus.textContent = 
-          "Successfully imported " + rows.length + " items!";
-        document.getElementById('csvFile').value = "";   // <-- clears the filename  
-      }
-    }
-  });
-});
- 
 </script>
+
 
 <button 
     onclick="window.location.href='index.html'" 
