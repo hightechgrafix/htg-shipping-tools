@@ -90,6 +90,29 @@
     <strong>Checking permissions…</strong>
   </div>
 
+    <h2 style="margin-top:2rem;">Add User</h2>
+
+    <div style="margin-bottom:1.5rem;">
+    <input
+        id="new-email"
+        type="email"
+        placeholder="email@hightechgrafix.com"
+        style="padding:6px; width:260px; margin-right:0.5rem;"
+    />
+
+    <input
+        id="new-password"
+        type="text"
+        placeholder="Temporary password"
+        style="padding:6px; width:200px; margin-right:0.5rem;"
+    />
+
+    <button class="btn" id="add-user-btn">
+        Add User
+    </button>
+    </div>
+
+
   <table id="users-table" style="display:none; margin-top:2rem;">
     <thead>
         <tr>
@@ -186,6 +209,46 @@
 
         document.getElementById("users-table").style.display = "table";
     }
+    document.getElementById("add-user-btn").addEventListener("click", async () => {
+    const email = document.getElementById("new-email").value.trim();
+    const password = document.getElementById("new-password").value.trim();
+
+    if (!email || !password) {
+        alert("Email and password are required.");
+        return;
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const session = sessionData?.session;
+
+    if (!session) {
+        alert("Session expired. Please log in again.");
+        location.href = "/login.html";
+        return;
+    }
+
+    const res = await fetch("/api/admin/create-user", {
+        method: "POST",
+        headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ email, password }),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+        alert(result.error || "Failed to create user");
+        return;
+    }
+
+    document.getElementById("new-email").value = "";
+    document.getElementById("new-password").value = "";
+
+    // Refresh table
+    loadUsers(session);
+    });
 
     init();
   </script>
