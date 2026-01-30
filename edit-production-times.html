@@ -118,10 +118,10 @@
         .eq("id", row.id);
 
       if (error) {
-        console.error(error);
-        status.textContent = "Error saving changes.";
+        console.error("SUPABASE UPDATE ERROR:", error);
+        status.textContent = "Error: " + error.message;
         return;
-      }
+        }
     }
 
     status.textContent = "Production times updated successfully!";
