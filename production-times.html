@@ -1,3 +1,4 @@
+button<div class="updated" id="updated-at"></div>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,41 +12,41 @@
 
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #ffffff;
-      margin: 0;
-      padding: 16px;
-    }
+        font-family: Arial, sans-serif;
+        background: #ffffff;
+        margin: 0;
+        padding: 16px;
+        }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-    td {
-      padding: 8px 4px;
-    }
+        td {
+            padding: 12px 6px;
+            font-size: 20px; /* 🐒 CHONKY */
+        }
 
-    td:first-child {
-      font-weight: bold;
-    }
+        td:first-child {
+            font-weight: 700;
+        }
 
-    tr + tr td {
-      border-top: 1px solid #eee;
-    }
+        td:last-child {
+            font-weight: 600;
+            text-align: right;
+        }
 
-    .updated {
-      margin-top: 10px;
-      font-size: 12px;
-      color: #666;
-    }
+        tr + tr td {
+            border-top: 1px solid #eee;
+        }
+    </style>
+
   </style>
 </head>
 <body>
 
   <table id="production-table"></table>
-  <div class="updated" id="updated-at"></div>
 
   <script>
   const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
@@ -58,8 +59,6 @@
   );
 
   const tableEl = document.getElementById("production-table");
-  const updatedEl = document.getElementById("updated-at");
-
   function render(rows) {
     tableEl.innerHTML = "";
 
@@ -71,15 +70,6 @@
       `;
       tableEl.appendChild(tr);
     });
-
-    if (rows.length > 0) {
-      const latest = rows
-        .map(r => new Date(r.updated_at))
-        .sort((a, b) => b - a)[0];
-
-      updatedEl.textContent =
-        "Last updated: " + latest.toLocaleDateString();
-    }
   }
 
   async function loadData() {
