@@ -115,12 +115,14 @@
 
   <table id="users-table" style="display:none; margin-top:2rem;">
     <thead>
-        <tr>
+    <tr>
         <th>Email</th>
         <th>Created</th>
         <th>Last Sign-in</th>
-        </tr>
+        <th>Actions</th>
+    </tr>
     </thead>
+
     <tbody></tbody>
   </table>
 
@@ -203,12 +205,69 @@
             <td>${u.email || ""}</td>
             <td>${u.created_at ? new Date(u.created_at).toLocaleString() : ""}</td>
             <td>${u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString() : "—"}</td>
+            <td>
+                <button
+                class="btn"
+                style="background:#000; padding:4px 8px; font-size:12px;"
+                data-user-id="${u.id}"
+                data-user-email="${u.email}"
+                >
+                Delete
+                </button>
+            </td>
             `;
             tbody.appendChild(tr);
+            const btn = tr.querySelector("button");
+            btn.addEventListener("click", () =>
+            deleteUser(u.id, u.email)
+            );
+
         });
 
         document.getElementById("users-table").style.display = "table";
     }
+
+    async function deleteUser(userId, userEmail) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const session = sessionData?.session;
+
+    if (!session) {
+        alert("Session expired. Please log in again.");
+        location.href = "/login.html";
+        return;
+    }
+
+    // Guardrail: prevent deleting yourself
+    if (session.user.id === userId) {
+        alert("You cannot delete your own account.");
+        return;
+    }
+
+    const confirmed = confirm(
+        `Are you sure you want to delete:\n\n${userEmail}?`
+    );
+
+    if (!confirmed) return;
+
+    const res = await fetch("/api/admin/delete-user", {
+        method: "POST",
+        headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ userId }),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+        alert(result.error || "Failed to delete user");
+        return;
+    }
+
+    loadUsers(session);
+    }
+
     document.getElementById("add-user-btn").addEventListener("click", async () => {
     const email = document.getElementById("new-email").value.trim();
     const password = document.getElementById("new-password").value.trim();
