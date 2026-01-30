@@ -30,12 +30,16 @@
 
         td:first-child {
             font-weight: 700;
+            text-align: right; /* names right */
+            padding-right: 12px;
         }
 
         td:last-child {
             font-weight: 600;
-            text-align: right;
+            text-align: left; /* times left */
+            padding-left: 12px;
         }
+
 
         tr + tr td {
             border-top: 1px solid #eee;
@@ -58,11 +62,21 @@
     SUPABASE_ANON_KEY
   );
 
+    const DISPLAY_ORDER = {
+    "screen_print": 1,
+    "embroidery": 2,
+    "dtf": 3
+    };
+
+
   const tableEl = document.getElementById("production-table");
   function render(rows) {
     tableEl.innerHTML = "";
 
-    rows.forEach(row => {
+    rows
+        .sort((a, b) => DISPLAY_ORDER[a.id] - DISPLAY_ORDER[b.id])
+        .forEach(row => {
+
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${row.label}</td>
