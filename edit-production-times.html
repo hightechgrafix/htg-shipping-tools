@@ -12,17 +12,17 @@
   <form id="timesForm">
     <label>
       Screen Print<br>
-      <input type="text" id="screen_print" required>
+      <input type="text" id="screen_print">
     </label><br><br>
 
     <label>
       Embroidery<br>
-      <input type="text" id="embroidery" required>
+      <input type="text" id="embroidery">
     </label><br><br>
 
     <label>
       DTF<br>
-      <input type="text" id="dtf" required>
+      <input type="text" id="dtf">
     </label><br><br>
 
     <button type="submit">Save Changes</button>
@@ -48,85 +48,100 @@
   </button>
 
   <!-- SCRIPT BLOCK -->
-  <script type="module">
-    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-    // Supabase setup (same as your other tools)
-    const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
-    const SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE";
+  const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
+  const SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE";
 
-    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Page guard (same pattern as add-item.html)
-    async function guardPage() {
-      const { data, error } = await client.auth.getSession();
+  const originalValues = {};
 
-      if (error || !data.session) {
-        window.location.href = "login.html";
-        return false;
-      }
-      return true;
+  async function guardPage() {
+    const { data, error } = await client.auth.getSession();
+    if (error || !data.session) {
+      window.location.href = "login.html";
+      return false;
+    }
+    return true;
+  }
+
+  async function loadProductionTimes() {
+    const { data, error } = await client
+      .from("production_times")
+      .select("id, display_value");
+
+    if (error) {
+      console.error(error);
+      document.getElementById("status").textContent =
+        "Error loading production times.";
+      return;
     }
 
-    async function loadProductionTimes() {
-      const { data, error } = await client
+    data.forEach(row => {
+      originalValues[row.id] = row.display_value;
+      const input = document.getElementById(row.id);
+      if (input) {
+        input.value = row.display_value;
+      }
+    });
+  }
+
+  async function saveProductionTimes() {
+    const status = document.getElementById("status");
+    status.textContent = "Saving...";
+
+    const updates = [];
+
+    ["screen_print", "embroidery", "dtf"].forEach(id => {
+      const input = document.getElementById(id);
+      const newValue = input.value.trim();
+
+      if (
+        newValue !== "" &&
+        newValue !== originalValues[id]
+      ) {
+        updates.push({ id, display_value: newValue });
+      }
+    });
+
+    if (updates.length === 0) {
+      status.textContent = "No changes to save.";
+      return;
+    }
+
+    for (const row of updates) {
+      const { error } = await client
         .from("production_times")
-        .select("id, display_value");
+        .update({ display_value: row.display_value })
+        .eq("id", row.id);
 
       if (error) {
         console.error(error);
-        document.getElementById("status").textContent =
-          "Error loading production times.";
+        status.textContent = "Error saving changes.";
         return;
       }
-
-      data.forEach(row => {
-        const input = document.getElementById(row.id);
-        if (input) {
-          input.value = row.display_value;
-        }
-      });
     }
 
-    async function saveProductionTimes() {
-      const status = document.getElementById("status");
-      status.textContent = "Saving...";
+    status.textContent = "Production times updated successfully!";
+  }
 
-      const updates = [
-        { id: "screen_print", display_value: document.getElementById("screen_print").value },
-        { id: "embroidery",   display_value: document.getElementById("embroidery").value },
-        { id: "dtf",          display_value: document.getElementById("dtf").value }
-      ];
+  document.addEventListener("DOMContentLoaded", async () => {
+    const ok = await guardPage();
+    if (!ok) return;
 
-      for (const row of updates) {
-        const { error } = await client
-          .from("production_times")
-          .update({ display_value: row.display_value })
-          .eq("id", row.id);
+    await loadProductionTimes();
 
-        if (error) {
-          console.error(error);
-          status.textContent = "Error saving changes.";
-          return;
-        }
-      }
-
-      status.textContent = "Production times updated successfully!";
-    }
-
-    document.addEventListener("DOMContentLoaded", async () => {
-      const ok = await guardPage();
-      if (!ok) return;
-
-      await loadProductionTimes();
-
-      const form = document.getElementById("timesForm");
-      form.addEventListener("submit", async (e) => {
+    document
+      .getElementById("timesForm")
+      .addEventListener("submit", async (e) => {
         e.preventDefault();
         await saveProductionTimes();
       });
-    });
-  </script>
+  });
+</script>
+
 
 </body>
 </html>
