@@ -113,9 +113,15 @@
 
     for (const row of updates) {
       const { error } = await client
+        const { data, error } = await client
         .from("production_times")
         .update({ display_value: row.display_value })
-        .eq("id", row.id);
+        .eq("id", row.id)
+        .select();
+        if (!error && data.length === 0) {
+            console.warn("No rows updated for ID:", row.id);
+        }
+
 
       if (error) {
         console.error("SUPABASE UPDATE ERROR:", error);
