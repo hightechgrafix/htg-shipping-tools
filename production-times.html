@@ -51,9 +51,9 @@
     const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vgEY";
 
-    const supabase = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
+    const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
     );
 
     const tableEl = document.getElementById("production-table");
@@ -84,7 +84,7 @@
     }
 
     async function loadData() {
-      const { data, error } = await supabase
+    const { data, error } = await db
         .from("production_times")
         .select("*")
         .order("label");
@@ -101,8 +101,8 @@
     loadData();
 
     // Realtime updates
-    supabase
-      .channel("production-times")
+/*     db
+    .channel("production-times")
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "production_times" },
@@ -110,7 +110,7 @@
           loadData();
         }
       )
-      .subscribe();
+      .subscribe(); */
   </script>
 
 </body>
