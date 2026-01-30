@@ -89,49 +89,59 @@
   }
 
   async function saveProductionTimes() {
-    const status = document.getElementById("status");
-    status.textContent = "Saving...";
+  const status = document.getElementById("status");
+  status.textContent = "Saving...";
 
-    const updates = [];
+  const updates = [];
 
-    ["screen_print", "embroidery", "dtf"].forEach(id => {
-      const input = document.getElementById(id);
-      const newValue = input.value.trim();
+  const fields = ["screen_print", "embroidery", "dtf"];
 
-      if (
-        newValue !== "" &&
-        newValue !== originalValues[id]
-      ) {
-        updates.push({ id, display_value: newValue });
-      }
-    });
+  fields.forEach(id => {
+    const input = document.getElementById(id);
+    if (!input) return;
 
-    if (updates.length === 0) {
-      status.textContent = "No changes to save.";
+    const newValue = input.value.trim();
+    const oldValue = originalValues[id];
+
+    // Only update if:
+    // - field is not empty
+    // - value actually changed
+    if (newValue !== "" && newValue !== oldValue) {
+      updates.push({ id, display_value: newValue });
+    }
+  });
+
+  if (updates.length === 0) {
+    status.textContent = "No changes to save.";
+    return;
+  }
+
+  for (const row of updates) {
+    const { data, error: updateError } = await client
+      .from("production_times")
+      .update({ display_value: row.display_value })
+      .eq("id", row.id)
+      .select();
+
+    if (updateError) {
+      console.error("SUPABASE UPDATE ERROR:", updateError);
+      status.textContent = "Error: " + updateError.message;
       return;
     }
 
-    for (const row of updates) {
-      const { error } = await client
-        const { data, error } = await client
-        .from("production_times")
-        .update({ display_value: row.display_value })
-        .eq("id", row.id)
-        .select();
-        if (!error && data.length === 0) {
-            console.warn("No rows updated for ID:", row.id);
-        }
-
-
-      if (error) {
-        console.error("SUPABASE UPDATE ERROR:", error);
-        status.textContent = "Error: " + error.message;
-        return;
-        }
+    if (!data || data.length === 0) {
+      console.warn("No rows updated for ID:", row.id);
     }
-
-    status.textContent = "Production times updated successfully!";
   }
+
+  // Update local originals so repeated saves work correctly
+  updates.forEach(row => {
+    originalValues[row.id] = row.display_value;
+  });
+
+  status.textContent = "Production times updated successfully!";
+}
+
 
   document.addEventListener("DOMContentLoaded", async () => {
     const ok = await guardPage();
