@@ -252,11 +252,18 @@
       setStatus("Logged in as " + email, "success");
 
       // 🔐 Check admin role from profiles table
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
+      const { data: adminRow, error } = await supabase
+      .from("admins")
+      .select("id")
+      .eq("id", user.id)
+      .single();
+
+      if (error || !adminRow) {
+        setStatus("Access denied: admin only", "error");
+        await supabase.auth.signOut();
+        return;
+      }
+
 
       if (error) {
         console.error("Profile lookup failed:", error);
