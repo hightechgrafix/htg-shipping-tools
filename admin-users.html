@@ -71,6 +71,18 @@
     <strong>Checking permissions…</strong>
   </div>
 
+  <table id="users-table" style="display:none; margin-top:2rem;">
+    <thead>
+        <tr>
+        <th>Email</th>
+        <th>Created</th>
+        <th>Last Sign-in</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -119,6 +131,41 @@
         Logged in as <code>${email}</code><br /><br />
         User management tools will appear here next.
       `);
+
+      loadUsers(session);
+
+    }
+    async function loadUsers(session) {
+        const token = session.access_token;
+
+        const res = await fetch("/api/admin/list-users", {
+            headers: {
+            Authorization: `Bearer ${token}`,
+            },
+        });
+
+        if (!res.ok) {
+            document.getElementById("status").innerHTML =
+            "<strong>Error loading users.</strong>";
+            return;
+        }
+
+        const { users } = await res.json();
+
+        const tbody = document.querySelector("#users-table tbody");
+        tbody.innerHTML = "";
+
+        users.forEach((u) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+            <td>${u.email || ""}</td>
+            <td>${u.created_at ? new Date(u.created_at).toLocaleString() : ""}</td>
+            <td>${u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString() : "—"}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById("users-table").style.display = "table";
     }
 
     init();
