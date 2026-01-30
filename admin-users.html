@@ -207,21 +207,39 @@
             <td>${u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString() : "—"}</td>
             <td>
                 <button
-                class="btn"
-                style="background:#000; padding:4px 8px; font-size:12px;"
-                data-user-id="${u.id}"
-                data-user-email="${u.email}"
+                    class="btn"
+                    style="background:#444; padding:4px 8px; font-size:12px; margin-right:4px;"
+                    data-action="reset"
                 >
-                Delete
+                    Reset Password
                 </button>
-            </td>
+
+                <button
+                    class="btn"
+                    style="background:#000; padding:4px 8px; font-size:12px;"
+                    data-action="delete"
+                >
+                    Delete
+                </button>
+                </td>
             `;
             tbody.appendChild(tr);
-            const btn = tr.querySelector("button");
-            btn.addEventListener("click", () =>
-            deleteUser(u.id, u.email)
-            );
+            const buttons = tr.querySelectorAll("button");
+            buttons.forEach((btn) => {
+            const action = btn.dataset.action;
 
+            if (action === "delete") {
+                btn.addEventListener("click", () =>
+                deleteUser(u.id, u.email)
+                );
+            }
+
+            if (action === "reset") {
+                btn.addEventListener("click", () =>
+                resetPassword(u.email)
+                );
+            }
+            });
         });
 
         document.getElementById("users-table").style.display = "table";
@@ -267,6 +285,41 @@
 
     loadUsers(session);
     }
+    async function resetPassword(email) {
+    const confirmed = confirm(
+        `Send password reset email to:\n\n${email}?`
+    );
+
+    if (!confirmed) return;
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const session = sessionData?.session;
+
+    if (!session) {
+        alert("Session expired. Please log in again.");
+        location.href = "/login.html";
+        return;
+    }
+
+    const res = await fetch("/api/admin/send-reset", {
+        method: "POST",
+        headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ email }),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+        alert(result.error || "Failed to send reset email");
+        return;
+    }
+
+    alert("Password reset email sent.");
+    }
+
 
     document.getElementById("add-user-btn").addEventListener("click", async () => {
     const email = document.getElementById("new-email").value.trim();
