@@ -89,6 +89,14 @@
   }
 
   async function saveProductionTimes() {
+    const { data: sessionData, error: sessionError } =
+        await client.auth.getSession();
+
+    if (sessionError || !sessionData.session) {
+    status.textContent = "Session expired. Please log in again.";
+    return;
+    }
+
   const status = document.getElementById("status");
   status.textContent = "Saving...";
 
