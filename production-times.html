@@ -48,13 +48,18 @@
         td {
             width: 50%;
         }
-
+        .today-date {
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 14px;
+        }
     </style>
-
-  </style>
 </head>
 <body>
-
+    
+  <div id="today-date" class="today-date"></div>
   <table id="production-table"></table>
 
   <script>
@@ -73,6 +78,16 @@
     "dtf": 3
     };
 
+    const dateEl = document.getElementById("today-date");
+
+    const today = new Date();
+    dateEl.textContent =
+    "Today's Date: " +
+    today.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+    });
 
   const tableEl = document.getElementById("production-table");
   function render(rows) {
