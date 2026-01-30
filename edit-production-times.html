@@ -92,36 +92,23 @@
   const status = document.getElementById("status");
   status.textContent = "Saving...";
 
-  const updates = [];
-
   const fields = ["screen_print", "embroidery", "dtf"];
+  let didUpdate = false;
 
-  fields.forEach(id => {
+  for (const id of fields) {
     const input = document.getElementById(id);
-    if (!input) return;
+    if (!input) continue;
 
     const newValue = input.value.trim();
     const oldValue = originalValues[id];
 
-    // Only update if:
-    // - field is not empty
-    // - value actually changed
-    if (newValue !== "" && newValue !== oldValue) {
-      updates.push({ id, display_value: newValue });
-    }
-  });
+    // Skip empty or unchanged fields
+    if (newValue === "" || newValue === oldValue) continue;
 
-  if (updates.length === 0) {
-    status.textContent = "No changes to save.";
-    return;
-  }
-
-  for (const row of updates) {
-    const { data, error: updateError } = await client
+    const { error: updateError } = await client
       .from("production_times")
-      .update({ display_value: row.display_value })
-      .eq("id", row.id)
-      .select("id");
+      .update({ display_value: newValue })
+      .eq("id", id);
 
     if (updateError) {
       console.error("SUPABASE UPDATE ERROR:", updateError);
@@ -129,18 +116,30 @@
       return;
     }
 
-    if (!data || data.length === 0) {
-      console.warn("No rows updated for ID:", row.id);
-    }
+    didUpdate = true;
   }
 
-  // Update local originals so repeated saves work correctly
-  updates.forEach(row => {
-    originalValues[row.id] = row.display_value;
-  });
+  if (!didUpdate) {
+    status.textContent = "No changes to save.";
+    return;
+  }
+
+  // Re-fetch from DB to sync state (authoritative)
+  const { data, error } = await client
+    .from("production_times")
+    .select("id, display_value");
+
+  if (!error && data) {
+    data.forEach(row => {
+      originalValues[row.id] = row.display_value;
+      const input = document.getElementById(row.id);
+      if (input) input.value = row.display_value;
+    });
+  }
 
   status.textContent = "Production times updated successfully!";
 }
+
 
 
   document.addEventListener("DOMContentLoaded", async () => {
