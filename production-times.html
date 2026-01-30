@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Production Times</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Supabase JS CDN -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #ffffff;
+      margin: 0;
+      padding: 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    td {
+      padding: 8px 4px;
+    }
+
+    td:first-child {
+      font-weight: bold;
+    }
+
+    tr + tr td {
+      border-top: 1px solid #eee;
+    }
+
+    .updated {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <table id="production-table"></table>
+  <div class="updated" id="updated-at"></div>
+
+  <script>
+    // 🔴 TODO: replace these
+    const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vgEY";
+
+    const supabase = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+    const tableEl = document.getElementById("production-table");
+    const updatedEl = document.getElementById("updated-at");
+
+    function render(rows) {
+      tableEl.innerHTML = "";
+
+      rows.forEach(row => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>${row.label}</td>
+          <td style="text-align:right;">${row.display_value}</td>
+        `;
+
+        tableEl.appendChild(tr);
+      });
+
+      if (rows.length > 0) {
+        const latest = rows
+          .map(r => new Date(r.updated_at))
+          .sort((a, b) => b - a)[0];
+
+        updatedEl.textContent =
+          "Last updated: " + latest.toLocaleDateString();
+      }
+    }
+
+    async function loadData() {
+      const { data, error } = await supabase
+        .from("production_times")
+        .select("*")
+        .order("label");
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      render(data);
+    }
+
+    // Initial load
+    loadData();
+
+    // Realtime updates
+    supabase
+      .channel("production-times")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "production_times" },
+        payload => {
+          loadData();
+        }
+      )
+      .subscribe();
+  </script>
+
+</body>
+</html>
