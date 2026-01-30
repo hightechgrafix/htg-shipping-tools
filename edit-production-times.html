@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Production Times</title>
+</head>
+
+<body style="font-family: Arial; max-width: 500px; margin: 40px auto;">
+
+  <h2>Edit Production Times</h2>
+
+  <form id="timesForm">
+    <label>
+      Screen Print<br>
+      <input type="text" id="screen_print" required>
+    </label><br><br>
+
+    <label>
+      Embroidery<br>
+      <input type="text" id="embroidery" required>
+    </label><br><br>
+
+    <label>
+      DTF<br>
+      <input type="text" id="dtf" required>
+    </label><br><br>
+
+    <button type="submit">Save Changes</button>
+  </form>
+
+  <p id="status" style="margin-top:20px; font-weight: bold;"></p>
+
+  <br>
+
+  <button 
+    onclick="window.location.href='login.html'"
+    style="
+      background:#b6282c;
+      color:#fff;
+      border:none;
+      padding:8px 14px;
+      border-radius:6px;
+      font-size:14px;
+      cursor:pointer;
+    "
+  >
+    ← Back to Menu
+  </button>
+
+  <!-- SCRIPT BLOCK -->
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    // Supabase setup (same as your other tools)
+    const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE";
+
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Page guard (same pattern as add-item.html)
+    async function guardPage() {
+      const { data, error } = await client.auth.getSession();
+
+      if (error || !data.session) {
+        window.location.href = "login.html";
+        return false;
+      }
+      return true;
+    }
+
+    async function loadProductionTimes() {
+      const { data, error } = await client
+        .from("production_times")
+        .select("id, display_value");
+
+      if (error) {
+        console.error(error);
+        document.getElementById("status").textContent =
+          "Error loading production times.";
+        return;
+      }
+
+      data.forEach(row => {
+        const input = document.getElementById(row.id);
+        if (input) {
+          input.value = row.display_value;
+        }
+      });
+    }
+
+    async function saveProductionTimes() {
+      const status = document.getElementById("status");
+      status.textContent = "Saving...";
+
+      const updates = [
+        { id: "screen_print", display_value: document.getElementById("screen_print").value },
+        { id: "embroidery",   display_value: document.getElementById("embroidery").value },
+        { id: "dtf",          display_value: document.getElementById("dtf").value }
+      ];
+
+      for (const row of updates) {
+        const { error } = await client
+          .from("production_times")
+          .update({ display_value: row.display_value })
+          .eq("id", row.id);
+
+        if (error) {
+          console.error(error);
+          status.textContent = "Error saving changes.";
+          return;
+        }
+      }
+
+      status.textContent = "Production times updated successfully!";
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const ok = await guardPage();
+      if (!ok) return;
+
+      await loadProductionTimes();
+
+      const form = document.getElementById("timesForm");
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        await saveProductionTimes();
+      });
+    });
+  </script>
+
+</body>
+</html>
