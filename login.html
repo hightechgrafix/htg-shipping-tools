@@ -200,11 +200,19 @@
         <button class="menu-btn" onclick="location.href='/add-item.html'">Add Item</button>
         <button class="menu-btn" onclick="location.href='/item-lookup.html'">Item Lookup</button>
         <button class="menu-btn" onclick="location.href='/index.html'">Shipping Calculator</button>
-        <button class="menu-btn" onclick="location.href='/edit-production-times.html'">Edit Production Times</button>
+
+        <!-- ADMIN ONLY -->
+        <button
+          class="menu-btn"
+          id="users-btn"
+          style="display:none;"
+          onclick="location.href='/admin-users.html'"
+        >
+          User Management
+        </button>
 
         <button class="menu-btn logout" id="logout-btn" style="margin-top: 2rem;">Log Out</button>
       </div>
-
     </div>
   </div>
 
@@ -243,24 +251,38 @@
       }
     }
 
-    function handleLoggedIn(session) {
-      const email = session.user?.email || "";
+    async function handleLoggedIn(session) {
+      const user = session.user;
+      const email = user?.email || "";
+
       setStatus("Logged in as " + email, "success");
 
       // Hide login form
       document.getElementById("login-form").style.display = "none";
 
       // Show menu
-      const menu = document.getElementById("menu");
-      menu.style.display = "block";
+      document.getElementById("menu").style.display = "block";
 
-      // Logout button
-      const logoutBtn = document.getElementById("logout-btn");
-      logoutBtn.addEventListener("click", async () => {
+      // 🔐 Check if user is admin
+      const { data: adminRow, error } = await supabase
+        .from("admins")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+
+      if (adminRow) {
+        // Show admin-only button
+        const usersBtn = document.getElementById("users-btn");
+        if (usersBtn) usersBtn.style.display = "block";
+      }
+
+      // Logout
+      document.getElementById("logout-btn").addEventListener("click", async () => {
         await supabase.auth.signOut();
         location.reload();
       });
     }
+
 
 
     form.addEventListener("submit", async (event) => {
