@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Spectrum - Print Batches</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #ffffff;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: #000000;
+      color: #ffffff;
+      padding: 20px 24px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #333;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+
+    .back-btn {
+      background: #b6282c;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .back-btn:hover {
+      background: #9b1f24;
+    }
+
+    .card {
+      background: #000000;
+      color: #ffffff;
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid #333;
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      margin: 0 0 20px 0;
+      font-size: 1.2rem;
+    }
+
+    .batch-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .batch-item {
+      background: #1a1a1a;
+      padding: 16px;
+      border-radius: 8px;
+      border: 2px solid #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: border-color 0.2s;
+    }
+
+    .batch-item:hover {
+      border-color: #b6282c;
+    }
+
+    .batch-info {
+      flex: 1;
+    }
+
+    .batch-color {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .batch-details {
+      font-size: 0.85rem;
+      color: #9ca3af;
+    }
+
+    .print-btn {
+      background: #b6282c;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .print-btn:hover {
+      background: #9b1f24;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #666;
+      padding: 40px;
+      font-style: italic;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #000000;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: #ffffff;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+    }
+
+    .close-btn:hover {
+      color: #ffffff;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 0.25rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background: #111;
+      color: #ffffff;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      font-family: inherit;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: #666;
+    }
+
+    input:focus,
+    textarea:focus {
+      outline: 2px solid #b6282c;
+      border-color: #b6282c;
+    }
+
+    .submit-btn {
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      padding: 14px;
+      background: #b6282c;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .submit-btn:hover {
+      background: #9b1f24;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .barcode-preview {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .barcode-preview img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .barcode-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .secondary-btn {
+      background: #374151;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .secondary-btn:hover {
+      background: #4b5563;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🖨️ Print Batches</h1>
+      <a href="spectrum_dashboard.html" class="back-btn">Back to Dashboard</a>
+    </div>
+    
+    <div class="card">
+      <h2>Ready to Print Batches</h2>
+      <div class="batch-list" id="batch-list">
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Print Modal -->
+  <div class="modal" id="print-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Print Batch</h3>
+        <button class="close-btn" onclick="closePrintModal()">×</button>
+      </div>
+
+      <div id="batch-summary" style="margin-bottom: 20px; padding: 12px; background: #1a1a1a; border-radius: 8px;">
+      </div>
+
+      <form id="print-form">
+        <label for="design">Design Name</label>
+        <input 
+          type="text" 
+          id="design" 
+          placeholder="e.g., Logo Front, Full Back Print" 
+          required 
+          autocomplete="off"
+        />
+
+        <label for="location">Storage Location (Optional)</label>
+        <input 
+          type="text" 
+          id="location" 
+          placeholder="e.g., Rack A3, Shelf 5" 
+          autocomplete="off"
+        />
+
+        <label for="notes">Notes (Optional)</label>
+        <textarea 
+          id="notes" 
+          placeholder="Any additional notes about this pallet..."
+        ></textarea>
+
+        <button type="submit" class="submit-btn" id="submit-btn">
+          Generate Barcode & Complete
+        </button>
+      </form>
+
+      <div id="barcode-section" style="display: none;">
+        <div class="barcode-preview" id="barcode-preview">
+          <svg id="barcode"></svg>
+        </div>
+        <div class="barcode-actions">
+          <button class="secondary-btn" onclick="printBarcode()">🖨️ Print Label</button>
+          <button class="submit-btn" onclick="finishPrinting()">✅ Finish</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.94.1/+esm";
+
+    const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentUser = null;
+    let selectedBatch = null;
+    let generatedBarcode = null;
+
+    // Check auth
+    async function checkAuth() {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        window.location.href = 'login.html';
+        return null;
+      }
+      
+      const { data: spectrumUser } = await supabase
+        .from("spectrum_users")
+        .select("id")
+        .eq("id", session.user.id)
+        .single();
+      
+      if (!spectrumUser) {
+        alert('Access denied');
+        window.location.href = 'login.html';
+        return null;
+      }
+      
+      currentUser = session.user;
+      return session;
+    }
+
+    // Load ready batches
+    async function loadReadyBatches() {
+      try {
+        const { data: batches, error } = await supabase
+          .from('spectrum_inventory_items')
+          .select('*')
+          .eq('status', 'ready')
+          .order('completed_date', { ascending: true });
+        
+        if (error) throw error;
+        
+        const batchList = document.getElementById('batch-list');
+        
+        if (batches.length === 0) {
+          batchList.innerHTML = '<div class="empty-state">No batches ready to print</div>';
+          return;
+        }
+        
+        batchList.innerHTML = '';
+        batches.forEach(batch => {
+          const completedDate = new Date(batch.completed_date).toLocaleDateString();
+          const div = document.createElement('div');
+          div.className = 'batch-item';
+          div.innerHTML = `
+            <div class="batch-info">
+              <div class="batch-color">${batch.color}</div>
+              <div class="batch-details">
+                Batch ID: ${batch.batch_id} | 
+                Quantity: ${batch.quantity.toLocaleString()} pcs | 
+                Completed: ${completedDate}
+              </div>
+            </div>
+            <button class="print-btn" onclick="openPrintModal('${batch.id}')">
+              Print This Batch
+            </button>
+          `;
+          batchList.appendChild(div);
+        });
+        
+      } catch (error) {
+        console.error('Error loading batches:', error);
+        document.getElementById('batch-list').innerHTML = 
+          '<div class="empty-state" style="color: #ff6b6b;">Error loading batches</div>';
+      }
+    }
+
+    // Open print modal
+    window.openPrintModal = async function(batchId) {
+      try {
+        const { data: batch, error } = await supabase
+          .from('spectrum_inventory_items')
+          .select('*')
+          .eq('id', batchId)
+          .single();
+        
+        if (error) throw error;
+        
+        selectedBatch = batch;
+        
+        // Show batch summary
+        document.getElementById('batch-summary').innerHTML = `
+          <strong>Color:</strong> ${batch.color}<br>
+          <strong>Batch ID:</strong> ${batch.batch_id}<br>
+          <strong>Quantity:</strong> ${batch.quantity.toLocaleString()} pieces
+        `;
+        
+        // Reset form
+        document.getElementById('print-form').reset();
+        document.getElementById('barcode-section').style.display = 'none';
+        document.getElementById('print-form').style.display = 'block';
+        
+        // Show modal
+        document.getElementById('print-modal').classList.add('active');
+        document.getElementById('design').focus();
+        
+      } catch (error) {
+        console.error('Error loading batch:', error);
+        alert('Error loading batch details');
+      }
+    }
+
+    window.closePrintModal = function() {
+      document.getElementById('print-modal').classList.remove('active');
+      selectedBatch = null;
+      generatedBarcode = null;
+    }
+
+    // Handle print form submission
+    document.getElementById('print-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Generating...';
+      
+      try {
+        const design = document.getElementById('design').value.trim();
+        const location = document.getElementById('location').value.trim() || null;
+        const notes = document.getElementById('notes').value.trim() || null;
+        
+        // Generate pallet ID and barcode
+        const timestamp = Date.now();
+        const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const palletId = `PALLET-${date}-${timestamp.toString().slice(-6)}`;
+        const barcode = palletId;
+        
+        generatedBarcode = barcode;
+        
+        // Generate barcode image
+        JsBarcode("#barcode", barcode, {
+          format: "CODE128",
+          width: 2,
+          height: 100,
+          displayValue: true,
+          fontSize: 16,
+          margin: 10
+        });
+        
+        // Hide form, show barcode
+        document.getElementById('print-form').style.display = 'none';
+        document.getElementById('barcode-section').style.display = 'block';
+        
+        // Store the print data for when they click "Finish"
+        window.printData = {
+          design,
+          location,
+          notes,
+          palletId,
+          barcode
+        };
+        
+      } catch (error) {
+        console.error('Error generating barcode:', error);
+        alert('Error generating barcode: ' + error.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Generate Barcode & Complete';
+      }
+    });
+
+    // Print barcode
+    window.printBarcode = function() {
+      const svg = document.getElementById('barcode');
+      const serializer = new XMLSerializer();
+      const svgStr = serializer.serializeToString(svg);
+      
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Print Barcode - ${generatedBarcode}</title>
+            <style>
+              body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                margin: 0;
+              }
+              @media print {
+                body { margin: 0; }
+              }
+            </style>
+          </head>
+          <body>
+            ${svgStr}
+            <script>
+              window.onload = function() {
+                window.print();
+              }
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+
+    // Finish printing - update database
+    window.finishPrinting = async function() {
+      try {
+        const { design, location, notes, palletId, barcode } = window.printData;
+        
+        // Update the batch to "printed" status
+        const { error: updateError } = await supabase
+          .from('spectrum_inventory_items')
+          .update({
+            status: 'printed',
+            design: design,
+            location: location,
+            pallet_id: palletId,
+            barcode: barcode,
+            printed_date: new Date().toISOString()
+          })
+          .eq('id', selectedBatch.id);
+        
+        if (updateError) throw updateError;
+        
+        // Log activity
+        await supabase.from('spectrum_activity_log').insert({
+          item_id: selectedBatch.id,
+          action: 'printed',
+          user_id: currentUser.id,
+          details: { 
+            color: selectedBatch.color, 
+            design, 
+            palletId, 
+            barcode 
+          }
+        });
+        
+        alert('Batch marked as printed successfully!');
+        closePrintModal();
+        loadReadyBatches();
+        
+      } catch (error) {
+        console.error('Error updating batch:', error);
+        alert('Error completing print: ' + error.message);
+      }
+    }
+
+    // Initialize
+    checkAuth().then(session => {
+      if (session) {
+        loadReadyBatches();
+      }
+    });
+  </script>
+</body>
+</html>
