@@ -136,6 +136,49 @@
         grid-template-columns: 1fr;
       }
     }
+    .package-item {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .package-tracking {
+      font-size: 1.1rem;
+      font-weight: 700;
+      font-family: monospace;
+      margin-bottom: 8px;
+    }
+
+    .package-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .detail-item {
+      font-size: 0.85rem;
+    }
+
+    .detail-label {
+      color: #6b7280;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+    }
+
+    .detail-value {
+      color: #111827;
+      margin-top: 2px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #9ca3af;
+    }
   </style>
 </head>
 <body>
@@ -221,6 +264,35 @@
 
       <div id="success-msg" class="success-message">
         ✅ Package logged successfully!
+      </div>
+    </div>
+    <!-- SEARCH SECTION -->
+    <div class="card" style="margin-top: 20px;">
+      <h2>Search Packages</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <input 
+            type="text" 
+            id="search-input" 
+            placeholder="Search by tracking #, location, or person..."
+            class="large-input"
+          />
+        </div>
+        
+        <div class="form-group">
+          <select id="building-filter">
+            <option value="">All Buildings</option>
+            <option value="1001">1001</option>
+            <option value="1000">1000</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="search-btn">🔍 Search</button>
+
+      <div id="search-results" style="margin-top: 20px;">
+        <!-- Results will appear here -->
       </div>
     </div>
   </div>
@@ -311,6 +383,129 @@
         alert('Error logging package: ' + error.message);
       }
     });
+    // SEARCH FUNCTIONALITY
+    const searchBtn = document.getElementById('search-btn');
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    const buildingFilter = document.getElementById('building-filter');
+
+    // Allow Enter key to search
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        searchBtn.click();
+      }
+    });
+
+    searchBtn.addEventListener('click', async () => {
+      const searchTerm = searchInput.value.trim().toLowerCase();
+      const building = buildingFilter.value;
+
+      if (!searchTerm && !building) {
+        searchResults.innerHTML = '<p class="empty-state">Enter a search term or select a building</p>';
+        return;
+      }
+
+      searchResults.innerHTML = '<p class="empty-state">Searching...</p>';
+
+      try {
+        let query = supabase
+          .from('packages')
+          .select('*')
+          .eq('status', 'active');
+
+        if (building) {
+          query = query.eq('building', building);
+        }
+
+        const { data, error } = await query.order('received_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Filter by search term if provided
+        let results = data;
+        if (searchTerm) {
+          results = data.filter(pkg => 
+            pkg.tracking_number.toLowerCase().includes(searchTerm) ||
+            pkg.location.toLowerCase().includes(searchTerm) ||
+            pkg.received_by.toLowerCase().includes(searchTerm) ||
+            (pkg.vendor && pkg.vendor.toLowerCase().includes(searchTerm))
+          );
+        }
+
+        displayResults(results);
+
+      } catch (error) {
+        console.error('Search error:', error);
+        searchResults.innerHTML = '<p class="empty-state">Error searching packages</p>';
+      }
+    });
+
+    function displayResults(packages) {
+      if (packages.length === 0) {
+        searchResults.innerHTML = '<p class="empty-state">No packages found</p>';
+        return;
+      }
+
+      searchResults.innerHTML = packages.map(pkg => {
+        const date = new Date(pkg.received_at);
+        const timeAgo = getTimeAgo(date);
+
+        return `
+          <div class="package-item">
+            <div class="package-tracking">${pkg.tracking_number}</div>
+            
+            <div class="package-details">
+              <div class="detail-item">
+                <div class="detail-label">Location</div>
+                <div class="detail-value">${pkg.location}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Building</div>
+                <div class="detail-value">${pkg.building}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Received By</div>
+                <div class="detail-value">${pkg.received_by}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Received</div>
+                <div class="detail-value">${timeAgo}</div>
+              </div>
+              ${pkg.vendor ? `
+              <div class="detail-item">
+                <div class="detail-label">Vendor</div>
+                <div class="detail-value">${pkg.vendor}</div>
+              </div>
+              ` : ''}
+              ${pkg.notes ? `
+              <div class="detail-item" style="grid-column: 1 / -1;">
+                <div class="detail-label">Items & Notes</div>
+                <div class="detail-value">${pkg.notes}</div>
+              </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function getTimeAgo(date) {
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffMins < 60) {
+        return `${diffMins} min${diffMins !== 1 ? 's' : ''} ago`;
+      } else if (diffHours < 24) {
+        return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+      } else if (diffDays < 7) {
+        return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+      } else {
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+    }
   </script>
 </body>
 </html>
