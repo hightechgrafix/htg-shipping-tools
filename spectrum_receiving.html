@@ -383,6 +383,11 @@
         return itemColor === normalizedColor;
         });
         
+        console.log('Normalized Color:', normalizedColor);
+        console.log('All Limbo:', allLimbo);
+        console.log('Filtered Limbo Items:', limboItems);
+        console.log('Limbo IDs to delete:', limboItems.map(item => item.id));
+
         const currentLimbo = limboItems.reduce((sum, item) => sum + item.quantity, 0);
         const totalQuantity = currentLimbo + quantity;
         
