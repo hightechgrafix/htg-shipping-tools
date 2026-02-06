@@ -188,6 +188,22 @@
     .btn-clear:hover {
       background: #059669;
     }
+
+    .btn-edit {
+      padding: 6px 12px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      margin-right: 6px;
+    }
+
+    .btn-edit:hover {
+      background: #2563eb;
+    }
   </style>
 </head>
 <body>
@@ -316,6 +332,7 @@
             <td>${pkg.notes || '-'}</td>
             <td>${timeAgo}</td>
             <td>
+              <button class="btn-edit" onclick="editPackage('${pkg.id}')">✏️ Edit</button>
               <button class="btn-clear" onclick="clearPackage('${pkg.id}')">✓ Clear</button>
             </td>
           </tr>
@@ -425,6 +442,52 @@
       } catch (error) {
         console.error('Error:', error);
         alert('Error clearing package');
+      }
+    };
+    // Edit package function
+    window.editPackage = async function(packageId) {
+      try {
+        // Get the package data
+        const { data: pkg, error } = await supabase
+          .from('packages')
+          .select('*')
+          .eq('id', packageId)
+          .single();
+
+        if (error) throw error;
+
+        // Prompt for new values (pre-filled with current values)
+        const newLocation = prompt('Location:', pkg.location);
+        if (newLocation === null) return; // User cancelled
+
+        const newBuilding = prompt('Building (1001 or 1000):', pkg.building);
+        if (newBuilding === null) return;
+
+        const newVendor = prompt('Vendor (leave blank for none):', pkg.vendor || '');
+        if (newVendor === null) return;
+
+        const newNotes = prompt('Items & Notes:', pkg.notes || '');
+        if (newNotes === null) return;
+
+        // Update the package
+        const { error: updateError } = await supabase
+          .from('packages')
+          .update({
+            location: newLocation.trim(),
+            building: newBuilding.trim(),
+            vendor: newVendor.trim() || null,
+            notes: newNotes.trim() || null
+          })
+          .eq('id', packageId);
+
+        if (updateError) throw updateError;
+
+        // Reload the packages
+        await loadPackages();
+
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error editing package');
       }
     };
   </script>
