@@ -197,6 +197,7 @@
       <h1>📦 Spectrum Inventory Dashboard</h1>
       <div class="user-info">
         <span id="userEmail"></span>
+        <button class="back-btn" onclick="exportCSV()" style="margin-right: 10px;">📊 Export CSV</button>
         <a href="login.html" class="back-btn">Back to Menu</a>
       </div>
     </div>
@@ -428,6 +429,91 @@
         setInterval(loadDashboardData, 30000);
       }
     });
+
+    // Export inventory to CSV
+    async function exportCSV() {
+      try {
+        // Get all inventory items
+        const { data: items, error } = await supabase
+          .from('spectrum_inventory_items')
+          .select('*')
+          .order('color', { ascending: true })
+          .order('status', { ascending: true });
+        
+        if (error) throw error;
+        
+        if (items.length === 0) {
+          alert('No inventory data to export');
+          return;
+        }
+        
+        // Create CSV header
+        const headers = [
+          'Color',
+          'Quantity',
+          'Status',
+          'Batch ID',
+          'Pallet ID',
+          'Barcode',
+          'Design',
+          'Shipping Destination',
+          'Storage Location',
+          'Received Date',
+          'Completed Date',
+          'Printed Date',
+          'Shipped Date'
+        ];
+        
+        // Create CSV rows
+        const rows = items.map(item => {
+          return [
+            item.color,
+            item.quantity,
+            item.status,
+            item.batch_id || '',
+            item.pallet_id || '',
+            item.barcode || '',
+            item.design || '',
+            item.shipping_destination || '',
+            item.location || '',
+            item.received_date ? new Date(item.received_date).toLocaleDateString() : '',
+            item.completed_date ? new Date(item.completed_date).toLocaleDateString() : '',
+            item.printed_date ? new Date(item.printed_date).toLocaleDateString() : '',
+            item.shipped_date ? new Date(item.shipped_date).toLocaleDateString() : ''
+          ].map(field => {
+            // Escape quotes and wrap in quotes if contains comma
+            const str = String(field);
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+              return '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
+          }).join(',');
+        });
+        
+        // Combine header and rows
+        const csv = [headers.join(','), ...rows].join('\n');
+        
+        // Create download link
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        const today = new Date().toISOString().slice(0, 10);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `spectrum_inventory_${today}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        alert('CSV exported successfully!');
+        
+      } catch (error) {
+        console.error('Error exporting CSV:', error);
+        alert('Error exporting CSV: ' + error.message);
+      }
+    }
   </script>
 </body>
 </html>
