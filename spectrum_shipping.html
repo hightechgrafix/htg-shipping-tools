@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Spectrum - Inventory & Shipping</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #ffffff;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: #000000;
+      color: #ffffff;
+      padding: 20px 24px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #333;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+
+    .back-btn {
+      background: #b6282c;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .back-btn:hover {
+      background: #9b1f24;
+    }
+
+    .card {
+      background: #000000;
+      color: #ffffff;
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid #333;
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      margin: 0 0 20px 0;
+      font-size: 1.2rem;
+    }
+
+    .search-bar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background: #111;
+      color: #ffffff;
+      font-size: 1rem;
+    }
+
+    .search-input::placeholder {
+      color: #666;
+    }
+
+    .search-input:focus {
+      outline: 2px solid #b6282c;
+      border-color: #b6282c;
+    }
+
+    .filter-btn {
+      background: #374151;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .filter-btn:hover {
+      background: #4b5563;
+    }
+
+    .filter-btn.active {
+      background: #b6282c;
+    }
+
+    .pallet-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .pallet-table th {
+      background: #1a1a1a;
+      padding: 12px;
+      text-align: left;
+      font-size: 0.85rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+      border-bottom: 2px solid #333;
+    }
+
+    .pallet-table td {
+      padding: 12px;
+      border-bottom: 1px solid #333;
+      color: #ffffff;
+    }
+
+    .pallet-table tr:hover {
+      background: #1a1a1a;
+    }
+
+    .pallet-color {
+      font-weight: 600;
+      color: #60a5fa;
+    }
+
+    .pallet-design {
+      color: #34d399;
+    }
+
+    .pallet-destination {
+      color: #fbbf24;
+    }
+
+    .barcode-link {
+      font-family: monospace;
+      color: #9ca3af;
+      font-size: 0.85rem;
+    }
+
+    .ship-btn {
+      background: #b6282c;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .ship-btn:hover {
+      background: #9b1f24;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #666;
+      padding: 40px;
+      font-style: italic;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+      padding: 16px;
+      background: #1a1a1a;
+      border-radius: 8px;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #60a5fa;
+    }
+
+    /* Modal for barcode scan */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #000000;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: #ffffff;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+    }
+
+    .close-btn:hover {
+      color: #ffffff;
+    }
+
+    .pallet-details {
+      background: #1a1a1a;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .pallet-details p {
+      margin: 8px 0;
+      line-height: 1.6;
+    }
+
+    .pallet-details strong {
+      color: #9ca3af;
+    }
+
+    .confirm-ship-btn {
+      width: 100%;
+      background: #b6282c;
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .confirm-ship-btn:hover {
+      background: #9b1f24;
+    }
+
+    .confirm-ship-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚚 Inventory & Shipping</h1>
+      <a href="spectrum_dashboard.html" class="back-btn">Back to Dashboard</a>
+    </div>
+    
+    <div class="card">
+      <h2>Printed Inventory</h2>
+      
+      <div class="stats-row" id="stats-row">
+        <div class="stat-item">
+          <div class="stat-label">Total Pallets</div>
+          <div class="stat-value" id="total-pallets">-</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Total Pieces</div>
+          <div class="stat-value" id="total-pieces">-</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Unique Designs</div>
+          <div class="stat-value" id="unique-designs">-</div>
+        </div>
+      </div>
+
+      <div class="search-bar">
+        <input 
+          type="text" 
+          id="search-input" 
+          class="search-input" 
+          placeholder="Search by color, design, barcode, location, or destination..."
+        />
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="pallet-table" id="pallet-table">
+          <thead>
+            <tr>
+              <th>Color</th>
+              <th>Design</th>
+              <th>Destination</th>
+              <th>Quantity</th>
+              <th>Location</th>
+              <th>Barcode</th>
+              <th>Printed Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="pallet-tbody">
+            <tr><td colspan="8" class="empty-state">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ship Confirmation Modal -->
+  <div class="modal" id="ship-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Ship Pallet</h3>
+        <button class="close-btn" onclick="closeShipModal()">×</button>
+      </div>
+
+      <div class="pallet-details" id="ship-details">
+      </div>
+
+      <button class="confirm-ship-btn" id="confirm-ship-btn" onclick="confirmShip()">
+        ✅ Confirm Shipment
+      </button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.94.1/+esm";
+
+    const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentUser = null;
+    let allPallets = [];
+    let selectedPallet = null;
+
+    // Check auth
+    async function checkAuth() {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        window.location.href = 'login.html';
+        return null;
+      }
+      
+      const { data: spectrumUser } = await supabase
+        .from("spectrum_users")
+        .select("id")
+        .eq("id", session.user.id)
+        .single();
+      
+      if (!spectrumUser) {
+        alert('Access denied');
+        window.location.href = 'login.html';
+        return null;
+      }
+      
+      currentUser = session.user;
+      return session;
+    }
+
+    // Load printed pallets
+    async function loadPrintedPallets() {
+      try {
+        const { data: pallets, error } = await supabase
+          .from('spectrum_inventory_items')
+          .select('*')
+          .eq('status', 'printed')
+          .order('printed_date', { ascending: false });
+        
+        if (error) throw error;
+        
+        allPallets = pallets;
+        
+        // Update stats
+        updateStats(pallets);
+        
+        // Display pallets
+        displayPallets(pallets);
+        
+      } catch (error) {
+        console.error('Error loading pallets:', error);
+        document.getElementById('pallet-tbody').innerHTML = 
+          '<tr><td colspan="8" class="empty-state" style="color: #ff6b6b;">Error loading inventory</td></tr>';
+      }
+    }
+
+    // Update stats
+    function updateStats(pallets) {
+      const totalPallets = pallets.length;
+      const totalPieces = pallets.reduce((sum, p) => sum + p.quantity, 0);
+      const uniqueDesigns = new Set(pallets.map(p => p.design)).size;
+      
+      document.getElementById('total-pallets').textContent = totalPallets;
+      document.getElementById('total-pieces').textContent = totalPieces.toLocaleString();
+      document.getElementById('unique-designs').textContent = uniqueDesigns;
+    }
+
+    // Display pallets
+    function displayPallets(pallets) {
+      const tbody = document.getElementById('pallet-tbody');
+      
+      if (pallets.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No printed inventory in stock</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = '';
+      pallets.forEach(pallet => {
+        const printedDate = new Date(pallet.printed_date).toLocaleDateString();
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><span class="pallet-color">${pallet.color}</span></td>
+          <td><span class="pallet-design">${pallet.design}</span></td>
+          <td><span class="pallet-destination">${pallet.shipping_destination || '-'}</span></td>
+          <td>${pallet.quantity.toLocaleString()}</td>
+          <td>${pallet.location || '-'}</td>
+          <td><span class="barcode-link">${pallet.barcode}</span></td>
+          <td>${printedDate}</td>
+          <td>
+            <button class="ship-btn" onclick="openShipModal('${pallet.id}')">
+              Ship
+            </button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Search functionality
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase().trim();
+      
+      if (searchTerm === '') {
+        displayPallets(allPallets);
+        return;
+      }
+      
+      const filtered = allPallets.filter(pallet => {
+        return (
+          pallet.color.toLowerCase().includes(searchTerm) ||
+          pallet.design.toLowerCase().includes(searchTerm) ||
+          pallet.barcode.toLowerCase().includes(searchTerm) ||
+          (pallet.location && pallet.location.toLowerCase().includes(searchTerm)) ||
+          (pallet.shipping_destination && pallet.shipping_destination.toLowerCase().includes(searchTerm))
+        );
+      });
+      
+      displayPallets(filtered);
+    });
+
+    // Open ship modal
+    window.openShipModal = async function(palletId) {
+      try {
+        const { data: pallet, error } = await supabase
+          .from('spectrum_inventory_items')
+          .select('*')
+          .eq('id', palletId)
+          .single();
+        
+        if (error) throw error;
+        
+        selectedPallet = pallet;
+        
+        // Show pallet details
+        document.getElementById('ship-details').innerHTML = `
+          <p><strong>Color:</strong> ${pallet.color}</p>
+          <p><strong>Design:</strong> ${pallet.design}</p>
+          <p><strong>Destination:</strong> ${pallet.shipping_destination || 'Not specified'}</p>
+          <p><strong>Quantity:</strong> ${pallet.quantity.toLocaleString()} pieces</p>
+          <p><strong>Pallet ID:</strong> ${pallet.pallet_id}</p>
+          <p><strong>Barcode:</strong> ${pallet.barcode}</p>
+          <p><strong>Location:</strong> ${pallet.location || 'Not specified'}</p>
+        `;
+        
+        // Show modal
+        document.getElementById('ship-modal').classList.add('active');
+        
+      } catch (error) {
+        console.error('Error loading pallet:', error);
+        alert('Error loading pallet details');
+      }
+    }
+
+    window.closeShipModal = function() {
+      document.getElementById('ship-modal').classList.remove('active');
+      selectedPallet = null;
+    }
+
+    // Confirm shipment
+    window.confirmShip = async function() {
+      const confirmBtn = document.getElementById('confirm-ship-btn');
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Shipping...';
+      
+      try {
+        // Update status to shipped
+        const { error: updateError } = await supabase
+          .from('spectrum_inventory_items')
+          .update({
+            status: 'shipped',
+            shipped_date: new Date().toISOString()
+          })
+          .eq('id', selectedPallet.id);
+        
+        if (updateError) throw updateError;
+        
+        // Log activity
+        await supabase.from('spectrum_activity_log').insert({
+          item_id: selectedPallet.id,
+          action: 'shipped',
+          user_id: currentUser.id,
+          details: { 
+            color: selectedPallet.color,
+            design: selectedPallet.design,
+            destination: selectedPallet.shipping_destination,
+            barcode: selectedPallet.barcode
+          }
+        });
+        
+        alert('Pallet shipped successfully!');
+        closeShipModal();
+        loadPrintedPallets();
+        
+      } catch (error) {
+        console.error('Error shipping pallet:', error);
+        alert('Error shipping pallet: ' + error.message);
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = '✅ Confirm Shipment';
+      }
+    }
+
+    // Initialize
+    checkAuth().then(session => {
+      if (session) {
+        loadPrintedPallets();
+      }
+    });
+  </script>
+</body>
+</html>
