@@ -189,6 +189,16 @@
           📦 Spectrum Inventory
         </button>
 
+        <!-- Package Tracker button - shown to package_users -->
+        <button
+          class="menu-btn"
+          id="package-btn"
+          style="display:none;"
+          onclick="location.href='package-tracker.html'"
+        >
+          📦 Package Tracker
+        </button>
+
         <!-- Original buttons - shown to everyone except receiving-only users -->
         <div id="standard-tools">
           <button class="menu-btn" onclick="location.href='edit-production-times.html'">Edit Production Times</button>  
@@ -283,6 +293,18 @@
         if (!adminRow) {
           document.getElementById("standard-tools").style.display = "none";
         }
+      }
+
+      // Check if user has Package Tracker access
+      const { data: packageUser } = await supabase
+        .from("package_users")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+
+      if (packageUser) {
+        // Show Package Tracker button
+        document.getElementById("package-btn").style.display = "block";
       }
 
       // Logout
