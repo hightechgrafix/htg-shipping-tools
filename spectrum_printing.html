@@ -527,39 +527,17 @@
 
     // Print barcode
     window.printBarcode = function() {
-      const svg = document.getElementById('barcode');
-      const serializer = new XMLSerializer();
-      const svgStr = serializer.serializeToString(svg);
-      
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Print Barcode - ${generatedBarcode}</title>
-            <style>
-              body {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: 100vh;
-                margin: 0;
-              }
-              @media print {
-                body { margin: 0; }
-              }
-            </style>
-          </head>
-          <body>
-            ${svgStr}
-            <script>
-              window.onload = function() {
-                window.print();
-              }
-            </script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
+        const svg = document.getElementById('barcode');
+        const serializer = new XMLSerializer();
+        const svgStr = serializer.serializeToString(svg);
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write('<html><head><title>Print Barcode - ' + generatedBarcode + '</title>');
+        printWindow.document.write('<style>body { display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; } @media print { body { margin: 0; } }</style>');
+        printWindow.document.write('</head><body>' + svgStr);
+        printWindow.document.write('<script>window.onload = function() { window.print(); }<\/script>');
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
     }
 
     // Finish printing - update database
