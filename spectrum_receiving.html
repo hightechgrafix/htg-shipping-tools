@@ -386,14 +386,14 @@
             
             // DELETE old limbo items for this color FIRST
             if (limboItems.length > 0) {
+            const limboIds = limboItems.map(item => item.id);
             const { error: deleteError } = await supabase
                 .from('spectrum_inventory_items')
                 .delete()
-                .eq('status', 'limbo')
-                .ilike('color', normalizedColor);
+                .in('id', limboIds);
             
             if (deleteError) throw deleteError;
-            }
+}   
             
             // Create ready batches
             for (let i = 0; i < completeBatches; i++) {
@@ -437,14 +437,13 @@
             
         } else {
             // Case 2: All goes to limbo
-            
             // Delete old limbo items for this color FIRST
             if (limboItems.length > 0) {
+            const limboIds = limboItems.map(item => item.id);
             const { error: deleteError } = await supabase
                 .from('spectrum_inventory_items')
                 .delete()
-                .eq('status', 'limbo')
-                .ilike('color', normalizedColor);
+                .in('id', limboIds);
             
             if (deleteError) throw deleteError;
             }
