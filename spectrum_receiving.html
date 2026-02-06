@@ -401,21 +401,12 @@
             // DELETE old limbo items for this color FIRST
             if (limboItems.length > 0) {
             const limboIds = limboItems.map(item => item.id);
-            const { error: deleteError } = await supabase
-                .from('spectrum_inventory_items')
-                .delete()
-                .in('id', limboIds);
-            
-            if (deleteError) throw deleteError;
-            } 
-
-            if (limboItems.length > 0) {
-            const limboIds = limboItems.map(item => item.id);
             console.log('About to delete IDs:', limboIds);
             const { data: deleteResult, error: deleteError } = await supabase
                 .from('spectrum_inventory_items')
                 .delete()
                 .in('id', limboIds);
+                .select();
             
             console.log('Delete result:', deleteResult);
             console.log('Delete error:', deleteError);
@@ -466,15 +457,6 @@
         } else {
             // Case 2: All goes to limbo
             // Delete old limbo items for this color FIRST
-            if (limboItems.length > 0) {
-            const limboIds = limboItems.map(item => item.id);
-            const { error: deleteError } = await supabase
-                .from('spectrum_inventory_items')
-                .delete()
-                .in('id', limboIds);
-            
-            if (deleteError) throw deleteError;
-            }
             
             if (limboItems.length > 0) {
             const limboIds = limboItems.map(item => item.id);
@@ -483,6 +465,7 @@
                 .from('spectrum_inventory_items')
                 .delete()
                 .in('id', limboIds);
+                .select();
             
             console.log('Delete result:', deleteResult);
             console.log('Delete error:', deleteError);
@@ -528,8 +511,10 @@
         document.getElementById('receive-form').reset();
         document.getElementById('color').focus();
         
-        // Reload limbo status
-        await loadLimboStatus();
+        // Force a small delay to ensure database has processed the delete
+        setTimeout(() => {
+        loadLimboStatus();
+        }, 500);
         
         } catch (error) {
         console.error('Error receiving items:', error);
