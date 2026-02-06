@@ -329,22 +329,27 @@
     const colorStats = {};
     
     items.forEach(item => {
-        if (!colorStats[item.color]) {
+    if (!colorStats[item.color]) {
         colorStats[item.color] = {
-            limbo: 0,
-            ready: 0,
-            out_for_printing: 0,
-            printed: 0,
-            shipped: 0,
-            limboIds: [],
-            readyIds: [],
-            outForPrintingIds: [],
-            printedIds: [],
-            shippedIds: []
+        limbo: 0,
+        ready: 0,
+        out_for_printing: 0,
+        printed: 0,
+        shipped: 0,
+        limboIds: [],
+        readyIds: [],
+        out_for_printingIds: [],
+        printedIds: [],
+        shippedIds: []
         };
-        }
-        colorStats[item.color][item.status] += item.quantity;
-        colorStats[item.color][item.status + 'Ids'].push(item.id);
+    }
+    
+    // Handle the status
+    const status = item.status;
+    const statusKey = status + 'Ids';
+    
+    colorStats[item.color][status] += item.quantity;
+    colorStats[item.color][statusKey].push(item.id);
     });
     
     const tbody = document.getElementById('colorTableBody');
@@ -370,8 +375,7 @@
         </td>
         <td>
             ${stats.out_for_printing.toLocaleString()}
-            ${stats.out_for_printing > 0 ? `<button class="mini-delete-btn" onclick="deleteColorStatus('${color}', 'out_for_printing', ${JSON.stringify(stats.outForPrintingIds).replace(/"/g, '&quot;')})">🗑️</button>` : ''}
-        </td>
+            ${stats.out_for_printing > 0 ? `<button class="mini-delete-btn" onclick="deleteColorStatus('${color}', 'out_for_printing', ${JSON.stringify(stats.out_for_printingIds).replace(/"/g, '&quot;')})">🗑️</button>` : ''}        </td>
         <td>
             ${stats.printed.toLocaleString()}
             ${stats.printed > 0 ? `<button class="mini-delete-btn" onclick="deleteColorStatus('${color}', 'printed', ${JSON.stringify(stats.printedIds).replace(/"/g, '&quot;')})">🗑️</button>` : ''}
