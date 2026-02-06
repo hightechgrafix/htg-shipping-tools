@@ -394,16 +394,23 @@
           const completeBatches = Math.floor(totalQuantity / 1000);
           const remainder = totalQuantity % 1000;
           
-          // DELETE old limbo items for this color FIRST
-          if (limboItems.length > 0) {
-            const limboIds = limboItems.map(item => item.id);
-            const { error: deleteError } = await supabase
-              .from('spectrum_inventory_items')
-              .delete()
-              .in('id', limboIds);
-            
-            if (deleteError) throw deleteError;
-          }
+
+        // DELETE old limbo items for this color FIRST
+        if (limboItems.length > 0) {
+        const limboIds = limboItems.map(item => item.id);
+        console.log('🗑️ Attempting to delete limbo IDs:', limboIds);
+        
+        const { data: deleteData, error: deleteError } = await supabase
+            .from('spectrum_inventory_items')
+            .delete()
+            .in('id', limboIds)
+            .select();
+        
+        console.log('✅ Delete completed. Deleted rows:', deleteData);
+        console.log('❌ Delete error:', deleteError);
+        
+        if (deleteError) throw deleteError;
+        }
           
           // Create ready batches
           for (let i = 0; i < completeBatches; i++) {
@@ -448,16 +455,22 @@
         } else {
           // Case 2: All goes to limbo
           
-          // Delete old limbo items for this color FIRST
-          if (limboItems.length > 0) {
+          // DELETE old limbo items for this color FIRST
+            if (limboItems.length > 0) {
             const limboIds = limboItems.map(item => item.id);
-            const { error: deleteError } = await supabase
-              .from('spectrum_inventory_items')
-              .delete()
-              .in('id', limboIds);
+            console.log('🗑️ Attempting to delete limbo IDs:', limboIds);
+            
+            const { data: deleteData, error: deleteError } = await supabase
+                .from('spectrum_inventory_items')
+                .delete()
+                .in('id', limboIds)
+                .select();
+            
+            console.log('✅ Delete completed. Deleted rows:', deleteData);
+            console.log('❌ Delete error:', deleteError);
             
             if (deleteError) throw deleteError;
-          }
+            }
           
           // Create new consolidated limbo entry
           const { error: insertError } = await supabase
