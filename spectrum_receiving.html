@@ -407,8 +407,22 @@
                 .in('id', limboIds);
             
             if (deleteError) throw deleteError;
-}   
+            } 
+
+            if (limboItems.length > 0) {
+            const limboIds = limboItems.map(item => item.id);
+            console.log('About to delete IDs:', limboIds);
+            const { data: deleteResult, error: deleteError } = await supabase
+                .from('spectrum_inventory_items')
+                .delete()
+                .in('id', limboIds);
             
+            console.log('Delete result:', deleteResult);
+            console.log('Delete error:', deleteError);
+            
+            if (deleteError) throw deleteError;
+            }
+
             // Create ready batches
             for (let i = 0; i < completeBatches; i++) {
             const batchId = `BATCH-${Date.now()}-${i + 1}`;
@@ -462,6 +476,20 @@
             if (deleteError) throw deleteError;
             }
             
+            if (limboItems.length > 0) {
+            const limboIds = limboItems.map(item => item.id);
+            console.log('About to delete IDs:', limboIds);
+            const { data: deleteResult, error: deleteError } = await supabase
+                .from('spectrum_inventory_items')
+                .delete()
+                .in('id', limboIds);
+            
+            console.log('Delete result:', deleteResult);
+            console.log('Delete error:', deleteError);
+            
+            if (deleteError) throw deleteError;
+            }
+
             // Create new consolidated limbo entry
             const { error: insertError } = await supabase
             .from('spectrum_inventory_items')
