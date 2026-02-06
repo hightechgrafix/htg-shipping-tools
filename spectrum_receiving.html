@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Spectrum - Receive Items</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #ffffff;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: #000000;
+      color: #ffffff;
+      padding: 20px 24px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #333;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+
+    .back-btn {
+      background: #b6282c;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .back-btn:hover {
+      background: #9b1f24;
+    }
+
+    .card {
+      background: #000000;
+      color: #ffffff;
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid #333;
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      margin: 0 0 20px 0;
+      font-size: 1.2rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 0.25rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background: #111;
+      color: #ffffff;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    input::placeholder {
+      color: #666;
+    }
+
+    input:focus {
+      outline: 2px solid #b6282c;
+      border-color: #b6282c;
+    }
+
+    .submit-btn {
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      padding: 14px;
+      background: #b6282c;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .submit-btn:hover {
+      background: #9b1f24;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 1rem;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      text-align: center;
+      display: none;
+    }
+
+    .status.success {
+      background: #065f46;
+      color: #d1fae5;
+      display: block;
+    }
+
+    .status.error {
+      background: #991b1b;
+      color: #fecaca;
+      display: block;
+    }
+
+    .limbo-summary {
+      background: #1a1a1a;
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid #333;
+    }
+
+    .limbo-summary h3 {
+      margin: 0 0 12px 0;
+      font-size: 1rem;
+      color: #fbbf24;
+    }
+
+    .limbo-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #333;
+    }
+
+    .limbo-item:last-child {
+      border-bottom: none;
+    }
+
+    .limbo-color {
+      font-weight: 600;
+    }
+
+    .limbo-qty {
+      color: #9ca3af;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #666;
+      padding: 20px;
+      font-style: italic;
+    }
+
+    .confirmation-box {
+      background: #1a1a1a;
+      padding: 20px;
+      border-radius: 8px;
+      border: 2px solid #b6282c;
+      margin-top: 1rem;
+    }
+
+    .confirmation-box h3 {
+      margin: 0 0 12px 0;
+      color: #34d399;
+      font-size: 1.1rem;
+    }
+
+    .confirmation-box p {
+      margin: 8px 0;
+      line-height: 1.6;
+    }
+
+    .confirmation-box strong {
+      color: #fbbf24;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📦 Receive Items</h1>
+      <a href="spectrum_dashboard.html" class="back-btn">Back to Dashboard</a>
+    </div>
+    
+    <div class="card">
+      <h2>Check In New Apparel</h2>
+      
+      <form id="receive-form">
+        <label for="color">Color</label>
+        <input 
+          type="text" 
+          id="color" 
+          placeholder="e.g., Black, White, Navy Blue" 
+          required 
+          autocomplete="off"
+        />
+        
+        <label for="quantity">Quantity</label>
+        <input 
+          type="number" 
+          id="quantity" 
+          placeholder="Enter number of pieces" 
+          required 
+          min="1"
+          step="1"
+        />
+        
+        <button type="submit" class="submit-btn" id="submit-btn">
+          Check In Items
+        </button>
+      </form>
+      
+      <div id="status" class="status"></div>
+      <div id="confirmation" style="display: none;"></div>
+    </div>
+    
+    <div class="card">
+      <h2>Current Limbo Status</h2>
+      <div class="limbo-summary" id="limbo-summary">
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+  </div>
+  
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.94.1/+esm";
+
+    const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentUser = null;
+
+    // Check auth
+    async function checkAuth() {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        window.location.href = 'login.html';
+        return null;
+      }
+      
+      const { data: spectrumUser } = await supabase
+        .from("spectrum_users")
+        .select("id")
+        .eq("id", session.user.id)
+        .single();
+      
+      if (!spectrumUser) {
+        alert('Access denied');
+        window.location.href = 'login.html';
+        return null;
+      }
+      
+      currentUser = session.user;
+      return session;
+    }
+
+    // Load limbo status
+    async function loadLimboStatus() {
+      try {
+        const { data: items, error } = await supabase
+          .from('spectrum_inventory_items')
+          .select('*')
+          .eq('status', 'limbo')
+          .order('color');
+        
+        if (error) throw error;
+        
+        const limboSummary = document.getElementById('limbo-summary');
+        
+        if (items.length === 0) {
+          limboSummary.innerHTML = '<div class="empty-state">No items in limbo</div>';
+          return;
+        }
+        
+        // Group by color
+        const colorGroups = {};
+        items.forEach(item => {
+          if (!colorGroups[item.color]) {
+            colorGroups[item.color] = 0;
+          }
+          colorGroups[item.color] += item.quantity;
+        });
+        
+        let html = '<h3>⏳ Items Waiting for Full Batch</h3>';
+        Object.keys(colorGroups).sort().forEach(color => {
+          const qty = colorGroups[color];
+          const remaining = 1000 - qty;
+          html += `
+            <div class="limbo-item">
+              <span class="limbo-color">${color}</span>
+              <span class="limbo-qty">${qty} pcs (need ${remaining} more)</span>
+            </div>
+          `;
+        });
+        
+        limboSummary.innerHTML = html;
+        
+      } catch (error) {
+        console.error('Error loading limbo:', error);
+      }
+    }
+
+    // Handle form submission
+    document.getElementById('receive-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('submit-btn');
+      const statusDiv = document.getElementById('status');
+      const confirmationDiv = document.getElementById('confirmation');
+      
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Processing...';
+      statusDiv.style.display = 'none';
+      confirmationDiv.style.display = 'none';
+      
+      try {
+        const color = document.getElementById('color').value.trim();
+        const quantity = parseInt(document.getElementById('quantity').value);
+        
+        // Get existing limbo for this color
+        const { data: limboItems, error: fetchError } = await supabase
+          .from('spectrum_inventory_items')
+          .select('*')
+          .eq('status', 'limbo')
+          .eq('color', color);
+        
+        if (fetchError) throw fetchError;
+        
+        const currentLimbo = limboItems.reduce((sum, item) => sum + item.quantity, 0);
+        const totalQuantity = currentLimbo + quantity;
+        
+        let confirmation = '';
+        
+        // Case 1: Creates complete batch(es)
+        if (totalQuantity >= 1000) {
+          const completeBatches = Math.floor(totalQuantity / 1000);
+          const remainder = totalQuantity % 1000;
+          
+          // Create ready batches
+          for (let i = 0; i < completeBatches; i++) {
+            const batchId = `BATCH-${Date.now()}-${i + 1}`;
+            const { error: insertError } = await supabase
+              .from('spectrum_inventory_items')
+              .insert({
+                color: color,
+                quantity: 1000,
+                status: 'ready',
+                batch_id: batchId,
+                created_by: currentUser.id,
+                completed_date: new Date().toISOString()
+              });
+            
+            if (insertError) throw insertError;
+          }
+          
+          // Delete old limbo items for this color
+          if (limboItems.length > 0) {
+            const { error: deleteError } = await supabase
+              .from('spectrum_inventory_items')
+              .delete()
+              .eq('status', 'limbo')
+              .eq('color', color);
+            
+            if (deleteError) throw deleteError;
+          }
+          
+          // Add remainder to limbo if any
+          if (remainder > 0) {
+            const { error: insertError } = await supabase
+              .from('spectrum_inventory_items')
+              .insert({
+                color: color,
+                quantity: remainder,
+                status: 'limbo',
+                created_by: currentUser.id
+              });
+            
+            if (insertError) throw insertError;
+          }
+          
+          confirmation = `
+            <div class="confirmation-box">
+              <h3>✅ Items Checked In Successfully!</h3>
+              <p><strong>${quantity}</strong> ${color} pieces received</p>
+              <p><strong>${completeBatches}</strong> batch${completeBatches > 1 ? 'es' : ''} of 1000 created and moved to "Ready to Print"</p>
+              ${remainder > 0 ? `<p><strong>${remainder}</strong> pieces moved to limbo</p>` : ''}
+            </div>
+          `;
+          
+        } else {
+          // Case 2: All goes to limbo
+          
+          // Delete old limbo items for this color
+          if (limboItems.length > 0) {
+            const { error: deleteError } = await supabase
+              .from('spectrum_inventory_items')
+              .delete()
+              .eq('status', 'limbo')
+              .eq('color', color);
+            
+            if (deleteError) throw deleteError;
+          }
+          
+          // Create new consolidated limbo entry
+          const { error: insertError } = await supabase
+            .from('spectrum_inventory_items')
+            .insert({
+              color: color,
+              quantity: totalQuantity,
+              status: 'limbo',
+              created_by: currentUser.id
+            });
+          
+          if (insertError) throw insertError;
+          
+          const needed = 1000 - totalQuantity;
+          confirmation = `
+            <div class="confirmation-box">
+              <h3>✅ Items Checked In Successfully!</h3>
+              <p><strong>${quantity}</strong> ${color} pieces received</p>
+              <p>Total in limbo: <strong>${totalQuantity}</strong> pieces</p>
+              <p>Need <strong>${needed}</strong> more to complete batch</p>
+            </div>
+          `;
+        }
+        
+        // Log activity
+        await supabase.from('spectrum_activity_log').insert({
+          action: 'received',
+          user_id: currentUser.id,
+          details: { color, quantity, currentLimbo, totalQuantity }
+        });
+        
+        // Show confirmation
+        confirmationDiv.innerHTML = confirmation;
+        confirmationDiv.style.display = 'block';
+        
+        // Reset form
+        document.getElementById('receive-form').reset();
+        document.getElementById('color').focus();
+        
+        // Reload limbo status
+        await loadLimboStatus();
+        
+      } catch (error) {
+        console.error('Error receiving items:', error);
+        statusDiv.textContent = 'Error: ' + error.message;
+        statusDiv.className = 'status error';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Check In Items';
+      }
+    });
+
+    // Initialize
+    checkAuth().then(session => {
+      if (session) {
+        loadLimboStatus();
+        // Auto-focus color field
+        document.getElementById('color').focus();
+      }
+    });
+  </script>
+</body>
+</html>
