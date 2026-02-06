@@ -271,7 +271,7 @@
       // Check if user has Spectrum access
       const { data: spectrumUser } = await supabase
         .from("spectrum_users")
-        .select("role")
+        .select("id")
         .eq("id", user.id)
         .single();
 
@@ -279,8 +279,8 @@
         // Show Spectrum button
         document.getElementById("spectrum-btn").style.display = "block";
         
-        // If user is ONLY receiving (not admin), hide standard tools
-        if (spectrumUser.role === 'receiving' && !adminRow) {
+        // If user is spectrum (not admin), hide standard tools
+        if (!adminRow) {
           document.getElementById("standard-tools").style.display = "none";
         }
       }
