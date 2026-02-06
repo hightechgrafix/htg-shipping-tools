@@ -282,25 +282,12 @@
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Check if user is logged in and authorized
+    // Check if user is logged in
     async function checkAuth() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
         alert("Please log in first");
-        location.href = 'login.html';
-        return null;
-      }
-
-      // Check if user is in package_users
-      const { data: packageUser } = await supabase
-        .from("package_users")
-        .select("id")
-        .eq("id", session.user.id)
-        .single();
-
-      if (!packageUser) {
-        alert("You don't have access to the Package Tracker");
         location.href = 'login.html';
         return null;
       }

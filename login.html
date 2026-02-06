@@ -295,17 +295,9 @@
         }
       }
 
-      // Check if user has Package Tracker access
-      const { data: packageUser } = await supabase
-        .from("package_users")
-        .select("id")
-        .eq("id", user.id)
-        .single();
 
-      if (packageUser) {
-        // Show Package Tracker button
-        document.getElementById("package-btn").style.display = "block";
-      }
+    // Show Package Tracker button to everyone
+      document.getElementById("package-btn").style.display = "block";
 
       // Logout
       document.getElementById("logout-btn").addEventListener("click", async () => {
