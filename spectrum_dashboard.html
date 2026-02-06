@@ -197,7 +197,7 @@
       <h1>📦 Spectrum Inventory Dashboard</h1>
       <div class="user-info">
         <span id="userEmail"></span>
-        <button class="back-btn" onclick="exportCSV()" style="margin-right: 10px;">📊 Export CSV</button>
+        <button class="back-btn" id="export-csv-btn" style="margin-right: 10px;">📊 Export CSV</button>
         <a href="login.html" class="back-btn">Back to Menu</a>
       </div>
     </div>
@@ -287,6 +287,9 @@
       
       return session;
     }
+    
+    // Add export CSV button listener
+    document.getElementById('export-csv-btn').addEventListener('click', exportCSV);
 
     // Load dashboard data
     async function loadDashboardData() {
