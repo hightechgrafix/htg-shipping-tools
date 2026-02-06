@@ -15,9 +15,9 @@
     min-height: 100vh;
     display: flex;
     align-items: flex-start;
-    padding-top: 40px;   /* adjust to taste */
+    padding-top: 40px;
     justify-content: center;
-    background: #ffffff; /* White background */
+    background: #ffffff;
     color: #111827;
   }
 
@@ -28,12 +28,12 @@
   }
 
   .card {
-    background: #000000;   /* BLACK */
-    color: #ffffff;        /* WHITE TEXT */
+    background: #000000;
+    color: #ffffff;
     border-radius: 12px;
     padding: 24px 20px 20px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-    border: 1px solid #333;  /* subtle border */
+    border: 1px solid #333;
   }
 
   h1 {
@@ -45,7 +45,7 @@
 
   .subtitle {
     font-size: 0.8rem;
-    color: #4b5563;
+    color: #9ca3af;
     text-align: center;
     margin-bottom: 1.5rem;
   }
@@ -54,32 +54,28 @@
     display: block;
     font-size: 0.85rem;
     margin-bottom: 0.25rem;
-    color: #111827;
+    color: #ffffff;
   }
 
   input[type="email"],
   input[type="password"] {
-  width: 100%;
-  padding: 0.6rem 0.7rem;
-  border-radius: 8px;
-  border: 1px solid #9ca3af;
-  background: #111;       /* keeps the field dark */
-  color: #ffffff;         /* <-- white text */
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
-  }
-
-  label {
-  color: #ffffff; /* clean white labels */
+    width: 100%;
+    padding: 0.6rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid #9ca3af;
+    background: #111;
+    color: #ffffff;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
   }
 
   input::placeholder {
-  color: #e5e5e5; /* off-white placeholder */
-  opacity: 1;
+    color: #e5e5e5;
+    opacity: 1;
   }
 
   input:focus {
-    outline: 2px solid #b6282c; /* HTG Red Focus */
+    outline: 2px solid #b6282c;
     border-color: #b6282c;
   }
 
@@ -88,7 +84,7 @@
     border: none;
     border-radius: 999px;
     padding: 0.7rem;
-    background: #b6282c; /* HTG Red */
+    background: #b6282c;
     color: #ffffff;
     font-weight: 600;
     font-size: 0.95rem;
@@ -97,7 +93,7 @@
   }
 
   button[type="submit"]:hover {
-    background: #9b1f24; /* Slightly darker hover */
+    background: #9b1f24;
   }
 
   button[type="submit"]:disabled {
@@ -110,70 +106,56 @@
     font-size: 0.85rem;
     min-height: 1.1rem;
     text-align: center;
+    color: #ffffff;
   }
 
   .status.error {
-    color: #b91c1c;
+    color: #ff6b6b;
   }
 
   .status.success {
-    color: #15803d;
+    color: #ffffff;
   }
 
   .menu-btn {
-  width: 100%;
-  padding: 0.75rem;
-  margin-bottom: 0.75rem;
-  border: none;
-  border-radius: 8px;
-  background: #b6282c; /* HTG red */
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-}
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    background: #b6282c;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
 
-.menu-btn:hover {
-  background: #9b1f24;
-}
+  .menu-btn:hover {
+    background: #9b1f24;
+  }
 
-.menu-btn.logout {
-  background: #b6282c;  /* HTG red */
-  color: #fff;
-}
+  .menu-btn.logout {
+    background: #b6282c;
+    color: #fff;
+  }
 
-.menu-btn.logout:hover {
-  background: #9b1f24;  /* darker red on hover */
-}
+  .menu-btn.logout:hover {
+    background: #9b1f24;
+  }
 
+  #menu {
+    background: #000;
+    color: #fff;
+    padding: 24px;
+    border-radius: 16px;
+  }
 
-.menu-btn.logout:hover {
-  background: #374151;
-}
-
-#menu {
-  background: #000;
-  color: #fff;
-  padding: 24px;
-  border-radius: 16px; /* slightly rounder */
-}
-
-.menu-title {
-  color: #fff !important;   /* make the heading white */
-  font-size: 1.1rem;
-  margin-bottom: 1rem;
-}
-
-.status.success {
-  color: #ffffff !important;
-}
-
-.status {
-  color: #ffffff !important;
-}
-
+  .menu-title {
+    color: #fff !important;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
 </style>
-
 </head>
 <body>
   <div class="wrapper">
@@ -196,17 +178,31 @@
       <!-- Menu shown AFTER login -->
       <div id="menu" style="display: none; text-align: center; margin-top: 1.5rem;">
         <h2 class="menu-title">HTG Tools Menu</h2>
-        <button class="menu-btn" onclick="location.href='/edit-production-times.html'">Edit Production Times</button>  
-        <button class="menu-btn" onclick="location.href='/add-item.html'">Add Item</button>
-        <button class="menu-btn" onclick="location.href='/item-lookup.html'">Item Lookup</button>
-        <button class="menu-btn" onclick="location.href='/index.html'">Shipping Calculator</button>
+        
+        <!-- Spectrum Inventory button - shown to spectrum_users -->
+        <button
+          class="menu-btn"
+          id="spectrum-btn"
+          style="display:none;"
+          onclick="location.href='spectrum_dashboard.html'"
+        >
+          📦 Spectrum Inventory
+        </button>
+
+        <!-- Original buttons - shown to everyone except receiving-only users -->
+        <div id="standard-tools">
+          <button class="menu-btn" onclick="location.href='edit-production-times.html'">Edit Production Times</button>  
+          <button class="menu-btn" onclick="location.href='add-item.html'">Add Item</button>
+          <button class="menu-btn" onclick="location.href='item-lookup.html'">Item Lookup</button>
+          <button class="menu-btn" onclick="location.href='index.html'">Shipping Calculator</button>
+        </div>
 
         <!-- ADMIN ONLY -->
         <button
           class="menu-btn"
           id="users-btn"
           style="display:none;"
-          onclick="location.href='/admin-users.html'"
+          onclick="location.href='admin-users.html'"
         >
           User Management
         </button>
@@ -219,8 +215,6 @@
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.94.1/+esm";
 
-
-    // 1) Fill these in from your Supabase settings
     const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
 
@@ -240,7 +234,6 @@
       submitBtn.textContent = isLoading ? "Signing in..." : "Log in";
     }
 
-    // Optional: if a session already exists, you can auto redirect
     async function checkExistingSession() {
       const { data, error } = await supabase.auth.getSession();
       if (error) {
@@ -264,17 +257,32 @@
       // Show menu
       document.getElementById("menu").style.display = "block";
 
-      // 🔐 Check if user is admin
-      const { data: adminRow, error } = await supabase
+      // Check if user is admin
+      const { data: adminRow } = await supabase
         .from("admins")
         .select("id")
         .eq("id", user.id)
         .single();
 
       if (adminRow) {
-        // Show admin-only button
-        const usersBtn = document.getElementById("users-btn");
-        if (usersBtn) usersBtn.style.display = "block";
+        document.getElementById("users-btn").style.display = "block";
+      }
+
+      // Check if user has Spectrum access
+      const { data: spectrumUser } = await supabase
+        .from("spectrum_users")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (spectrumUser) {
+        // Show Spectrum button
+        document.getElementById("spectrum-btn").style.display = "block";
+        
+        // If user is ONLY receiving (not admin), hide standard tools
+        if (spectrumUser.role === 'receiving' && !adminRow) {
+          document.getElementById("standard-tools").style.display = "none";
+        }
       }
 
       // Logout
@@ -283,8 +291,6 @@
         location.reload();
       });
     }
-
-
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
