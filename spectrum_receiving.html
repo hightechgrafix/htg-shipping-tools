@@ -204,6 +204,29 @@
     .confirmation-box strong {
       color: #fbbf24;
     }
+    .limbo-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #333;
+    }
+
+    .delete-limbo-btn {
+        background: #991b1b;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: background 0.2s;
+    }
+
+    .delete-limbo-btn:hover {
+    background: #7f1d1d;
+    }
   </style>
 </head>
 <body>
@@ -290,56 +313,93 @@
 
     // Load limbo status
     async function loadLimboStatus() {
-      try {
+    try {
         const { data: items, error } = await supabase
-          .from('spectrum_inventory_items')
-          .select('*')
-          .eq('status', 'limbo')
-          .order('color');
+        .from('spectrum_inventory_items')
+        .select('*')
+        .eq('status', 'limbo')
+        .order('color');
         
         if (error) throw error;
         
         const limboSummary = document.getElementById('limbo-summary');
         
         if (items.length === 0) {
-          limboSummary.innerHTML = '<div class="empty-state">No items in limbo</div>';
-          return;
+        limboSummary.innerHTML = '<div class="empty-state">No items in limbo</div>';
+        return;
         }
         
         // Group by color (case insensitive)
         const colorGroups = {};
         items.forEach(item => {
-          const normalizedColor = item.color
+        const normalizedColor = item.color
             .toLowerCase()
             .split(' ')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
-          
-          if (!colorGroups[normalizedColor]) {
-            colorGroups[normalizedColor] = 0;
-          }
-          colorGroups[normalizedColor] += item.quantity;
+        
+        if (!colorGroups[normalizedColor]) {
+            colorGroups[normalizedColor] = {
+            quantity: 0,
+            ids: []
+            };
+        }
+        colorGroups[normalizedColor].quantity += item.quantity;
+        colorGroups[normalizedColor].ids.push(item.id);
         });
         
         let html = '<h3>⏳ Items Waiting for Full Batch</h3>';
         Object.keys(colorGroups).sort().forEach(color => {
-          const qty = colorGroups[color];
-          const remaining = 1000 - qty;
-          html += `
+        const data = colorGroups[color];
+        const remaining = 1000 - data.quantity;
+        const idsJson = JSON.stringify(data.ids).replace(/"/g, '&quot;');
+        html += `
             <div class="limbo-item">
-              <span class="limbo-color">${color}</span>
-              <span class="limbo-qty">${qty} pcs (need ${remaining} more)</span>
+            <div>
+                <span class="limbo-color">${color}</span>
+                <span class="limbo-qty"> - ${data.quantity} pcs (need ${remaining} more)</span>
             </div>
-          `;
+            <button 
+                class="delete-limbo-btn" 
+                onclick="deleteLimboColor('${color}', ${idsJson})"
+                title="Delete this limbo entry"
+            >
+                🗑️ Delete
+            </button>
+            </div>
+        `;
         });
         
         limboSummary.innerHTML = html;
         
-      } catch (error) {
+    } catch (error) {
         console.error('Error loading limbo:', error);
         const limboSummary = document.getElementById('limbo-summary');
         limboSummary.innerHTML = '<div class="empty-state" style="color: #ff6b6b;">Error loading limbo status</div>';
-      }
+    }
+    }
+
+    // Delete limbo color entry
+    window.deleteLimboColor = async function(color, ids) {
+    if (!confirm(`Delete all ${color} items from limbo?`)) {
+        return;
+    }
+    
+    try {
+        const { error } = await supabase
+        .from('spectrum_inventory_items')
+        .delete()
+        .in('id', ids);
+        
+        if (error) throw error;
+        
+        alert(`${color} limbo entry deleted successfully`);
+        loadLimboStatus();
+        
+    } catch (error) {
+        console.error('Error deleting limbo:', error);
+        alert('Error deleting limbo entry: ' + error.message);
+    }
     }
 
     // Handle form submission
