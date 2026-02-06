@@ -172,6 +172,22 @@
       padding: 40px;
       color: #9ca3af;
     }
+
+    .mini-delete-btn {
+        background: #991b1b;
+        color: white;
+        border: none;
+        padding: 2px 6px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.75rem;
+        margin-left: 8px;
+        transition: background 0.2s;
+    }
+
+    .mini-delete-btn:hover {
+     background: #7f1d1d;
+    }
   </style>
 </head>
 <body>
@@ -301,40 +317,87 @@
     }
 
     function buildColorTable(items) {
-      const colorStats = {};
-      
-      items.forEach(item => {
+    const colorStats = {};
+    
+    items.forEach(item => {
         if (!colorStats[item.color]) {
-          colorStats[item.color] = {
+        colorStats[item.color] = {
             limbo: 0,
             ready: 0,
             printed: 0,
-            shipped: 0
-          };
+            shipped: 0,
+            limboIds: [],
+            readyIds: [],
+            printedIds: [],
+            shippedIds: []
+        };
         }
         colorStats[item.color][item.status] += item.quantity;
-      });
-      
-      const tbody = document.getElementById('colorTableBody');
-      tbody.innerHTML = '';
-      
-      if (Object.keys(colorStats).length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No inventory data yet. Start by receiving items!</td></tr>';
+        colorStats[item.color][item.status + 'Ids'].push(item.id);
+    });
+    
+    const tbody = document.getElementById('colorTableBody');
+    tbody.innerHTML = '';
+    
+    if (Object.keys(colorStats).length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No inventory data yet. Start by receiving items!</td></tr>';
         return;
-      }
-      
-      Object.keys(colorStats).sort().forEach(color => {
+    }
+    
+    Object.keys(colorStats).sort().forEach(color => {
         const stats = colorStats[color];
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td><strong>${color}</strong></td>
-          <td>${stats.limbo.toLocaleString()}</td>
-          <td>${stats.ready.toLocaleString()}</td>
-          <td>${stats.printed.toLocaleString()}</td>
-          <td>${stats.shipped.toLocaleString()}</td>
+        <td><strong>${color}</strong></td>
+        <td>
+            ${stats.limbo.toLocaleString()}
+            ${stats.limbo > 0 ? `<button class="mini-delete-btn" onclick="deleteColorStatus('${color}', 'limbo', ${JSON.stringify(stats.limboIds).replace(/"/g, '&quot;')})">🗑️</button>` : ''}
+        </td>
+        <td>
+            ${stats.ready.toLocaleString()}
+            ${stats.ready > 0 ? `<button class="mini-delete-btn" onclick="deleteColorStatus('${color}', 'ready', ${JSON.stringify(stats.readyIds).replace(/"/g, '&quot;')})">🗑️</button>` : ''}
+        </td>
+        <td>
+            ${stats.printed.toLocaleString()}
+            ${stats.printed > 0 ? `<button class="mini-delete-btn" onclick="deleteColorStatus('${color}', 'printed', ${JSON.stringify(stats.printedIds).replace(/"/g, '&quot;')})">🗑️</button>` : ''}
+        </td>
+        <td>
+            ${stats.shipped.toLocaleString()}
+            ${stats.shipped > 0 ? `<button class="mini-delete-btn" onclick="deleteColorStatus('${color}', 'shipped', ${JSON.stringify(stats.shippedIds).replace(/"/g, '&quot;')})">🗑️</button>` : ''}
+        </td>
         `;
         tbody.appendChild(row);
-      });
+    });
+    }
+
+    // Delete items by color and status
+    window.deleteColorStatus = async function(color, status, ids) {
+    const statusNames = {
+        limbo: 'Limbo',
+        ready: 'Ready to Print',
+        printed: 'Printed',
+        shipped: 'Shipped'
+    };
+    
+    if (!confirm(`Delete all ${color} items in ${statusNames[status]}?`)) {
+        return;
+    }
+    
+    try {
+        const { error } = await supabase
+        .from('spectrum_inventory_items')
+        .delete()
+        .in('id', ids);
+        
+        if (error) throw error;
+        
+        alert(`${color} ${statusNames[status]} items deleted successfully`);
+        loadDashboardData();
+        
+    } catch (error) {
+        console.error('Error deleting items:', error);
+        alert('Error deleting items: ' + error.message);
+    }
     }
 
     // Initialize
