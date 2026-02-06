@@ -365,38 +365,126 @@
         
         let confirmation = '';
         
-        // Case 1: Creates complete batch(es)
-        if (totalQuantity >= 1000) {
-          const completeBatches = Math.floor(totalQuantity / 1000);
-          const remainder = totalQuantity % 1000;
-          
-          // Create ready batches
-          for (let i = 0; i < completeBatches; i++) {
-            const batchId = `BATCH-${Date.now()}-${i + 1}`;
+            // Normalize color to Title Case for consistency
+            const normalizedColor = color
+            .toLowerCase()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+
+            // Get existing limbo for this color (case insensitive)
+            const { data: limboItems, error: fetchError } = await supabase
+            .from('spectrum_inventory_items')
+            .select('*')
+            .eq('status', 'limbo')
+            .ilike('color', normalizedColor);
+
+            if (fetchError) throw fetchError;
+
+            const currentLimbo = limboItems.reduce((sum, item) => sum + item.quantity, 0);
+            const totalQuantity = currentLimbo + quantity;
+
+            let confirmation = '';
+
+            // Case 1: Creates complete batch(es)
+            if (totalQuantity >= 1000) {
+            const completeBatches = Math.floor(totalQuantity / 1000);
+            const remainder = totalQuantity % 1000;
+            
+            // DELETE old limbo items for this color FIRST
+            if (limboItems.length > 0) {
+                const { error: deleteError } = await supabase
+                .from('spectrum_inventory_items')
+                .delete()
+                .eq('status', 'limbo')
+                .ilike('color', normalizedColor);
+                
+                if (deleteError) throw deleteError;
+            }
+            
+            // Create ready batches
+            for (let i = 0; i < completeBatches; i++) {
+                const batchId = `BATCH-${Date.now()}-${i + 1}`;
+                const { error: insertError } = await supabase
+                .from('spectrum_inventory_items')
+                .insert({
+                    color: normalizedColor,
+                    quantity: 1000,
+                    status: 'ready',
+                    batch_id: batchId,
+                    created_by: currentUser.id,
+                    completed_date: new Date().toISOString()
+                });
+                
+                if (insertError) throw insertError;
+            }
+            
+            // Add remainder to limbo if any
+            if (remainder > 0) {
+                const { error: insertError } = await supabase
+                .from('spectrum_inventory_items')
+                .insert({
+                    color: normalizedColor,
+                    quantity: remainder,
+                    status: 'limbo',
+                    created_by: currentUser.id
+                });
+                
+                if (insertError) throw insertError;
+            }
+            
+            confirmation = `
+                <div class="confirmation-box">
+                <h3>✅ Items Checked In Successfully!</h3>
+                <p><strong>${quantity}</strong> ${normalizedColor} pieces received</p>
+                <p><strong>${completeBatches}</strong> batch${completeBatches > 1 ? 'es' : ''} of 1000 created and moved to "Ready to Print"</p>
+                ${remainder > 0 ? `<p><strong>${remainder}</strong> pieces moved to limbo</p>` : ''}
+                </div>
+            `;
+            
+            } else {
+            // Case 2: All goes to limbo
+            
+            // Delete old limbo items for this color FIRST
+            if (limboItems.length > 0) {
+                const { error: deleteError } = await supabase
+                .from('spectrum_inventory_items')
+                .delete()
+                .eq('status', 'limbo')
+                .ilike('color', normalizedColor);
+                
+                if (deleteError) throw deleteError;
+            }
+            
+            // Create new consolidated limbo entry
             const { error: insertError } = await supabase
-              .from('spectrum_inventory_items')
-              .insert({
-                color: color,
-                quantity: 1000,
-                status: 'ready',
-                batch_id: batchId,
-                created_by: currentUser.id,
-                completed_date: new Date().toISOString()
-              });
+                .from('spectrum_inventory_items')
+                .insert({
+                color: normalizedColor,
+                quantity: totalQuantity,
+                status: 'limbo',
+                created_by: currentUser.id
+                });
             
             if (insertError) throw insertError;
-          }
-          
-          // Delete old limbo items for this color
-          if (limboItems.length > 0) {
-            const { error: deleteError } = await supabase
-              .from('spectrum_inventory_items')
-              .delete()
-              .eq('status', 'limbo')
-              .eq('color', color);
             
-            if (deleteError) throw deleteError;
-          }
+            const needed = 1000 - totalQuantity;
+            confirmation = `
+                <div class="confirmation-box">
+                <h3>✅ Items Checked In Successfully!</h3>
+                <p><strong>${quantity}</strong> ${normalizedColor} pieces received</p>
+                <p>Total in limbo: <strong>${totalQuantity}</strong> pieces</p>
+                <p>Need <strong>${needed}</strong> more to complete batch</p>
+                </div>
+            `;
+            }
+
+            // Log activity
+            await supabase.from('spectrum_activity_log').insert({
+            action: 'received',
+            user_id: currentUser.id,
+            details: { color: normalizedColor, quantity, currentLimbo, totalQuantity }
+            });
           
           // Add remainder to limbo if any
           if (remainder > 0) {
