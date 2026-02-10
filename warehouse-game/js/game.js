@@ -127,9 +127,10 @@ const Game = {
     // Check win condition
     if (this.checkWin()) {
       setTimeout(() => {
-        alert('Level Complete! 🎉\nMoves: ' + this.moveCount);
+        this.handleLevelComplete();
       }, 100);
     }
+    
   },
   
   // Try to push a cart
@@ -172,6 +173,21 @@ const Game = {
   // Check if all carts are on staging areas (win condition)
   checkWin() {
     return this.carts.every(cart => this.isCartOnGoal(cart));
+  },
+
+  // Handle level completion
+  handleLevelComplete() {
+    alert('Level Complete! 🎉\nMoves: ' + this.moveCount);
+    
+    // Check if there's a next level
+    if (this.currentLevel < 60) {
+      // Load next level
+      this.loadLevel(this.currentLevel + 1);
+      Renderer.draw();
+    } else {
+      // Beat all 60 levels!
+      alert('🎊 CONGRATULATIONS! 🎊\n\nYou completed all 60 levels!\n\nYou are a warehouse logistics master!');
+    }
   },
   
   // Save current state for undo
