@@ -1,5 +1,6 @@
 // HTG Warehouse Game - Game Engine
 // Handles game state, movement, pushing, and win conditions
+//force sync
 
 const Game = {
   // Game state
