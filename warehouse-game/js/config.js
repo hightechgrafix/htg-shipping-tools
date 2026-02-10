@@ -33,6 +33,10 @@ const CONFIG = {
   // === CANVAS BACKGROUND ===
   CANVAS_BG: '#2c3e50',
   
+  //Supabase config
+  SUPABASE_URL: 'https://sbfslzwnkztmodnlsigq.supabase.co',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg',
+
   // Helper: Calculate canvas size for a level
   calculateCanvasSize(levelWidth, levelHeight) {
     const gameWidth = levelWidth * this.TILE_SIZE + (this.GRID_PADDING * 2);

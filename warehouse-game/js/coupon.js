@@ -1,6 +1,12 @@
 // HTG Warehouse Game - Coupon System
 // Handles email collection and coupon generation
 
+// Initialize Supabase client
+const supabase = window.supabase.createClient(
+  CONFIG.SUPABASE_URL,
+  CONFIG.SUPABASE_ANON_KEY
+);
+
 const CouponSystem = {
   // Coupon rewards configuration
   REWARDS: {
@@ -60,35 +66,42 @@ const CouponSystem = {
     });
   },
   
-  // Handle email submission
-  async handleEmailSubmit(level) {
+    // Handle email submission
+    async handleEmailSubmit(level) {
     const emailInput = document.getElementById('email-input');
     const email = emailInput.value.trim();
     const errorEl = document.getElementById('email-error');
     
     // Validate email
     if (!this.isValidEmail(email)) {
-      errorEl.textContent = 'Please enter a valid email address';
-      errorEl.classList.remove('hidden');
-      return;
+        errorEl.textContent = 'Please enter a valid email address';
+        errorEl.classList.remove('hidden');
+        return;
     }
     
     // Check if email already claimed this level's reward
-    if (this.hasEmailClaimedReward(email, level)) {
-      errorEl.textContent = 'This email has already claimed the Level ' + level + ' reward';
-      errorEl.classList.remove('hidden');
-      return;
+    const alreadyClaimed = await this.hasEmailClaimedReward(email, level);
+    if (alreadyClaimed) {
+        errorEl.textContent = 'This email has already claimed the Level ' + level + ' reward';
+        errorEl.classList.remove('hidden');
+        return;
     }
     
     // Generate coupon code
     const couponCode = this.generateCouponCode();
     
-    // Store the coupon (in localStorage for now, will be database later)
-    this.storeCoupon(email, level, couponCode);
-    
-    // Show the coupon
-    this.displayCoupon(couponCode, level);
-  },
+    // Store the coupon in Supabase
+    try {
+        await this.storeCoupon(email, level, couponCode);
+        
+        // Show the coupon
+        this.displayCoupon(couponCode, level);
+    } catch (error) {
+        errorEl.textContent = 'Error saving coupon. Please try again.';
+        errorEl.classList.remove('hidden');
+        console.error('Failed to store coupon:', error);
+    }
+    },
   
   // Validate email format
   isValidEmail(email) {
@@ -96,11 +109,21 @@ const CouponSystem = {
     return re.test(email);
   },
   
-  // Check if email already claimed this reward
-  hasEmailClaimedReward(email, level) {
-    const coupons = JSON.parse(localStorage.getItem('htg_coupons') || '[]');
-    return coupons.some(c => c.email === email && c.level === level);
-  },
+    // Check if email already claimed this reward
+    async hasEmailClaimedReward(email, level) {
+    const { data, error } = await supabase
+        .from('htg_warehouse_coupons')
+        .select('id')
+        .eq('email', email)
+        .eq('level', level)
+        .single();
+    
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+        console.error('Error checking email:', error);
+    }
+    
+    return data !== null;
+    },
   
   // Generate a random coupon code
   generateCouponCode() {
@@ -112,25 +135,33 @@ const CouponSystem = {
     return code;
   },
   
-  // Store coupon (localStorage for now, will be Supabase later)
-  storeCoupon(email, level, couponCode) {
-    const coupons = JSON.parse(localStorage.getItem('htg_coupons') || '[]');
+    // Store coupon in Supabase
+    async storeCoupon(email, level, couponCode) {
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
     
-    const coupon = {
-      email: email,
-      level: level,
-      code: couponCode,
-      discount: this.REWARDS[level].discount,
-      createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-      redeemed: false
-    };
+    const { data, error } = await supabase
+        .from('htg_warehouse_coupons')
+        .insert([
+        {
+            email: email,
+            level: level,
+            code: couponCode,
+            discount: this.REWARDS[level].discount,
+            expires_at: expiresAt.toISOString(),
+            redeemed: false
+        }
+        ])
+        .select()
+        .single();
     
-    coupons.push(coupon);
-    localStorage.setItem('htg_coupons', JSON.stringify(coupons));
+    if (error) {
+        console.error('Error storing coupon:', error);
+        throw error;
+    }
     
-    console.log('Coupon stored:', coupon);
-  },
+    console.log('Coupon stored in Supabase:', data);
+    return data;
+    },
   
   // Display the coupon to the user
   displayCoupon(couponCode, level) {
