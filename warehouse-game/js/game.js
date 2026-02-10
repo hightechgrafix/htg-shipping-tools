@@ -102,8 +102,17 @@ const Game = {
             this.skipToLevel(levelNum);
           }
           e.preventDefault();
-          break;  
-      }
+          break; 
+          case 'w':
+          case 'W':
+            // Press W to instantly win the level (for testing)
+            if (e.ctrlKey || e.metaKey) { // Require Ctrl+W or Cmd+W so you don't accidentally trigger it
+              console.log('Instant win cheat activated!');
+              this.handleLevelComplete();
+              e.preventDefault();
+            }
+            break;
+        }
     });
   },
   
