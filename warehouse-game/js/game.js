@@ -11,6 +11,15 @@ const Game = {
   stagingAreas: [], // Array of {x, y}
   moveHistory: [], // For undo functionality
   moveCount: 0,
+  moveHistory: [], // For undo functionality
+  moveCount: 0,
+  totalMoves: 0, // Total moves across all levels
+  gameStartTime: null, // When Level 1 started
+  totalPausedTime: 0, // Accumulated paused time in milliseconds
+  currentPauseStart: null, // When current pause started
+  isTimerPaused: false, // Is timer currently paused
+  levelWidth: 0,
+  levelHeight: 0,
   levelWidth: 0,
   levelHeight: 0,
   
@@ -40,6 +49,15 @@ const Game = {
     }
     
     this.currentLevel = levelNumber;
+    this.currentLevel = levelNumber;
+  
+    // Start timer when loading Level 1
+    if (levelNumber === 1 && this.gameStartTime === null) {
+      this.gameStartTime = Date.now();
+      console.log('Game timer started!');
+    }
+  
+  this.levelWidth = levelData.width;
     this.levelWidth = levelData.width;
     this.levelHeight = levelData.height;
     this.playerPos = { ...levelData.playerStart };
@@ -149,6 +167,7 @@ const Game = {
     this.playerPos.x = newX;
     this.playerPos.y = newY;
     this.moveCount++;
+    this.totalMoves++;
     
     // Redraw
     Renderer.draw();
@@ -208,16 +227,36 @@ const Game = {
   handleLevelComplete() {
     console.log('handleLevelComplete called! Current level:', this.currentLevel);
     console.trace(); // This will show us WHERE it was called from
-    // Check if this is a coupon level (10 or 40)
-    if (this.currentLevel === 10 || this.currentLevel === 40) {
+    
+    // Check if this is Level 40 (game complete!)
+    if (this.currentLevel === 40) {
+      // Calculate final score
+      const elapsedSeconds = this.getElapsedTime();
+      const timeBonus = Math.max(0, 120 - elapsedSeconds);
+      const score = (40 * 10000) + timeBonus - (this.totalMoves * 10);
+      
+      console.log('=== GAME COMPLETE ===');
+      console.log('Total Time:', elapsedSeconds, 'seconds');
+      console.log('Total Moves:', this.totalMoves);
+      console.log('Time Bonus:', timeBonus);
+      console.log('Final Score:', score);
+      
+      // Store score for leaderboard submission
+      this.finalScore = score;
+      this.finalTime = elapsedSeconds;
+      
+      // Show coupon modal
+      CouponSystem.showCouponModal(this.currentLevel);
+    }
+    // Check if this is Level 10
+    else if (this.currentLevel === 10) {
       // Show coupon modal
       CouponSystem.showCouponModal(this.currentLevel);
       
-      // After they close the modal, handle progression
-      // For now, they'll click Continue button which closes modal
-      // Then they can manually advance or we can auto-advance
-    } else {
-      // Regular level completion
+      // After they close the modal, they can continue to Level 11
+    }
+    // Regular level completion (not a coupon level)
+    else {
       alert('Level ' + this.currentLevel + ' Complete! 🎉\nMoves: ' + this.moveCount);
       
       // Load next level
@@ -257,7 +296,42 @@ const Game = {
     this.loadLevel(this.currentLevel);
     Renderer.draw();
   },
-  
+
+  // Pause the game timer (when modal opens)
+  pauseTimer() {
+    if (!this.isTimerPaused && this.gameStartTime !== null) {
+      this.currentPauseStart = Date.now();
+      this.isTimerPaused = true;
+      console.log('Timer paused');
+    }
+  },
+
+  // Resume the game timer (when modal closes)
+  resumeTimer() {
+    if (this.isTimerPaused && this.currentPauseStart !== null) {
+      const pauseDuration = Date.now() - this.currentPauseStart;
+      this.totalPausedTime += pauseDuration;
+      this.isTimerPaused = false;
+      this.currentPauseStart = null;
+      console.log('Timer resumed, paused for', pauseDuration, 'ms');
+    }
+  },
+
+  // Get elapsed game time (excluding paused time)
+  getElapsedTime() {
+    if (this.gameStartTime === null) return 0;
+    
+    const now = Date.now();
+    let elapsed = now - this.gameStartTime - this.totalPausedTime;
+    
+    // If currently paused, don't count the current pause
+    if (this.isTimerPaused && this.currentPauseStart !== null) {
+      elapsed -= (now - this.currentPauseStart);
+    }
+    
+    return Math.floor(elapsed / 1000); // Return in seconds
+  },
+    
   //-------------------------------------------------------
   // Skip to a specific level (for testing)
   skipToLevel(levelNumber) {

@@ -24,6 +24,10 @@ const CouponSystem = {
   showCouponModal(level) {
     console.log('showCouponModal called with level:', level);
     console.trace(); // Show call stack
+    // Pause the game timer
+        if (window.Game) {
+            Game.pauseTimer();
+        }
     const modal = document.getElementById('coupon-modal');
     const title = document.getElementById('modal-title');
     const message = document.getElementById('modal-message');
@@ -185,17 +189,35 @@ const CouponSystem = {
     const continueBtn = document.getElementById('continue-button');
     const newContinueBtn = continueBtn.cloneNode(true);
     continueBtn.parentNode.replaceChild(newContinueBtn, continueBtn);
-    
+
+    // Change button text based on level
+    if (level === 40) {
+    newContinueBtn.textContent = 'View Leaderboard';
+    } else {
+    newContinueBtn.textContent = 'Continue Playing';
+    }
+
     newContinueBtn.addEventListener('click', () => {
-      this.closeCouponModal();
+    this.closeCouponModal();
+    
+    // If level 40, show leaderboard (we'll build this next)
+    if (level === 40) {
+        // TODO: Show leaderboard
+        console.log('Show leaderboard!');
+    }
     });
   },
   
-  // Close the modal
-  closeCouponModal() {
+ // Close the modal
+    closeCouponModal() {
     const modal = document.getElementById('coupon-modal');
     modal.classList.add('hidden');
-  }
+    
+        // Resume the game timer
+        if (window.Game) {
+            Game.resumeTimer();
+        }
+    }
 };
 
 // Make available globally
