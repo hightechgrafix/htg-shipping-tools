@@ -16,6 +16,8 @@ const CouponSystem = {
   
   // Show the coupon modal for a specific level
   showCouponModal(level) {
+    console.log('showCouponModal called with level:', level);
+    console.trace(); // Show call stack
     const modal = document.getElementById('coupon-modal');
     const title = document.getElementById('modal-title');
     const message = document.getElementById('modal-message');
