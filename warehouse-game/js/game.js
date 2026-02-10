@@ -103,7 +103,7 @@ const Game = {
         case 'l':
         case 'L':
           // Press L to prompt for level number
-          const levelInput = prompt('Jump to level (1-60):');
+          const levelInput = prompt('Jump to level (1-40):');
           if (levelInput) {
             const levelNum = parseInt(levelInput);
             this.skipToLevel(levelNum);
@@ -208,8 +208,8 @@ const Game = {
   handleLevelComplete() {
     console.log('handleLevelComplete called! Current level:', this.currentLevel);
     console.trace(); // This will show us WHERE it was called from
-    // Check if this is a coupon level (10 or 60)
-    if (this.currentLevel === 10 || this.currentLevel === 60) {
+    // Check if this is a coupon level (10 or 40)
+    if (this.currentLevel === 10 || this.currentLevel === 40) {
       // Show coupon modal
       CouponSystem.showCouponModal(this.currentLevel);
       
@@ -221,7 +221,7 @@ const Game = {
       alert('Level ' + this.currentLevel + ' Complete! 🎉\nMoves: ' + this.moveCount);
       
       // Load next level
-      if (this.currentLevel < 60) {
+      if (this.currentLevel < 40) {
         this.loadLevel(this.currentLevel + 1);
         Renderer.draw();
       }
@@ -261,8 +261,8 @@ const Game = {
   //-------------------------------------------------------
   // Skip to a specific level (for testing)
   skipToLevel(levelNumber) {
-    if (levelNumber < 1 || levelNumber > 60) {
-      console.log('Level must be between 1 and 60');
+    if (levelNumber < 1 || levelNumber > 40) {
+      console.log('Level must be between 1 and 40');
       return;
     }
     

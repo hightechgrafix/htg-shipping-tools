@@ -14,7 +14,7 @@ const CouponSystem = {
       discount: '$5 off your order',
       description: 'Congratulations on completing Level 10!'
     },
-    60: {
+    40: {
       discount: '$20 off orders $100+',
       description: 'You are a Warehouse Master! 🏆'
     }
@@ -40,7 +40,7 @@ const CouponSystem = {
     if (level === 10) {
       title.textContent = '🎉 Level 10 Complete!';
       message.textContent = 'Great job! Enter your email to claim your $5 reward!';
-    } else if (level === 60) {
+    } else if (level === 40) {
       title.textContent = '🏆 ALL LEVELS COMPLETE! 🏆';
       message.textContent = 'You\'re a Warehouse Master! Enter your email to claim your $20 reward!';
     }
