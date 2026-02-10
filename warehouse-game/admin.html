@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTG Warehouse Game - Admin Panel</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      background: #ecf0f1;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+    
+    .subtitle {
+      color: #7f8c8d;
+      margin-bottom: 30px;
+    }
+    
+    .search-section {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+    
+    .search-section h2 {
+      color: #34495e;
+      margin-bottom: 15px;
+      font-size: 18px;
+    }
+    
+    .search-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .search-form input {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid #bdc3c7;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    .search-form button {
+      padding: 10px 20px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    .search-form button:hover {
+      background: #2980b9;
+    }
+    
+    .results {
+      margin-top: 20px;
+    }
+    
+    .result-card {
+      background: white;
+      border: 2px solid #ecf0f1;
+      border-radius: 6px;
+      padding: 20px;
+      margin-bottom: 15px;
+    }
+    
+    .result-card.expired {
+      border-color: #e74c3c;
+      background: #fadbd8;
+    }
+    
+    .result-card.redeemed {
+      border-color: #95a5a6;
+      background: #ecf0f1;
+    }
+    
+    .result-card.active {
+      border-color: #27ae60;
+      background: #d5f4e6;
+    }
+    
+    .coupon-code {
+      font-size: 24px;
+      font-weight: bold;
+      color: #2c3e50;
+      font-family: 'Courier New', monospace;
+      margin-bottom: 10px;
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    
+    .status-badge.active {
+      background: #27ae60;
+      color: white;
+    }
+    
+    .status-badge.redeemed {
+      background: #95a5a6;
+      color: white;
+    }
+    
+    .status-badge.expired {
+      background: #e74c3c;
+      color: white;
+    }
+    
+    .detail-row {
+      margin: 8px 0;
+      color: #34495e;
+    }
+    
+    .detail-label {
+      font-weight: bold;
+      display: inline-block;
+      width: 150px;
+    }
+    
+    .redeem-btn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    .redeem-btn:hover {
+      background: #c0392b;
+    }
+    
+    .redeem-btn:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+    }
+    
+    .error-message {
+      background: #e74c3c;
+      color: white;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 15px;
+    }
+    
+    .no-results {
+      color: #7f8c8d;
+      text-align: center;
+      padding: 30px;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #3498db;
+    }
+    
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎮 HTG Warehouse Game - Admin Panel</h1>
+    <p class="subtitle">Manage coupons and verify customer rewards</p>
+    
+    <!-- Search by Coupon Code -->
+    <div class="search-section">
+      <h2>🔍 Search by Coupon Code</h2>
+      <div class="search-form">
+        <input type="text" id="code-search-input" placeholder="Enter coupon code (e.g., HTG-ABC1234)" />
+        <button id="code-search-btn">Search</button>
+      </div>
+      <div id="code-results" class="results"></div>
+    </div>
+    
+    <!-- Search by Email -->
+    <div class="search-section">
+      <h2>📧 Search by Email Address</h2>
+      <div class="search-form">
+        <input type="email" id="email-search-input" placeholder="Enter customer email" />
+        <button id="email-search-btn">Search</button>
+      </div>
+      <div id="email-results" class="results"></div>
+    </div>
+  </div>
+  
+  <!-- Load Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
