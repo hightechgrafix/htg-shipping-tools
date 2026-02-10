@@ -5,195 +5,230 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HTG Warehouse Game - Admin Panel</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: Arial, sans-serif;
-      background: #ecf0f1;
-      padding: 20px;
-    }
-    
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background: white;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    h1 {
-      color: #2c3e50;
-      margin-bottom: 10px;
-    }
-    
-    .subtitle {
-      color: #7f8c8d;
-      margin-bottom: 30px;
-    }
-    
-    .search-section {
-      background: #f8f9fa;
-      padding: 20px;
-      border-radius: 6px;
-      margin-bottom: 20px;
-    }
-    
-    .search-section h2 {
-      color: #34495e;
-      margin-bottom: 15px;
-      font-size: 18px;
-    }
-    
-    .search-form {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    
-    .search-form input {
-      flex: 1;
-      padding: 10px;
-      border: 2px solid #bdc3c7;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-    
-    .search-form button {
-      padding: 10px 20px;
-      background: #3498db;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    
-    .search-form button:hover {
-      background: #2980b9;
-    }
-    
-    .results {
-      margin-top: 20px;
-    }
-    
-    .result-card {
-      background: white;
-      border: 2px solid #ecf0f1;
-      border-radius: 6px;
-      padding: 20px;
-      margin-bottom: 15px;
-    }
-    
-    .result-card.expired {
-      border-color: #e74c3c;
-      background: #fadbd8;
-    }
-    
-    .result-card.redeemed {
-      border-color: #95a5a6;
-      background: #ecf0f1;
-    }
-    
-    .result-card.active {
-      border-color: #27ae60;
-      background: #d5f4e6;
-    }
-    
-    .coupon-code {
-      font-size: 24px;
-      font-weight: bold;
-      color: #2c3e50;
-      font-family: 'Courier New', monospace;
-      margin-bottom: 10px;
-    }
-    
-    .status-badge {
-      display: inline-block;
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: bold;
-      margin-left: 10px;
-    }
-    
-    .status-badge.active {
-      background: #27ae60;
-      color: white;
-    }
-    
-    .status-badge.redeemed {
-      background: #95a5a6;
-      color: white;
-    }
-    
-    .status-badge.expired {
-      background: #e74c3c;
-      color: white;
-    }
-    
-    .detail-row {
-      margin: 8px 0;
-      color: #34495e;
-    }
-    
-    .detail-label {
-      font-weight: bold;
-      display: inline-block;
-      width: 150px;
-    }
-    
-    .redeem-btn {
-      margin-top: 15px;
-      padding: 10px 20px;
-      background: #e74c3c;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    
-    .redeem-btn:hover {
-      background: #c0392b;
-    }
-    
-    .redeem-btn:disabled {
-      background: #bdc3c7;
-      cursor: not-allowed;
-    }
-    
-    .error-message {
-      background: #e74c3c;
-      color: white;
-      padding: 15px;
-      border-radius: 4px;
-      margin-top: 15px;
-    }
-    
-    .no-results {
-      color: #7f8c8d;
-      text-align: center;
-      padding: 30px;
-    }
-    
-    .loading {
-      text-align: center;
-      padding: 20px;
-      color: #3498db;
-    }
-    
-    .hidden {
-      display: none;
-    }
+   * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+  background: #ffffff;
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #000000;
+  color: #ffffff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  border: 1px solid #333;
+}
+
+h1 {
+  color: #ffffff;
+  margin-bottom: 10px;
+  font-size: 1.8rem;
+}
+
+.subtitle {
+  color: #9ca3af;
+  margin-bottom: 30px;
+  font-size: 0.9rem;
+}
+
+.search-section {
+  background: #111;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #333;
+}
+
+.search-section h2 {
+  color: #ffffff;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.search-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.search-form input {
+  flex: 1;
+  padding: 0.6rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid #9ca3af;
+  background: #000;
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.search-form input::placeholder {
+  color: #9ca3af;
+}
+
+.search-form input:focus {
+  outline: 2px solid #b6282c;
+  border-color: #b6282c;
+}
+
+.search-form button {
+  padding: 0.6rem 1.5rem;
+  background: #b6282c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.search-form button:hover {
+  background: #9b1f24;
+}
+
+.results {
+  margin-top: 20px;
+}
+
+.result-card {
+  background: #000;
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 15px;
+}
+
+.result-card.expired {
+  border-color: #ff6b6b;
+  background: #1a0000;
+}
+
+.result-card.redeemed {
+  border-color: #666;
+  background: #0a0a0a;
+}
+
+.result-card.active {
+  border-color: #27ae60;
+  background: #001a00;
+}
+
+.coupon-code {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  margin-bottom: 10px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.status-badge.active {
+  background: #27ae60;
+  color: white;
+}
+
+.status-badge.redeemed {
+  background: #666;
+  color: white;
+}
+
+.status-badge.expired {
+  background: #ff6b6b;
+  color: white;
+}
+
+.detail-row {
+  margin: 8px 0;
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.detail-label {
+  font-weight: bold;
+  display: inline-block;
+  width: 150px;
+  color: #9ca3af;
+}
+
+.redeem-btn {
+  margin-top: 15px;
+  padding: 0.6rem 1.2rem;
+  background: #b6282c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.redeem-btn:hover {
+  background: #9b1f24;
+}
+
+.redeem-btn:disabled {
+  background: #666;
+  cursor: not-allowed;
+}
+
+.error-message {
+  background: #b6282c;
+  color: white;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 15px;
+}
+
+.no-results {
+  color: #9ca3af;
+  text-align: center;
+  padding: 30px;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #9ca3af;
+}
+
+.hidden {
+  display: none;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: #9ca3af;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.back-link:hover {
+  color: #ffffff;
+}
   </style>
 </head>
 <body>
   <div class="container">
+    <a href="login.html" class="back-link">← Back to Team Menu</a>
     <h1>🎮 HTG Warehouse Game - Admin Panel</h1>
     <p class="subtitle">Manage coupons and verify customer rewards</p>
     
