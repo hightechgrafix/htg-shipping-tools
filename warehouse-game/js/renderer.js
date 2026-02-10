@@ -6,9 +6,11 @@ const Renderer = {
   ctx: null,
   sprites: {},
   spritesLoaded: false,
+  game: null,
   
   // Initialize the renderer
-  init() {
+  init(game) {
+    this.game = game;
     this.canvas = document.getElementById('game-canvas');
     this.ctx = this.canvas.getContext('2d');
     
@@ -47,18 +49,16 @@ const Renderer = {
     document.getElementById('loading').classList.add('hidden');
     this.canvas.classList.remove('hidden');
     
-    // Draw a test level
-    this.drawTestLevel();
+    // Draw the game state
+    this.draw();
   },
   
-  // Draw a simple test level to verify sprites work
-  drawTestLevel() {
-    // Create a small test grid (8x8)
-    const gridWidth = 8;
-    const gridHeight = 8;
+  // Main draw function - called whenever game state changes
+  draw() {
+    if (!this.game) return;
     
-    // Set canvas size
-    const canvasSize = CONFIG.calculateCanvasSize(gridWidth, gridHeight);
+    // Set canvas size based on level
+    const canvasSize = CONFIG.calculateCanvasSize(this.game.levelWidth, this.game.levelHeight);
     this.canvas.width = canvasSize.width;
     this.canvas.height = canvasSize.height;
     
@@ -67,30 +67,12 @@ const Renderer = {
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
     // Draw header
-    this.drawHeader('Test Level');
+    this.drawHeader();
     
-    // Draw test grid
-    for (let y = 0; y < gridHeight; y++) {
-      for (let x = 0; x < gridWidth; x++) {
-        let tileType = CONFIG.TILES.FLOOR;
-        
-        // Walls around border
-        if (x === 0 || x === gridWidth - 1 || y === 0 || y === gridHeight - 1) {
-          tileType = CONFIG.TILES.WALL;
-        }
-        // Player in center
-        else if (x === 4 && y === 4) {
-          tileType = CONFIG.TILES.PLAYER_START;
-        }
-        // A cart
-        else if (x === 3 && y === 3) {
-          tileType = CONFIG.TILES.CART;
-        }
-        // Staging area
-        else if (x === 5 && y === 5) {
-          tileType = CONFIG.TILES.STAGING_AREA;
-        }
-        
+    // Draw all tiles
+    for (let y = 0; y < this.game.levelHeight; y++) {
+      for (let x = 0; x < this.game.levelWidth; x++) {
+        const tileType = this.game.getTileAt(x, y);
         this.drawTile(tileType, x, y);
       }
     }
@@ -139,7 +121,7 @@ const Renderer = {
   },
   
   // Draw header UI
-  drawHeader(levelName) {
+  drawHeader() {
     this.ctx.fillStyle = '#2c3e50';
     this.ctx.fillRect(0, 0, this.canvas.width, CONFIG.UI_HEADER_HEIGHT);
     
@@ -149,7 +131,8 @@ const Renderer = {
     this.ctx.fillText('HTG WAREHOUSE GAME', this.canvas.width / 2, 30);
     
     this.ctx.font = '16px Arial';
-    this.ctx.fillText(levelName || 'Level 1', this.canvas.width / 2, 60);
+    const levelText = 'Test Level | Moves: ' + this.game.moveCount;
+    this.ctx.fillText(levelText, this.canvas.width / 2, 60);
   },
   
   // Draw footer UI
@@ -163,11 +146,13 @@ const Renderer = {
     this.ctx.font = '14px Arial';
     this.ctx.textAlign = 'center';
     this.ctx.fillText('Arrow Keys: Move | Z: Undo | R: Reset', this.canvas.width / 2, footerY + 30);
-    this.ctx.fillText('Sprites loaded successfully!', this.canvas.width / 2, footerY + 55);
+    
+    // Show how many carts are on goals
+    const cartsOnGoals = this.game.carts.filter(cart => this.game.isCartOnGoal(cart)).length;
+    const totalCarts = this.game.carts.length;
+    this.ctx.fillText(`Carts on Goals: ${cartsOnGoals}/${totalCarts}`, this.canvas.width / 2, footerY + 55);
   }
 };
 
-// Start the renderer when page loads
-window.addEventListener('DOMContentLoaded', () => {
-  Renderer.init();
-});
+// Don't auto-start renderer anymore - Game will call it
+
