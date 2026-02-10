@@ -42,11 +42,25 @@ const CouponSystem = {
     
     // Set content based on level
     if (level === 10) {
-      title.textContent = '🎉 Level 10 Complete!';
-      message.textContent = 'Great job! Enter your email to claim your $5 reward!';
+    title.textContent = '🎉 Level 10 Complete!';
+    message.textContent = 'Great job! Enter your email to claim your $5 reward!';
     } else if (level === 40) {
-      title.textContent = '🏆 ALL LEVELS COMPLETE! 🏆';
-      message.textContent = 'You\'re a Warehouse Master! Enter your email to claim your $20 reward!';
+    title.textContent = '🏆 ALL LEVELS COMPLETE! 🏆';
+    
+    // Get score from Game object
+    const finalScore = window.Game ? Game.finalScore : 0;
+    const finalTime = window.Game ? Game.finalTime : 0;
+    const totalMoves = window.Game ? Game.totalMoves : 0;
+    
+    // Format time nicely (MM:SS)
+    const minutes = Math.floor(finalTime / 60);
+    const seconds = finalTime % 60;
+    const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    message.innerHTML = `You're a Warehouse Master!<br><br>
+        <strong>Final Score: ${finalScore.toLocaleString()} points</strong><br>
+        Total Time: ${timeStr} | Total Moves: ${totalMoves}<br><br>
+        Enter your email to claim your $20 reward!`;
     }
     
     // Show modal
