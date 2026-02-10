@@ -228,7 +228,7 @@ h1 {
 </head>
 <body>
   <div class="container">
-    <a href="login.html" class="back-link">← Back to Team Menu</a>
+    <a href="../login.html" class="back-link">← Back to Team Menu</a>
     <h1>🎮 HTG Warehouse Game - Admin Panel</h1>
     <p class="subtitle">Manage coupons and verify customer rewards</p>
     
@@ -255,7 +255,13 @@ h1 {
   
   <!-- Load Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
-  <script src="js/config.js"></script>
+  <script>
+    // Supabase config directly in admin page
+    const SUPABASE_CONFIG = {
+      url: 'https://sbfslzwnkztmodnlsigq.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
+    };
+  </script>
   <script src="js/admin.js"></script>
 </body>
 </html>

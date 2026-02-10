@@ -3,8 +3,8 @@
 
 // Initialize Supabase client
 const supabase = window.supabase.createClient(
-  CONFIG.SUPABASE_URL,
-  CONFIG.SUPABASE_ANON_KEY
+  SUPABASE_CONFIG.url,
+  SUPABASE_CONFIG.anonKey
 );
 
 const Admin = {
