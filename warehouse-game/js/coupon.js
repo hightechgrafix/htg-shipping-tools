@@ -190,6 +190,7 @@ const CouponSystem = {
     
     // Hide email form, show coupon
     emailForm.classList.add('hidden');
+    document.getElementById('modal-message').classList.add('hidden'); // Hide the message too
     couponDisplay.classList.remove('hidden');
     
     // Set coupon code
