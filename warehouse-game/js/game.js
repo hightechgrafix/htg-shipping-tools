@@ -49,6 +49,9 @@ const Game = {
     this.moveHistory = [];
     
     console.log(`Level ${levelNumber} loaded: ${this.levelWidth}x${this.levelHeight}`);
+    console.log('Carts:', this.carts);
+    console.log('Staging areas:', this.stagingAreas);
+    console.log('Win check:', this.checkWin()); 
     return true;
   },
   
