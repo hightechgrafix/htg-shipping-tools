@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTG Warehouse Game</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      background: #34495e;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    #game-container {
+      background: #2c3e50;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    
+    #game-canvas {
+      display: block;
+      background: #34495e;
+      border: 2px solid #ecf0f1;
+    }
+    
+    #loading {
+      color: #ecf0f1;
+      text-align: center;
+      padding: 40px;
+      font-size: 18px;
+    }
+    
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="loading">Loading...</div>
+    <canvas id="game-canvas" class="hidden"></canvas>
+  </div>
+  
+  <!-- Load scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/renderer.js"></script>
+</body>
+</html>
