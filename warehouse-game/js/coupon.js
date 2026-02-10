@@ -114,10 +114,24 @@ const CouponSystem = {
     
     // Store the coupon in Supabase
     try {
-        await this.storeCoupon(email, level, couponCode);
+    await this.storeCoupon(email, level, couponCode);
+    
+    // If Level 40, also submit score to leaderboard
+    if (level === 40 && window.Game) {
+        // Prompt for player name
+        const playerName = prompt('Enter your name for the leaderboard:') || 'Anonymous';
         
-        // Show the coupon
-        this.displayCoupon(couponCode, level);
+        await Leaderboard.submitScore(
+        playerName,
+        email,
+        Game.finalScore,
+        Game.totalMoves,
+        Game.finalTime
+        );
+    }
+    
+    // Show the coupon
+    this.displayCoupon(couponCode, level);
     } catch (error) {
         errorEl.textContent = 'Error saving coupon. Please try again.';
         errorEl.classList.remove('hidden');
@@ -219,10 +233,9 @@ const CouponSystem = {
     newContinueBtn.addEventListener('click', () => {
     this.closeCouponModal();
     
-    // If level 40, show leaderboard (we'll build this next)
+    // If level 40, show leaderboard
     if (level === 40) {
-        // TODO: Show leaderboard
-        console.log('Show leaderboard!');
+        Leaderboard.showLeaderboard();
     }
     });
   },

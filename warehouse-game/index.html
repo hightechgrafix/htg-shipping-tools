@@ -154,6 +154,65 @@
       font-size: 14px;
       margin-top: 10px;
     }
+
+    /* Leaderboard styles */
+    #leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    #leaderboard-table th {
+      background: #34495e;
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-weight: bold;
+    }
+
+    #leaderboard-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #bdc3c7;
+      color: #2c3e50;
+    }
+
+    #leaderboard-table tbody tr:hover {
+      background: #ecf0f1;
+    }
+
+    #leaderboard-table tbody tr:nth-child(1) td:first-child {
+      color: #f39c12;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    #leaderboard-table tbody tr:nth-child(2) td:first-child {
+      color: #95a5a6;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    #leaderboard-table tbody tr:nth-child(3) td:first-child {
+      color: #cd7f32;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    #close-leaderboard-btn {
+      padding: 12px 30px;
+      font-size: 16px;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    #close-leaderboard-btn:hover {
+      background: #c0392b;
+    }
   </style>
 </head>
 <body>
@@ -183,7 +242,36 @@
     </div>
   </div>
 </div>
-  
+
+ <!-- Leaderboard Modal -->
+<div id="leaderboard-modal" class="modal hidden">
+  <div class="modal-content" style="max-width: 700px;">
+    <div style="text-align: right; margin-bottom: -30px;">
+      <button id="close-leaderboard" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #7f8c8d;">&times;</button>
+    </div>
+    <h2>🏆 Leaderboard - Top 10</h2>
+    <div id="leaderboard-loading">Loading...</div>
+    <div id="leaderboard-content" class="hidden">
+      <table id="leaderboard-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Player</th>
+            <th>Score</th>
+            <th>Moves</th>
+            <th>Time</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body">
+          <!-- Filled by JavaScript -->
+        </tbody>
+      </table>
+    </div>
+    <button id="close-leaderboard-btn">Close</button>
+  </div>
+</div> 
+
 <!-- Load scripts -->
 <!-- Supabase client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
@@ -191,6 +279,7 @@
 <script src="js/config.js"></script>
 <script src="js/levelManager.js"></script>
 <script src="js/coupon.js"></script>
+<script src="js/leaderboard.js"></script>
 <script src="js/renderer.js"></script>
 <script src="js/game.js"></script>
 </body>
