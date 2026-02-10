@@ -190,6 +190,8 @@ const Game = {
 
   // Handle level completion
   handleLevelComplete() {
+    console.log('handleLevelComplete called! Current level:', this.currentLevel);
+    console.trace(); // This will show us WHERE it was called from
     // Check if this is a coupon level (10 or 60)
     if (this.currentLevel === 10 || this.currentLevel === 60) {
       // Show coupon modal
