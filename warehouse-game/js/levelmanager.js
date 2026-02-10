@@ -91,3 +91,5 @@ const LevelManager = {
 
 // Make LevelManager available globally
 window.LevelManager = LevelManager;
+
+//cap
