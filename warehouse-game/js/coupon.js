@@ -64,7 +64,33 @@ const CouponSystem = {
         <span style="font-size: 14px;">Time: ${timeStr} | Moves: ${totalMoves}</span>
         </div>`;
     
-    message.textContent = 'You\'re a Warehouse Master! Enter your email to claim your $20 reward!';
+    message.innerHTML = `You're a Warehouse Master! Enter your email to claim your $20 reward!<br><br>
+        <button id="skip-to-leaderboard-btn" style="padding: 8px 20px; background: #95a5a6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
+        Skip Coupon - Go Directly to Leaderboard
+        </button>`;
+    
+    // Add handler for skip button (needs setTimeout to ensure DOM is ready)
+    setTimeout(() => {
+        document.getElementById('skip-to-leaderboard-btn')?.addEventListener('click', () => {
+        // Prompt for name and submit score
+        const playerName = prompt('Enter your name for the leaderboard:') || 'Anonymous';
+        const email = 'noreward@skip.com'; // Placeholder email for skipped rewards
+        
+        Leaderboard.submitScore(
+            playerName,
+            email,
+            finalScore,
+            totalMoves,
+            finalTime
+        ).then(() => {
+            this.closeCouponModal();
+            Leaderboard.showLeaderboard();
+        }).catch(err => {
+            console.error('Error submitting score:', err);
+            alert('Error submitting score. Please try again.');
+        });
+        });
+    }, 100);
     }
         
     // Show modal
