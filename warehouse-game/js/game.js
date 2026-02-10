@@ -58,7 +58,13 @@ const Game = {
   // Set up keyboard controls
   setupControls() {
     document.addEventListener('keydown', (e) => {
-      switch(e.key) {
+      // Don't process game controls if modal is open
+      const modal = document.getElementById('coupon-modal');
+      if (modal && !modal.classList.contains('hidden')) {
+        return; // Modal is open, ignore game controls
+      }
+    
+    switch(e.key) {
         case 'ArrowUp':
         case 'w':
         case 'W':
@@ -103,10 +109,10 @@ const Game = {
           }
           e.preventDefault();
           break; 
-          case 'w':
-          case 'W':
-            // Press W to instantly win the level (for testing)
-            if (e.ctrlKey || e.metaKey) { // Require Ctrl+W or Cmd+W so you don't accidentally trigger it
+          case 'x':
+          case 'X':
+            // Press Shift+X to instantly win the level (for testing)
+            if (e.shiftKey) {
               console.log('Instant win cheat activated!');
               this.handleLevelComplete();
               e.preventDefault();
