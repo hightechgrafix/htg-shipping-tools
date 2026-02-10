@@ -238,7 +238,7 @@ const Game = {
   // Reset level to starting state
   reset() {
     this.moveHistory = [];
-    this.loadTestLevel();
+    this.loadLevel(this.currentLevel);
     Renderer.draw();
   },
   
