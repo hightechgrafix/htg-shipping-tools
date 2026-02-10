@@ -96,6 +96,23 @@ const Leaderboard = {
         tbody.appendChild(row);
       });
       
+        // Add "Play Again" button if not already there
+        if (!document.getElementById('play-again-btn')) {
+        const playAgainBtn = document.createElement('button');
+        playAgainBtn.id = 'play-again-btn';
+        playAgainBtn.textContent = 'Play Again from Level 1';
+        playAgainBtn.style.cssText = 'padding: 12px 30px; font-size: 16px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-right: 10px;';
+        
+        playAgainBtn.addEventListener('click', () => {
+            this.closeLeaderboard();
+            if (window.Game) {
+            Game.resetGame();
+            }
+        });
+        
+        document.getElementById('close-leaderboard-btn').parentNode.insertBefore(playAgainBtn, document.getElementById('close-leaderboard-btn'));
+        }
+      
       // Show content, hide loading
       loading.classList.add('hidden');
       content.classList.remove('hidden');

@@ -297,6 +297,26 @@ const Game = {
     Renderer.draw();
   },
 
+  // Reset entire game to Level 1
+  resetGame() {
+    // Reset all game state
+    this.currentLevel = 0;
+    this.totalMoves = 0;
+    this.gameStartTime = null;
+    this.totalPausedTime = 0;
+    this.currentPauseStart = null;
+    this.isTimerPaused = false;
+    this.finalScore = null;
+    this.finalTime = null;
+    this.moveHistory = [];
+    
+    // Load Level 1
+    this.loadLevel(1);
+    Renderer.draw();
+    
+    console.log('Game reset - starting from Level 1');
+  },
+
   // Pause the game timer (when modal opens)
   pauseTimer() {
     if (!this.isTimerPaused && this.gameStartTime !== null) {
