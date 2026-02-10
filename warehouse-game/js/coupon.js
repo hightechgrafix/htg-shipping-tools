@@ -1,0 +1,169 @@
+// HTG Warehouse Game - Coupon System
+// Handles email collection and coupon generation
+
+const CouponSystem = {
+  // Coupon rewards configuration
+  REWARDS: {
+    10: {
+      discount: '$5 off your order',
+      description: 'Congratulations on completing Level 10!'
+    },
+    60: {
+      discount: '$20 off orders $100+',
+      description: 'You are a Warehouse Master! 🏆'
+    }
+  },
+  
+  // Show the coupon modal for a specific level
+  showCouponModal(level) {
+    const modal = document.getElementById('coupon-modal');
+    const title = document.getElementById('modal-title');
+    const message = document.getElementById('modal-message');
+    const emailForm = document.getElementById('email-form');
+    const couponDisplay = document.getElementById('coupon-display');
+    
+    // Reset modal state
+    emailForm.classList.remove('hidden');
+    couponDisplay.classList.add('hidden');
+    document.getElementById('email-input').value = '';
+    document.getElementById('email-error').classList.add('hidden');
+    
+    // Set content based on level
+    if (level === 10) {
+      title.textContent = '🎉 Level 10 Complete!';
+      message.textContent = 'Great job! Enter your email to claim your $5 reward!';
+    } else if (level === 60) {
+      title.textContent = '🏆 ALL LEVELS COMPLETE! 🏆';
+      message.textContent = 'You\'re a Warehouse Master! Enter your email to claim your $20 reward!';
+    }
+    
+    // Show modal
+    modal.classList.remove('hidden');
+    
+    // Set up event listeners (remove old ones first)
+    const submitBtn = document.getElementById('email-submit');
+    const newSubmitBtn = submitBtn.cloneNode(true);
+    submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+    
+    newSubmitBtn.addEventListener('click', () => {
+      this.handleEmailSubmit(level);
+    });
+    
+    // Allow Enter key to submit
+    const emailInput = document.getElementById('email-input');
+    emailInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        this.handleEmailSubmit(level);
+      }
+    });
+  },
+  
+  // Handle email submission
+  async handleEmailSubmit(level) {
+    const emailInput = document.getElementById('email-input');
+    const email = emailInput.value.trim();
+    const errorEl = document.getElementById('email-error');
+    
+    // Validate email
+    if (!this.isValidEmail(email)) {
+      errorEl.textContent = 'Please enter a valid email address';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+    
+    // Check if email already claimed this level's reward
+    if (this.hasEmailClaimedReward(email, level)) {
+      errorEl.textContent = 'This email has already claimed the Level ' + level + ' reward';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+    
+    // Generate coupon code
+    const couponCode = this.generateCouponCode();
+    
+    // Store the coupon (in localStorage for now, will be database later)
+    this.storeCoupon(email, level, couponCode);
+    
+    // Show the coupon
+    this.displayCoupon(couponCode, level);
+  },
+  
+  // Validate email format
+  isValidEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  },
+  
+  // Check if email already claimed this reward
+  hasEmailClaimedReward(email, level) {
+    const coupons = JSON.parse(localStorage.getItem('htg_coupons') || '[]');
+    return coupons.some(c => c.email === email && c.level === level);
+  },
+  
+  // Generate a random coupon code
+  generateCouponCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No confusing chars
+    let code = 'HTG-';
+    for (let i = 0; i < 7; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  },
+  
+  // Store coupon (localStorage for now, will be Supabase later)
+  storeCoupon(email, level, couponCode) {
+    const coupons = JSON.parse(localStorage.getItem('htg_coupons') || '[]');
+    
+    const coupon = {
+      email: email,
+      level: level,
+      code: couponCode,
+      discount: this.REWARDS[level].discount,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+      redeemed: false
+    };
+    
+    coupons.push(coupon);
+    localStorage.setItem('htg_coupons', JSON.stringify(coupons));
+    
+    console.log('Coupon stored:', coupon);
+  },
+  
+  // Display the coupon to the user
+  displayCoupon(couponCode, level) {
+    const emailForm = document.getElementById('email-form');
+    const couponDisplay = document.getElementById('coupon-display');
+    const codeEl = document.getElementById('coupon-code');
+    const detailsEl = document.getElementById('coupon-details');
+    
+    // Hide email form, show coupon
+    emailForm.classList.add('hidden');
+    couponDisplay.classList.remove('hidden');
+    
+    // Set coupon code
+    codeEl.textContent = couponCode;
+    
+    // Set details
+    const reward = this.REWARDS[level];
+    detailsEl.textContent = reward.discount;
+    
+    // Set up continue button
+    const continueBtn = document.getElementById('continue-button');
+    const newContinueBtn = continueBtn.cloneNode(true);
+    continueBtn.parentNode.replaceChild(newContinueBtn, continueBtn);
+    
+    newContinueBtn.addEventListener('click', () => {
+      this.closeCouponModal();
+    });
+  },
+  
+  // Close the modal
+  closeCouponModal() {
+    const modal = document.getElementById('coupon-modal');
+    modal.classList.add('hidden');
+  }
+};
+
+// Make available globally
+window.CouponSystem = CouponSystem;

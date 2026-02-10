@@ -90,6 +90,16 @@ const Game = {
           this.reset();
           e.preventDefault();
           break;
+        case 'l':
+        case 'L':
+          // Press L to prompt for level number
+          const levelInput = prompt('Jump to level (1-60):');
+          if (levelInput) {
+            const levelNum = parseInt(levelInput);
+            this.skipToLevel(levelNum);
+          }
+          e.preventDefault();
+          break;  
       }
     });
   },
@@ -177,16 +187,23 @@ const Game = {
 
   // Handle level completion
   handleLevelComplete() {
-    alert('Level Complete! 🎉\nMoves: ' + this.moveCount);
-    
-    // Check if there's a next level
-    if (this.currentLevel < 60) {
-      // Load next level
-      this.loadLevel(this.currentLevel + 1);
-      Renderer.draw();
+    // Check if this is a coupon level (10 or 60)
+    if (this.currentLevel === 10 || this.currentLevel === 60) {
+      // Show coupon modal
+      CouponSystem.showCouponModal(this.currentLevel);
+      
+      // After they close the modal, handle progression
+      // For now, they'll click Continue button which closes modal
+      // Then they can manually advance or we can auto-advance
     } else {
-      // Beat all 60 levels!
-      alert('🎊 CONGRATULATIONS! 🎊\n\nYou completed all 60 levels!\n\nYou are a warehouse logistics master!');
+      // Regular level completion
+      alert('Level ' + this.currentLevel + ' Complete! 🎉\nMoves: ' + this.moveCount);
+      
+      // Load next level
+      if (this.currentLevel < 60) {
+        this.loadLevel(this.currentLevel + 1);
+        Renderer.draw();
+      }
     }
   },
   
@@ -220,6 +237,19 @@ const Game = {
     Renderer.draw();
   },
   
+  //-------------------------------------------------------
+  // Skip to a specific level (for testing)
+  skipToLevel(levelNumber) {
+    if (levelNumber < 1 || levelNumber > 60) {
+      console.log('Level must be between 1 and 60');
+      return;
+    }
+    
+    this.loadLevel(levelNumber);
+    Renderer.draw();
+    console.log('Skipped to level', levelNumber);
+  },
+
   // Get tile type at position (for rendering)
   getTileAt(x, y) {
     // Check player
