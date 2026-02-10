@@ -131,8 +131,7 @@ const Renderer = {
     this.ctx.fillText('HTG WAREHOUSE GAME', this.canvas.width / 2, 30);
     
     this.ctx.font = '16px Arial';
-    const levelText = 'Test Level | Moves: ' + this.game.moveCount;
-    this.ctx.fillText(levelText, this.canvas.width / 2, 60);
+    const levelText = 'Level ' + this.game.currentLevel + ' | Moves: ' + this.game.moveCount;    this.ctx.fillText(levelText, this.canvas.width / 2, 60);
   },
   
   // Draw footer UI

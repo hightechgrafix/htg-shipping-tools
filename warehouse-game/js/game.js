@@ -13,50 +13,43 @@ const Game = {
   levelWidth: 0,
   levelHeight: 0,
   
-  // Initialize game with a test level
-  init() {
-    this.loadTestLevel();
+  // Initialize game
+  async init() {
+    // Load level data first
+    const loaded = await LevelManager.loadLevelData();
+    if (!loaded) {
+      console.error('Failed to load level data');
+      return;
+    }
+    
+    // Load level 1
+    await this.loadLevel(1);
+    
     this.setupControls();
     Renderer.init(this);
   },
   
-  // Create a simple test level
-  loadTestLevel() {
-    this.levelWidth = 8;
-    this.levelHeight = 8;
+ // Load level from JSON
+  async loadLevel(levelNumber) {
+    const levelData = LevelManager.getLevel(levelNumber);
     
-    // Set player start position
-    this.playerPos = { x: 4, y: 4 };
-    
-    // Create walls around border
-    this.walls = [];
-    for (let x = 0; x < this.levelWidth; x++) {
-      this.walls.push({ x, y: 0 });
-      this.walls.push({ x, y: this.levelHeight - 1 });
-    }
-    for (let y = 1; y < this.levelHeight - 1; y++) {
-      this.walls.push({ x: 0, y });
-      this.walls.push({ x: this.levelWidth - 1, y });
+    if (!levelData) {
+      console.error('Could not load level:', levelNumber);
+      return false;
     }
     
-    // Add some internal walls
-    this.walls.push({ x: 2, y: 2 });
-    this.walls.push({ x: 2, y: 3 });
-    
-    // Create carts
-    this.carts = [
-      { x: 3, y: 3 },
-      { x: 5, y: 3 }
-    ];
-    
-    // Create staging areas (goals)
-    this.stagingAreas = [
-      { x: 3, y: 6 },
-      { x: 5, y: 6 }
-    ];
-    
+    this.currentLevel = levelNumber;
+    this.levelWidth = levelData.width;
+    this.levelHeight = levelData.height;
+    this.playerPos = { ...levelData.playerStart };
+    this.walls = levelData.walls.map(w => ({...w}));
+    this.carts = levelData.carts.map(c => ({...c}));
+    this.stagingAreas = levelData.stagingAreas.map(s => ({...s}));
     this.moveCount = 0;
     this.moveHistory = [];
+    
+    console.log(`Level ${levelNumber} loaded: ${this.levelWidth}x${this.levelHeight}`);
+    return true;
   },
   
   // Set up keyboard controls
