@@ -104,9 +104,37 @@ const CouponSystem = {
     // Check if email already claimed this level's reward
     const alreadyClaimed = await this.hasEmailClaimedReward(email, level);
     if (alreadyClaimed) {
-        errorEl.textContent = 'This email has already claimed the Level ' + level + ' reward';
-        errorEl.classList.remove('hidden');
-        return;
+    errorEl.innerHTML = 'This email has already claimed the Level ' + level + ' reward<br>' +
+        '<button id="skip-coupon-btn" style="margin-top: 10px; padding: 8px 16px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer;">Skip Coupon - Go to Leaderboard</button>';
+    errorEl.classList.remove('hidden');
+    
+    // Add click handler for skip button
+    setTimeout(() => {
+        document.getElementById('skip-coupon-btn')?.addEventListener('click', () => {
+        if (level === 40) {
+            // Prompt for name and submit score
+            const playerName = prompt('Enter your name for the leaderboard:') || 'Anonymous';
+            Leaderboard.submitScore(
+            playerName,
+            email,
+            Game.finalScore,
+            Game.totalMoves,
+            Game.finalTime
+            ).then(() => {
+            this.closeCouponModal();
+            Leaderboard.showLeaderboard();
+            }).catch(err => {
+            console.error('Error submitting score:', err);
+            alert('Error submitting score. Please try again.');
+            });
+        } else {
+            // Level 10 - just close modal and continue
+            this.closeCouponModal();
+        }
+        });
+    }, 100);
+    
+    return;
     }
     
     // Generate coupon code
