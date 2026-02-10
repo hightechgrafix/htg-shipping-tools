@@ -57,12 +57,16 @@ const CouponSystem = {
     const seconds = finalTime % 60;
     const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
     
-    message.innerHTML = `You're a Warehouse Master!<br><br>
+    // Put score in the title instead
+    title.innerHTML = `🏆 ALL LEVELS COMPLETE! 🏆<br>
+        <div style="font-size: 18px; margin-top: 10px; font-weight: normal;">
         <strong>Final Score: ${finalScore.toLocaleString()} points</strong><br>
-        Total Time: ${timeStr} | Total Moves: ${totalMoves}<br><br>
-        Enter your email to claim your $20 reward!`;
-    }
+        <span style="font-size: 14px;">Time: ${timeStr} | Moves: ${totalMoves}</span>
+        </div>`;
     
+    message.textContent = 'You\'re a Warehouse Master! Enter your email to claim your $20 reward!';
+    }
+        
     // Show modal
     modal.classList.remove('hidden');
     
