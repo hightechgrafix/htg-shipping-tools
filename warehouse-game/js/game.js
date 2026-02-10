@@ -236,6 +236,9 @@ const Game = {
   }
 };
 
+// Make Game available globally
+window.Game = Game;
+
 // Start the game when page loads
 window.addEventListener('DOMContentLoaded', () => {
   Game.init();
