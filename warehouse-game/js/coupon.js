@@ -1,11 +1,6 @@
 // HTG Warehouse Game - Coupon System
 // Handles email collection and coupon generation
 
-// Initialize Supabase client
-const supabase = window.supabase.createClient(
-  CONFIG.SUPABASE_URL,
-  CONFIG.SUPABASE_ANON_KEY
-);
 
 const CouponSystem = {
   // Coupon rewards configuration
@@ -127,46 +122,10 @@ const CouponSystem = {
         return;
     }
     
-    // Check if email already claimed this level's reward
-    const alreadyClaimed = await this.hasEmailClaimedReward(email, level);
-    if (alreadyClaimed) {
-    errorEl.innerHTML = 'This email has already claimed the Level ' + level + ' reward<br>' +
-        '<button id="skip-coupon-btn" style="margin-top: 10px; padding: 8px 16px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer;">Skip Coupon - Go to Leaderboard</button>';
-    errorEl.classList.remove('hidden');
-    
-    // Add click handler for skip button
-    setTimeout(() => {
-        document.getElementById('skip-coupon-btn')?.addEventListener('click', () => {
-        if (level === 40) {
-            // Prompt for name and submit score
-            const playerName = prompt('Enter your name for the leaderboard:') || 'Anonymous';
-            Leaderboard.submitScore(
-            playerName,
-            email,
-            Game.finalScore,
-            Game.totalMoves,
-            Game.finalTime
-            ).then(() => {
-            this.closeCouponModal();
-            Leaderboard.showLeaderboard();
-            }).catch(err => {
-            console.error('Error submitting score:', err);
-            alert('Error submitting score. Please try again.');
-            });
-        } else {
-            // Level 10 - just close modal and continue
-            this.closeCouponModal();
-        }
-        });
-    }, 100);
-    
-    return;
-    }
-    
     // Generate coupon code
     const couponCode = this.generateCouponCode();
-    
-    // Store the coupon in Supabase
+
+    // Store the coupon via API (which also checks for duplicates)
     try {
     await this.storeCoupon(email, level, couponCode);
     
@@ -187,9 +146,39 @@ const CouponSystem = {
     // Show the coupon
     this.displayCoupon(couponCode, level);
     } catch (error) {
-        errorEl.textContent = 'Error saving coupon. Please try again.';
-        errorEl.classList.remove('hidden');
-        console.error('Failed to store coupon:', error);
+        if (error.message === 'ALREADY_CLAIMED') {
+            errorEl.innerHTML = 'This email has already claimed the Level ' + level + ' reward<br>' +
+            '<button id="skip-coupon-btn" style="margin-top: 10px; padding: 8px 16px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer;">Skip Coupon - Go to Leaderboard</button>';
+            errorEl.classList.remove('hidden');
+            
+            // Add click handler for skip button
+            setTimeout(() => {
+            document.getElementById('skip-coupon-btn')?.addEventListener('click', () => {
+                if (level === 40) {
+                const playerName = prompt('Enter your name for the leaderboard:') || 'Anonymous';
+                Leaderboard.submitScore(
+                    playerName,
+                    email,
+                    Game.finalScore,
+                    Game.totalMoves,
+                    Game.finalTime
+                ).then(() => {
+                    this.closeCouponModal();
+                    Leaderboard.showLeaderboard();
+                }).catch(err => {
+                    console.error('Error submitting score:', err);
+                    alert('Error submitting score. Please try again.');
+                });
+                } else {
+                this.closeCouponModal();
+                }
+            });
+            }, 100);
+        } else {
+            errorEl.textContent = 'Error saving coupon. Please try again.';
+            errorEl.classList.remove('hidden');
+            console.error('Failed to store coupon:', error);
+        }
     }
     },
   
@@ -199,21 +188,7 @@ const CouponSystem = {
     return re.test(email);
   },
   
-    // Check if email already claimed this reward
-    async hasEmailClaimedReward(email, level) {
-    const { data, error } = await supabase
-        .from('htg_warehouse_coupons')
-        .select('id')
-        .eq('email', email)
-        .eq('level', level)
-        .single();
-    
-    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
-        console.error('Error checking email:', error);
-    }
-    
-    return data !== null;
-    },
+
   
   // Generate a random coupon code
   generateCouponCode() {
@@ -225,32 +200,33 @@ const CouponSystem = {
     return code;
   },
   
-    // Store coupon in Supabase
+    // Store coupon via API
     async storeCoupon(email, level, couponCode) {
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
+    const response = await fetch('/api/game/claim-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+        email: email,
+        level: level,
+        code: couponCode,
+        discount: this.REWARDS[level].discount
+        })
+    });
     
-    const { data, error } = await supabase
-        .from('htg_warehouse_coupons')
-        .insert([
-        {
-            email: email,
-            level: level,
-            code: couponCode,
-            discount: this.REWARDS[level].discount,
-            expires_at: expiresAt.toISOString(),
-            redeemed: false
-        }
-        ])
-        .select()
-        .single();
+    const json = await response.json();
     
-    if (error) {
-        console.error('Error storing coupon:', error);
-        throw error;
+    if (response.status === 409) {
+        // Already claimed
+        throw new Error('ALREADY_CLAIMED');
     }
     
-    console.log('Coupon stored in Supabase:', data);
-    return data;
+    if (!response.ok) {
+        console.error('Error storing coupon:', json.error);
+        throw new Error(json.error || 'Failed to store coupon');
+    }
+    
+    console.log('Coupon stored:', json.coupon);
+    return json.coupon;
     },
   
   // Display the coupon to the user

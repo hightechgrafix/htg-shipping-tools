@@ -2,58 +2,59 @@
 // Handles score submission and leaderboard display
 
 const Leaderboard = {
-  // Submit score to leaderboard (called on Level 40 completion)
+  // Submit score to leaderboard via API
   async submitScore(playerName, email, score, totalMoves, totalTime) {
     try {
-      const { data, error } = await supabase
-        .from('htg_warehouse_leaderboard')
-        .insert([
-          {
-            player_name: playerName,
-            email: email,
-            score: score,
-            total_moves: totalMoves,
-            total_time: totalTime,
-            levels_completed: 40
-          }
-        ])
-        .select()
-        .single();
+      const response = await fetch('/api/game/submit-score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          player_name: playerName,
+          email: email,
+          score: score,
+          total_moves: totalMoves,
+          total_time: totalTime,
+          levels_completed: 40
+        })
+      });
       
-      if (error) {
-        console.error('Error submitting score:', error);
-        throw error;
+      const json = await response.json();
+      
+      if (!response.ok) {
+        console.error('Error submitting score:', json.error);
+        throw new Error(json.error || 'Failed to submit score');
       }
       
-      console.log('Score submitted to leaderboard:', data);
-      return data;
+      console.log('Score submitted to leaderboard:', json.row);
+      return json.row;
     } catch (error) {
       console.error('Failed to submit score:', error);
       throw error;
     }
   },
   
-  // Fetch top 10 scores from leaderboard
+  // Fetch top 10 scores via API
   async fetchTopScores() {
     try {
-      const { data, error } = await supabase
-        .from('htg_warehouse_leaderboard')
-        .select('*')
-        .order('score', { ascending: false })
-        .limit(10);
+      const response = await fetch('/api/game/top-scores', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
       
-      if (error) {
-        console.error('Error fetching leaderboard:', error);
-        throw error;
+      const json = await response.json();
+      
+      if (!response.ok) {
+        console.error('Error fetching leaderboard:', json.error);
+        throw new Error(json.error || 'Failed to fetch leaderboard');
       }
       
-      return data;
+      return json.scores;
     } catch (error) {
       console.error('Failed to fetch leaderboard:', error);
       throw error;
     }
   },
-  
+    
   // Display leaderboard modal
   async showLeaderboard() {
     const modal = document.getElementById('leaderboard-modal');
