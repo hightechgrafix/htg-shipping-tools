@@ -216,6 +216,16 @@
           🎮 Coupon Management
         </button>
 
+        <!-- RA Tracking button - shown to admins and ra_users -->
+        <button
+          class="menu-btn"
+          id="ra-btn"
+          style="display:none;"
+          onclick="location.href='ra-tracking.html'"
+        >
+          📦 RA Tracking
+        </button>
+
         <!-- Original buttons - shown to everyone except receiving-only users -->
         <div id="standard-tools">
 
@@ -315,6 +325,17 @@
         }
       }
 
+      // Check if user has RA access
+      const { data: raUser } = await supabase
+        .from("ra_users")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+
+      if (raUser || adminRow) {
+        // Show RA button to ra_users OR admins
+        document.getElementById("ra-btn").style.display = "block";
+      }
 
     // Show Package Tracker button to everyone
       document.getElementById("package-btn").style.display = "block";
