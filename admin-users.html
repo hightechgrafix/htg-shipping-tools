@@ -72,7 +72,31 @@
         th {
         background: #000;
         color: #fff;
-     }
+        }
+
+        /* Style checkboxes */
+        input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        }
+
+        /* Center align checkbox columns */
+        td:nth-child(4),  /* Admin */
+        td:nth-child(5),  /* Spectrum */
+        td:nth-child(6),  /* Package */
+        td:nth-child(7),  /* RA */
+        td:nth-child(8) { /* Standard Tools */
+        text-align: center;
+        }
+
+        th:nth-child(4),  /* Admin */
+        th:nth-child(5),  /* Spectrum */
+        th:nth-child(6),  /* Package */
+        th:nth-child(7),  /* RA */
+        th:nth-child(8) { /* Standard Tools */
+        text-align: center;
+        }
 
   </style>
 </head>
@@ -119,6 +143,11 @@
         <th>Email</th>
         <th>Created</th>
         <th>Last Sign-in</th>
+        <th>Admin</th>
+        <th>Spectrum</th>
+        <th>Package Tracker</th>
+        <th>RA Tracking</th>
+        <th>Standard Tools</th>
         <th>Actions</th>
     </tr>
     </thead>
@@ -173,7 +202,8 @@
       setStatus(`
         <strong>Admin access confirmed.</strong><br />
         Logged in as <code>${email}</code><br /><br />
-        User management tools will appear here next.
+        <strong>New:</strong> Use the checkboxes below to control which buttons each user can see on the main login page.<br />
+        Changes are saved automatically when you click a checkbox.
       `);
 
       loadUsers(session);
@@ -182,6 +212,7 @@
     async function loadUsers(session) {
         const token = session.access_token;
 
+        // Load users from Supabase Auth
         const res = await fetch("/api/admin/list-users", {
             headers: {
             Authorization: `Bearer ${token}`,
@@ -196,15 +227,34 @@
 
         const { users } = await res.json();
 
+        // Load user management permissions
+        const { data: userManagement, error } = await supabase
+            .from('user_management')
+            .select('*');
+
         const tbody = document.querySelector("#users-table tbody");
         tbody.innerHTML = "";
 
         users.forEach((u) => {
+            // Find permissions for this user
+            const permissions = userManagement?.find(um => um.user_id === u.id) || {
+                is_admin: false,
+                has_spectrum_access: false,
+                has_package_access: true, // Default true
+                has_ra_access: false,
+                has_standard_tools: true // Default true
+            };
+
             const tr = document.createElement("tr");
             tr.innerHTML = `
             <td>${u.email || ""}</td>
             <td>${u.created_at ? new Date(u.created_at).toLocaleString() : ""}</td>
             <td>${u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString() : "—"}</td>
+            <td><input type="checkbox" ${permissions.is_admin ? 'checked' : ''} data-permission="is_admin" data-user-id="${u.id}"></td>
+            <td><input type="checkbox" ${permissions.has_spectrum_access ? 'checked' : ''} data-permission="has_spectrum_access" data-user-id="${u.id}"></td>
+            <td><input type="checkbox" ${permissions.has_package_access ? 'checked' : ''} data-permission="has_package_access" data-user-id="${u.id}"></td>
+            <td><input type="checkbox" ${permissions.has_ra_access ? 'checked' : ''} data-permission="has_ra_access" data-user-id="${u.id}"></td>
+            <td><input type="checkbox" ${permissions.has_standard_tools ? 'checked' : ''} data-permission="has_standard_tools" data-user-id="${u.id}"></td>
             <td>
                 <button
                     class="btn"
@@ -224,21 +274,27 @@
                 </td>
             `;
             tbody.appendChild(tr);
+            
+            // Add event listeners for buttons
             const buttons = tr.querySelectorAll("button");
             buttons.forEach((btn) => {
-            const action = btn.dataset.action;
+                const action = btn.dataset.action;
 
-            if (action === "delete") {
-                btn.addEventListener("click", () =>
-                deleteUser(u.id, u.email)
-                );
-            }
+                if (action === "delete") {
+                    btn.addEventListener("click", () => deleteUser(u.id, u.email));
+                }
 
-            if (action === "reset") {
-                btn.addEventListener("click", () =>
-                resetPassword(u.email)
-                );
-            }
+                if (action === "reset") {
+                    btn.addEventListener("click", () => resetPassword(u.email));
+                }
+            });
+
+            // Add event listeners for checkboxes
+            const checkboxes = tr.querySelectorAll("input[type='checkbox']");
+            checkboxes.forEach((checkbox) => {
+                checkbox.addEventListener("change", (e) => {
+                    updateUserPermissions(e.target.dataset.userId, e.target.dataset.permission, e.target.checked);
+                });
             });
         });
 
@@ -285,6 +341,58 @@
 
     loadUsers(session);
     }
+    async function updateUserPermissions(userId, permission, isEnabled) {
+        try {
+            // First check if user already has a record in user_management
+            const { data: existingRecord, error: fetchError } = await supabase
+                .from('user_management')
+                .select('*')
+                .eq('user_id', userId)
+                .single();
+
+            const updateData = {
+                user_id: userId,
+                [permission]: isEnabled
+            };
+
+            if (fetchError && fetchError.code === 'PGRST116') {
+                // No record exists, create one
+                const { error: insertError } = await supabase
+                    .from('user_management')
+                    .insert({
+                        user_id: userId,
+                        is_admin: permission === 'is_admin' ? isEnabled : false,
+                        has_spectrum_access: permission === 'has_spectrum_access' ? isEnabled : false,
+                        has_package_access: permission === 'has_package_access' ? isEnabled : true,
+                        has_ra_access: permission === 'has_ra_access' ? isEnabled : false,
+                        has_standard_tools: permission === 'has_standard_tools' ? isEnabled : true
+                    });
+
+                if (insertError) {
+                    console.error('Error creating user permissions:', insertError);
+                    alert('Error updating permissions');
+                }
+            } else if (!fetchError) {
+                // Record exists, update it
+                const { error: updateError } = await supabase
+                    .from('user_management')
+                    .update({ [permission]: isEnabled })
+                    .eq('user_id', userId);
+
+                if (updateError) {
+                    console.error('Error updating user permissions:', updateError);
+                    alert('Error updating permissions');
+                }
+            } else {
+                console.error('Error fetching user permissions:', fetchError);
+                alert('Error updating permissions');
+            }
+        } catch (err) {
+            console.error('Unexpected error:', err);
+            alert('Error updating permissions');
+        }
+    }
+
     async function resetPassword(email) {
     const confirmed = confirm(
         `Send password reset email to:\n\n${email}?`
@@ -353,6 +461,25 @@
     if (!res.ok) {
         alert(result.error || "Failed to create user");
         return;
+    }
+
+    // Create default permissions for the new user
+    if (result.user && result.user.id) {
+        const { error: permissionError } = await supabase
+            .from('user_management')
+            .insert({
+                user_id: result.user.id,
+                is_admin: false,
+                has_spectrum_access: false,
+                has_package_access: true,
+                has_ra_access: false,
+                has_standard_tools: true
+            });
+
+        if (permissionError) {
+            console.error('Error creating default permissions:', permissionError);
+            // Don't alert here since the user was created successfully
+        }
     }
 
     document.getElementById("new-email").value = "";

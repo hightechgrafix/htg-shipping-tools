@@ -198,15 +198,6 @@
         >
           📦 Package Tracker
         </button>
-        <!-- Package Tracker button - shown to package_users -->
-        <button
-          class="menu-btn"
-          id="package-btn"
-          style="display:none;"
-          onclick="location.href='package-tracker.html'"
-        >
-          📦 Package Tracker
-        </button>
 
         <!-- Warehouse Game Coupon Admin button -->
         <button
@@ -225,9 +216,6 @@
         >
           📦 RA Tracking
         </button>
-
-        <!-- Original buttons - shown to everyone except receiving-only users -->
-        <div id="standard-tools">
 
         <!-- Original buttons - shown to everyone except receiving-only users -->
         <div id="standard-tools">
@@ -297,48 +285,75 @@
       // Show menu
       document.getElementById("menu").style.display = "block";
 
-      // Check if user is admin
-      const { data: adminRow } = await supabase
-        .from("admins")
-        .select("id")
-        .eq("id", user.id)
+      // Get user permissions from unified user_management table
+      const { data: userPermissions, error: permissionError } = await supabase
+        .from("user_management")
+        .select("*")
+        .eq("user_id", user.id)
         .single();
 
-      if (adminRow) {
+      // If no permissions record exists, create default permissions
+      if (permissionError && permissionError.code === 'PGRST116') {
+        // Create default permissions for existing user
+        const { error: insertError } = await supabase
+          .from('user_management')
+          .insert({
+            user_id: user.id,
+            is_admin: false,
+            has_spectrum_access: false,
+            has_package_access: true,
+            has_ra_access: false,
+            has_standard_tools: true
+          });
+
+        if (insertError) {
+          console.error('Error creating default permissions:', insertError);
+        }
+
+        // Set default permissions for this session
+        userPermissions = {
+          is_admin: false,
+          has_spectrum_access: false,
+          has_package_access: true,
+          has_ra_access: false,
+          has_standard_tools: true
+        };
+      }
+
+      const permissions = userPermissions || {
+        is_admin: false,
+        has_spectrum_access: false,
+        has_package_access: true,
+        has_ra_access: false,
+        has_standard_tools: true
+      };
+
+      // Show/hide buttons based on permissions
+      if (permissions.is_admin) {
         document.getElementById("users-btn").style.display = "block";
       }
 
-      // Check if user has Spectrum access
-      const { data: spectrumUser } = await supabase
-        .from("spectrum_users")
-        .select("id")
-        .eq("id", user.id)
-        .single();
-
-      if (spectrumUser) {
-        // Show Spectrum button
+      if (permissions.has_spectrum_access) {
         document.getElementById("spectrum-btn").style.display = "block";
         
-        // If user is spectrum (not admin), hide standard tools
-        if (!adminRow) {
+        // If user is spectrum-only (not admin), hide standard tools unless they have explicit access
+        if (!permissions.is_admin && !permissions.has_standard_tools) {
           document.getElementById("standard-tools").style.display = "none";
         }
       }
 
-      // Check if user has RA access
-      const { data: raUser } = await supabase
-        .from("ra_users")
-        .select("id")
-        .eq("id", user.id)
-        .single();
-
-      if (raUser || adminRow) {
-        // Show RA button to ra_users OR admins
+      if (permissions.has_ra_access) {
         document.getElementById("ra-btn").style.display = "block";
       }
 
-    // Show Package Tracker button to everyone
-      document.getElementById("package-btn").style.display = "block";
+      if (permissions.has_package_access) {
+        document.getElementById("package-btn").style.display = "block";
+      }
+
+      // Show/hide standard tools based on permissions
+      if (!permissions.has_standard_tools) {
+        document.getElementById("standard-tools").style.display = "none";
+      }
 
       // Logout
       document.getElementById("logout-btn").addEventListener("click", async () => {
