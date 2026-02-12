@@ -320,6 +320,92 @@
     padding: 40px;
     color: #6b7280;
   }
+
+  .photo-upload {
+    margin-top: 15px;
+    padding: 15px;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+  }
+
+  .photo-upload h3 {
+    margin: 0 0 10px 0;
+    font-size: 0.95rem;
+    color: #374151;
+  }
+
+  .photo-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .photo-input-wrapper input[type="file"] {
+    flex: 1;
+  }
+
+  .photo-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .photo-preview-item {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .photo-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .photo-remove {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+    padding: 0;
+  }
+
+  .photo-remove:hover {
+    background: #dc2626;
+  }
+
+  .photo-links {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .photo-link {
+    padding: 4px 8px;
+    background: #3b82f6;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.75rem;
+  }
+
+  .photo-link:hover {
+    background: #2563eb;
+  }
 </style>
 </head>
 <body>
@@ -371,6 +457,20 @@
           </div>
         </div>
 
+        <div class="photo-upload">
+          <h3>📷 Photos (Optional)</h3>
+          <div class="photo-input-wrapper">
+            <input 
+              type="file" 
+              id="photo-input" 
+              accept="image/*" 
+              capture="environment"
+              multiple
+            />
+          </div>
+          <div id="photo-preview" class="photo-preview"></div>
+        </div>
+
         <button type="submit" class="btn-primary" id="submit-btn">Add RA Item</button>
         
         <div id="form-status" class="status-message"></div>
@@ -405,6 +505,7 @@
               <th>Contents</th>
               <th>Authorized By</th>
               <th>Date Added</th>
+              <th>Photos</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -493,6 +594,7 @@
     let currentPage = 1;
     const itemsPerPage = 5;
     let currentSearch = { field: '', term: '' };
+    let selectedPhotos = []; // Store File objects for upload
 
     // Check authentication
     async function checkAuth() {
@@ -502,6 +604,67 @@
         return null;
       }
       return data.session.user;
+    }
+
+    // Photo preview handling
+    document.getElementById('photo-input').addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      selectedPhotos = [...selectedPhotos, ...files];
+      updatePhotoPreview();
+    });
+
+    function updatePhotoPreview() {
+      const previewContainer = document.getElementById('photo-preview');
+      previewContainer.innerHTML = '';
+      
+      selectedPhotos.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const div = document.createElement('div');
+          div.className = 'photo-preview-item';
+          div.innerHTML = `
+            <img src="${e.target.result}" alt="Preview ${index + 1}" />
+            <button type="button" class="photo-remove" onclick="removePhoto(${index})">×</button>
+          `;
+          previewContainer.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    window.removePhoto = (index) => {
+      selectedPhotos.splice(index, 1);
+      updatePhotoPreview();
+    };
+
+    // Upload photos to Supabase Storage
+    async function uploadPhotos(raItemId) {
+      const uploadedUrls = [];
+      
+      for (let i = 0; i < selectedPhotos.length; i++) {
+        const file = selectedPhotos[i];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${raItemId}_${Date.now()}_${i}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { data, error } = await supabase.storage
+          .from('ra-photos')
+          .upload(filePath, file);
+
+        if (error) {
+          console.error('Error uploading photo:', error);
+          continue;
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('ra-photos')
+          .getPublicUrl(filePath);
+
+        uploadedUrls.push(urlData.publicUrl);
+      }
+
+      return uploadedUrls;
     }
 
     // Show status message
@@ -558,7 +721,15 @@
         table.style.display = 'table';
         emptyState.style.display = 'none';
         
-        tbody.innerHTML = pageItems.map(item => `
+        tbody.innerHTML = pageItems.map(item => {
+          const photos = item.photo_urls || [];
+          const photoLinks = photos.length > 0 
+            ? `<div class="photo-links">${photos.map((url, i) => 
+                `<a href="${url}" target="_blank" class="photo-link">Pic ${i + 1}</a>`
+              ).join('')}</div>`
+            : '-';
+          
+          return `
           <tr>
             <td>${item.customer_name || ''}</td>
             <td>${item.customer_po || ''}</td>
@@ -567,12 +738,14 @@
             <td>${item.contents || ''}</td>
             <td>${item.authorized_by || ''}</td>
             <td>${new Date(item.created_at).toLocaleDateString()}</td>
+            <td>${photoLinks}</td>
             <td class="actions">
               <button class="btn-small btn-edit" onclick="editItem('${item.id}')">Edit</button>
               <button class="btn-small btn-delete" onclick="deleteItem('${item.id}')">Delete</button>
             </td>
           </tr>
-        `).join('');
+        `;
+        }).join('');
       }
 
       // Update pagination
@@ -599,31 +772,55 @@
       submitBtn.disabled = true;
       submitBtn.textContent = 'Adding...';
 
-      const formData = {
-        customer_name: document.getElementById('customer-name').value,
-        customer_po: document.getElementById('customer-po').value || null,
-        job_number: document.getElementById('job-number').value || null,
-        location: document.getElementById('location').value || null,
-        authorized_by: document.getElementById('authorized-by').value || null,
-        contents: document.getElementById('contents').value || null,
-        notes: document.getElementById('notes').value || null,
-        created_by: user.id
-      };
+      try {
+        const formData = {
+          customer_name: document.getElementById('customer-name').value,
+          customer_po: document.getElementById('customer-po').value || null,
+          job_number: document.getElementById('job-number').value || null,
+          location: document.getElementById('location').value || null,
+          authorized_by: document.getElementById('authorized-by').value || null,
+          contents: document.getElementById('contents').value || null,
+          notes: document.getElementById('notes').value || null,
+          created_by: user.id,
+          photo_urls: [] // Will update after upload
+        };
 
-      const { error } = await supabase
-        .from('ra_items')
-        .insert([formData]);
+        // Insert the item first to get the ID
+        const { data: newItem, error: insertError } = await supabase
+          .from('ra_items')
+          .insert([formData])
+          .select()
+          .single();
 
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Add RA Item';
+        if (insertError) throw insertError;
 
-      if (error) {
-        console.error('Error adding item:', error);
-        showStatus('Error adding item: ' + error.message, 'error');
-      } else {
+        // Upload photos if any
+        if (selectedPhotos.length > 0) {
+          submitBtn.textContent = 'Uploading photos...';
+          const photoUrls = await uploadPhotos(newItem.id);
+          
+          // Update the item with photo URLs
+          const { error: updateError } = await supabase
+            .from('ra_items')
+            .update({ photo_urls: photoUrls })
+            .eq('id', newItem.id);
+
+          if (updateError) {
+            console.error('Error updating photo URLs:', updateError);
+          }
+        }
+
         showStatus('RA item added successfully!', 'success');
         document.getElementById('ra-form').reset();
+        selectedPhotos = [];
+        updatePhotoPreview();
         refreshTable();
+      } catch (error) {
+        console.error('Error adding item:', error);
+        showStatus('Error adding item: ' + error.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Add RA Item';
       }
     });
 
