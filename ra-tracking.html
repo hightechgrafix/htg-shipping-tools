@@ -574,9 +574,24 @@
           </div>
         </div>
 
+        <div class="photo-upload">
+          <h3>📷 Photos</h3>
+          <div id="edit-existing-photos" class="photo-preview"></div>
+          <div class="photo-input-wrapper" style="margin-top: 10px;">
+            <input 
+              type="file" 
+              id="edit-photo-input" 
+              accept="image/*" 
+              capture="environment"
+              multiple
+            />
+          </div>
+          <div id="edit-photo-preview" class="photo-preview"></div>
+        </div>
+
         <div class="modal-actions">
           <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
-          <button type="submit" class="btn-primary">Save Changes</button>
+          <button type="submit" class="btn-primary" id="edit-submit-btn">Save Changes</button>
         </div>
       </form>
     </div>
@@ -594,7 +609,9 @@
     let currentPage = 1;
     const itemsPerPage = 5;
     let currentSearch = { field: '', term: '' };
-    let selectedPhotos = []; // Store File objects for upload
+    let selectedPhotos = []; // Store File objects for upload (main form)
+    let editSelectedPhotos = []; // Store File objects for edit modal
+    let editExistingPhotos = []; // Store existing photo URLs for edit modal
 
     // Check authentication
     async function checkAuth() {
@@ -637,12 +654,68 @@
       updatePhotoPreview();
     };
 
+    // Edit modal photo handling
+    document.getElementById('edit-photo-input').addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      editSelectedPhotos = [...editSelectedPhotos, ...files];
+      updateEditPhotoPreview();
+    });
+
+    function updateEditPhotoPreview() {
+      const previewContainer = document.getElementById('edit-photo-preview');
+      previewContainer.innerHTML = '';
+      
+      editSelectedPhotos.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const div = document.createElement('div');
+          div.className = 'photo-preview-item';
+          div.innerHTML = `
+            <img src="${e.target.result}" alt="New ${index + 1}" />
+            <button type="button" class="photo-remove" onclick="removeEditPhoto(${index})">×</button>
+          `;
+          previewContainer.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    window.removeEditPhoto = (index) => {
+      editSelectedPhotos.splice(index, 1);
+      updateEditPhotoPreview();
+    };
+
+    function displayExistingPhotos(photoUrls) {
+      const container = document.getElementById('edit-existing-photos');
+      container.innerHTML = '';
+      
+      if (!photoUrls || photoUrls.length === 0) {
+        container.innerHTML = '<p style="color: #6b7280; font-size: 0.85rem;">No existing photos</p>';
+        return;
+      }
+
+      photoUrls.forEach((url, index) => {
+        const div = document.createElement('div');
+        div.className = 'photo-preview-item';
+        div.innerHTML = `
+          <img src="${url}" alt="Existing ${index + 1}" />
+          <button type="button" class="photo-remove" onclick="removeExistingPhoto(${index})">×</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    window.removeExistingPhoto = (index) => {
+      editExistingPhotos.splice(index, 1);
+      displayExistingPhotos(editExistingPhotos);
+    };
+
     // Upload photos to Supabase Storage
-    async function uploadPhotos(raItemId) {
+    async function uploadPhotos(raItemId, photoArray = selectedPhotos) {
       const uploadedUrls = [];
       
-      for (let i = 0; i < selectedPhotos.length; i++) {
-        const file = selectedPhotos[i];
+      for (let i = 0; i < photoArray.length; i++) {
+        const file = photoArray[i];
         const fileExt = file.name.split('.').pop();
         const fileName = `${raItemId}_${Date.now()}_${i}.${fileExt}`;
         const filePath = `${fileName}`;
@@ -888,12 +961,20 @@
       document.getElementById('edit-contents').value = data.contents || '';
       document.getElementById('edit-notes').value = data.notes || '';
 
+      // Load existing photos
+      editExistingPhotos = data.photo_urls ? [...data.photo_urls] : [];
+      editSelectedPhotos = [];
+      displayExistingPhotos(editExistingPhotos);
+      updateEditPhotoPreview();
+
       document.getElementById('edit-modal').style.display = 'flex';
     };
 
     // Close edit modal (global function)
     window.closeEditModal = () => {
       document.getElementById('edit-modal').style.display = 'none';
+      editSelectedPhotos = [];
+      editExistingPhotos = [];
     };
 
     // Save edit
@@ -901,27 +982,47 @@
       e.preventDefault();
       
       const id = document.getElementById('edit-id').value;
-      const updateData = {
-        customer_name: document.getElementById('edit-customer-name').value,
-        customer_po: document.getElementById('edit-customer-po').value || null,
-        job_number: document.getElementById('edit-job-number').value || null,
-        location: document.getElementById('edit-location').value || null,
-        authorized_by: document.getElementById('edit-authorized-by').value || null,
-        contents: document.getElementById('edit-contents').value || null,
-        notes: document.getElementById('edit-notes').value || null
-      };
+      const submitBtn = document.getElementById('edit-submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving...';
 
-      const { error } = await supabase
-        .from('ra_items')
-        .update(updateData)
-        .eq('id', id);
+      try {
+        const updateData = {
+          customer_name: document.getElementById('edit-customer-name').value,
+          customer_po: document.getElementById('edit-customer-po').value || null,
+          job_number: document.getElementById('edit-job-number').value || null,
+          location: document.getElementById('edit-location').value || null,
+          authorized_by: document.getElementById('edit-authorized-by').value || null,
+          contents: document.getElementById('edit-contents').value || null,
+          notes: document.getElementById('edit-notes').value || null
+        };
 
-      if (error) {
-        console.error('Error updating item:', error);
-        alert('Error updating item: ' + error.message);
-      } else {
+        // Handle photo uploads if any new photos were added
+        if (editSelectedPhotos.length > 0) {
+          submitBtn.textContent = 'Uploading photos...';
+          const newPhotoUrls = await uploadPhotos(id, editSelectedPhotos);
+          // Combine existing photos with new uploads
+          updateData.photo_urls = [...editExistingPhotos, ...newPhotoUrls];
+        } else {
+          // Just keep the existing photos (with any removals)
+          updateData.photo_urls = editExistingPhotos;
+        }
+
+        const { error } = await supabase
+          .from('ra_items')
+          .update(updateData)
+          .eq('id', id);
+
+        if (error) throw error;
+
         closeEditModal();
         refreshTable();
+      } catch (error) {
+        console.error('Error updating item:', error);
+        alert('Error updating item: ' + error.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Save Changes';
       }
     });
 
