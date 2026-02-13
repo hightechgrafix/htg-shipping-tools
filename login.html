@@ -209,6 +209,16 @@
           📦 RA Tracking
         </button>
 
+        <!-- Replacement Parts button - shown to admins only -->
+        <button
+          class="menu-btn"
+          id="parts-btn"
+          style="display:none;"
+          onclick="location.href='replacement-parts.html'"
+        >
+          🔧 Replacement Parts
+        </button>
+
         <!-- Original buttons - shown to everyone except receiving-only users -->
         <div id="standard-tools">
           <button class="menu-btn" onclick="location.href='edit-production-times.html'">Edit Production Times</button>  
@@ -324,6 +334,7 @@
       // Show/hide buttons based on permissions
       if (permissions.is_admin) {
         document.getElementById("users-btn").style.display = "block";
+        document.getElementById("parts-btn").style.display = "block";
       }
 
       if (permissions.has_spectrum_access) {
