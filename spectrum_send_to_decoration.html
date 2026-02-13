@@ -170,13 +170,40 @@
         return null;
       }
       
-      const { data: spectrumUser } = await supabase
-        .from("spectrum_users")
-        .select("id")
-        .eq("id", session.user.id)
+      // Check if user has spectrum access via new user_management table
+      const { data: userPermissions, error: permissionError } = await supabase
+        .from("user_management")
+        .select("has_spectrum_access, is_admin")
+        .eq("user_id", session.user.id)
         .single();
       
-      if (!spectrumUser) {
+      // If no permissions record exists, check old admins table for backward compatibility
+      let hasAccess = false;
+      if (permissionError && permissionError.code === 'PGRST116') {
+        // No record in user_management, check old tables for backward compatibility
+        const { data: adminUser } = await supabase
+          .from("admins")
+          .select("id")
+          .eq("id", session.user.id)
+          .single();
+          
+        if (adminUser) {
+          hasAccess = true; // Admins always have access
+        } else {
+          // Also check old spectrum_users table as fallback
+          const { data: spectrumUser } = await supabase
+            .from("spectrum_users")
+            .select("id")
+            .eq("id", session.user.id)
+            .single();
+          hasAccess = !!spectrumUser;
+        }
+      } else if (!permissionError && userPermissions) {
+        // Check new permission system
+        hasAccess = userPermissions.has_spectrum_access || userPermissions.is_admin;
+      }
+      
+      if (!hasAccess) {
         alert('Access denied');
         window.location.href = 'login.html';
         return null;
