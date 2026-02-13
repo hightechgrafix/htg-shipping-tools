@@ -27,14 +27,29 @@ module.exports = async function handler(req, res) {
 
     const adminId = userData.user.id;
 
-    // Verify admin
-    const { data: adminRow } = await supabaseAdmin
-      .from("admins")
-      .select("id")
-      .eq("id", adminId)
+    // Check admin permissions via new user_management table
+    const { data: userPermissions, error: permissionError } = await supabaseAdmin
+      .from("user_management")
+      .select("is_admin")
+      .eq("user_id", adminId)
       .single();
+    
+    // If no permissions record exists, check old admins table for backward compatibility
+    let isAdmin = false;
+    if (permissionError && permissionError.code === 'PGRST116') {
+      // No record in user_management, check old admins table as fallback
+      const { data: adminRow } = await supabaseAdmin
+        .from("admins")
+        .select("id")
+        .eq("id", adminId)
+        .single();
+      isAdmin = !!adminRow;
+    } else if (!permissionError && userPermissions) {
+      // Check new permission system
+      isAdmin = userPermissions.is_admin;
+    }
 
-    if (!adminRow) {
+    if (!isAdmin) {
       return res.status(403).json({ error: "Admin access required" });
     }
 
