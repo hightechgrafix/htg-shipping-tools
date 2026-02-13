@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug Test - Admin Access</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; background: #f5f5f5; }
+    .info { background: white; padding: 1rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid #b6282c; }
+    .code { background: #f0f0f0; padding: 0.5rem; font-family: monospace; border-radius: 4px; margin: 0.5rem 0; }
+  </style>
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+    
+    const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
+    
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    async function debugUser() {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        document.getElementById('results').innerHTML = `
+          <div class="info">
+            <h3>❌ Not Logged In</h3>
+            <p>Please log in first, then come back to this page.</p>
+            <a href="login.html">Go to Login</a>
+          </div>
+        `;
+        return;
+      }
+      
+      const userId = session.user.id;
+      const email = session.user.email;
+      
+      // Check old admins table
+      const { data: adminCheck } = await supabase
+        .from("admins")
+        .select("id")
+        .eq("id", userId)
+        .single();
+      
+      // Check new user_management table  
+      const { data: userMgmtCheck } = await supabase
+        .from("user_management")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+      
+      document.getElementById('results').innerHTML = `
+        <div class="info">
+          <h3>🔍 Debug Information</h3>
+          <p><strong>Current URL:</strong> <code>${window.location.href}</code></p>
+          <p><strong>User ID:</strong> <code>${userId}</code></p>
+          <p><strong>Email:</strong> <code>${email}</code></p>
+        </div>
+        
+        <div class="info">
+          <h3>🔐 Permission Checks</h3>
+          <p><strong>Old Admins Table:</strong> ${adminCheck ? '✅ Found' : '❌ Not found'}</p>
+          <p><strong>New User Management Table:</strong> ${userMgmtCheck ? '✅ Found' : '❌ Not found'}</p>
+          ${userMgmtCheck ? `
+            <div class="code">
+              is_admin: ${userMgmtCheck.is_admin}<br>
+              has_spectrum_access: ${userMgmtCheck.has_spectrum_access}<br>
+              has_package_access: ${userMgmtCheck.has_package_access}<br>
+              has_ra_access: ${userMgmtCheck.has_ra_access}<br>
+              has_standard_tools: ${userMgmtCheck.has_standard_tools}
+            </div>
+          ` : ''}
+        </div>
+        
+        <div class="info">
+          <h3>🧪 Test Links</h3>
+          <p><a href="admin-users.html">Direct Link to admin-users.html</a></p>
+          <p><a href="index.html">Direct Link to index.html (Shipping Calculator)</a></p>
+          <p><a href="login.html">Back to Login Page</a></p>
+        </div>
+      `;
+    }
+    
+    // Run debug when page loads
+    debugUser();
+  </script>
+</head>
+<body>
+  <h1>🐛 Admin Access Debug Tool</h1>
+  <p>This page will help debug why User Management is redirecting to the shipping calculator.</p>
+  
+  <div id="results">
+    <div class="info">Loading...</div>
+  </div>
+</body>
+</html>
