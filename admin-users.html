@@ -186,14 +186,29 @@
       const userId = session.user.id;
       const email = session.user.email;
 
-      // 2️⃣ Must be admin
-      const { data: adminRow, error } = await supabase
-        .from("admins")
-        .select("id")
-        .eq("id", userId)
+      // 2️⃣ Check admin permissions via new user_management table
+      const { data: userPermissions, error: permissionError } = await supabase
+        .from("user_management")
+        .select("is_admin")
+        .eq("user_id", userId)
         .single();
+      
+      // If no permissions record exists, check old admins table for backward compatibility
+      let isAdmin = false;
+      if (permissionError && permissionError.code === 'PGRST116') {
+        // No record in user_management, check old admins table as fallback
+        const { data: adminRow } = await supabase
+          .from("admins")
+          .select("id")
+          .eq("id", userId)
+          .single();
+        isAdmin = !!adminRow;
+      } else if (!permissionError && userPermissions) {
+        // Check new permission system
+        isAdmin = userPermissions.is_admin;
+      }
 
-      if (error || !adminRow) {
+      if (!isAdmin) {
         location.href = "/";
         return;
       }
