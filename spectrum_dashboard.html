@@ -189,6 +189,131 @@
     .mini-delete-btn:hover {
      background: #7f1d1d;
     }
+
+    .mini-edit-btn {
+        background: #1d4ed8;
+        color: white;
+        border: none;
+        padding: 2px 6px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.75rem;
+        margin-left: 4px;
+        transition: background 0.2s;
+    }
+
+    .mini-edit-btn:hover {
+        background: #1e40af;
+    }
+
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+        background-color: #fff;
+        margin: 15% auto;
+        padding: 20px;
+        border: none;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        color: #333;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .close:hover {
+        color: #000;
+    }
+
+    .modal-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .modal-form label {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .modal-form input {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+    .modal-form input:focus {
+        outline: none;
+        border-color: #1d4ed8;
+        box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.2);
+    }
+
+    .modal-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+
+    .modal-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .modal-btn.primary {
+        background: #1d4ed8;
+        color: white;
+    }
+
+    .modal-btn.primary:hover {
+        background: #1e40af;
+    }
+
+    .modal-btn.secondary {
+        background: #e5e7eb;
+        color: #374151;
+    }
+
+    .modal-btn.secondary:hover {
+        background: #d1d5db;
+    }
   </style>
 </head>
 <body>
@@ -397,21 +522,26 @@
         <td><strong>${color}</strong></td>
         <td>
             ${stats.limbo.toLocaleString()}
+            ${stats.limbo > 0 ? `<button class="mini-edit-btn" onclick="editColorStatus('${color}', 'limbo', ${JSON.stringify(stats.limboIds).replace(/"/g, '&quot;')})">✏️</button>` : ''}
             ${stats.limbo > 0 ? `<button class="mini-delete-btn" onclick="deleteColorStatus('${color}', 'limbo', ${JSON.stringify(stats.limboIds).replace(/"/g, '&quot;')})">🗑️</button>` : ''}
         </td>
         <td>
             ${stats.ready.toLocaleString()}
+            ${stats.ready > 0 ? `<button class="mini-edit-btn" onclick="editColorStatus('${color}', 'ready', ${JSON.stringify(stats.readyIds).replace(/"/g, '&quot;')})">✏️</button>` : ''}
             ${stats.ready > 0 ? `<button class="mini-delete-btn" onclick="deleteColorStatus('${color}', 'ready', ${JSON.stringify(stats.readyIds).replace(/"/g, '&quot;')})">🗑️</button>` : ''}
         </td>
         <td>
             ${stats.out_for_printing.toLocaleString()}
+            ${stats.out_for_printing > 0 ? `<button class="mini-edit-btn" onclick="editColorStatus('${color}', 'out_for_printing', ${JSON.stringify(stats.out_for_printingIds).replace(/"/g, '&quot;')})">✏️</button>` : ''}
             ${stats.out_for_printing > 0 ? `<button class="mini-delete-btn" onclick="deleteColorStatus('${color}', 'out_for_printing', ${JSON.stringify(stats.out_for_printingIds).replace(/"/g, '&quot;')})">🗑️</button>` : ''}        </td>
         <td>
             ${stats.printed.toLocaleString()}
+            ${stats.printed > 0 ? `<button class="mini-edit-btn" onclick="editColorStatus('${color}', 'printed', ${JSON.stringify(stats.printedIds).replace(/"/g, '&quot;')})">✏️</button>` : ''}
             ${stats.printed > 0 ? `<button class="mini-delete-btn" onclick="deleteColorStatus('${color}', 'printed', ${JSON.stringify(stats.printedIds).replace(/"/g, '&quot;')})">🗑️</button>` : ''}
         </td>
         <td>
             ${stats.shipped.toLocaleString()}
+            ${stats.shipped > 0 ? `<button class="mini-edit-btn" onclick="editColorStatus('${color}', 'shipped', ${JSON.stringify(stats.shippedIds).replace(/"/g, '&quot;')})">✏️</button>` : ''}
             ${stats.shipped > 0 ? `<button class="mini-delete-btn" onclick="deleteColorStatus('${color}', 'shipped', ${JSON.stringify(stats.shippedIds).replace(/"/g, '&quot;')})">🗑️</button>` : ''}
         </td>
         `;
@@ -448,6 +578,72 @@
         console.error('Error deleting items:', error);
         alert('Error deleting items: ' + error.message);
     }
+    }
+
+    // Edit color name
+    window.editColorStatus = function(color, status, ids) {
+        document.getElementById('currentColor').value = color;
+        document.getElementById('newColor').value = color;
+        document.getElementById('editItemIds').value = JSON.stringify(ids);
+        document.getElementById('editStatus').value = status;
+        document.getElementById('editModal').style.display = 'block';
+        
+        // Focus on the new color input
+        setTimeout(() => {
+            document.getElementById('newColor').focus();
+            document.getElementById('newColor').select();
+        }, 100);
+    }
+
+    // Close edit modal
+    window.closeEditModal = function() {
+        document.getElementById('editModal').style.display = 'none';
+        document.getElementById('newColor').value = '';
+    }
+
+    // Update item color
+    window.updateItemColor = async function(event) {
+        event.preventDefault();
+        
+        const currentColor = document.getElementById('currentColor').value;
+        const newColor = document.getElementById('newColor').value.trim();
+        const itemIds = JSON.parse(document.getElementById('editItemIds').value);
+        const status = document.getElementById('editStatus').value;
+        
+        if (!newColor) {
+            alert('Please enter a new color name');
+            return;
+        }
+        
+        if (newColor === currentColor) {
+            alert('New color name must be different from current color');
+            return;
+        }
+        
+        try {
+            const { error } = await supabase
+                .from('spectrum_inventory_items')
+                .update({ color: newColor })
+                .in('id', itemIds);
+            
+            if (error) throw error;
+            
+            alert(`Successfully updated ${currentColor} to ${newColor}`);
+            closeEditModal();
+            loadDashboardData();
+            
+        } catch (error) {
+            console.error('Error updating color:', error);
+            alert('Error updating color: ' + error.message);
+        }
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('editModal');
+        if (event.target == modal) {
+            closeEditModal();
+        }
     }
 
     // Initialize
@@ -544,5 +740,30 @@
       }
     }
   </script>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Edit Item Color</h3>
+        <span class="close" onclick="closeEditModal()">&times;</span>
+      </div>
+      <form class="modal-form" onsubmit="updateItemColor(event)">
+        <label for="currentColor">Current Color:</label>
+        <input type="text" id="currentColor" readonly style="background: #f3f4f6;">
+        
+        <label for="newColor">New Color Name:</label>
+        <input type="text" id="newColor" placeholder="Enter new color name" required>
+        
+        <input type="hidden" id="editItemIds">
+        <input type="hidden" id="editStatus">
+        
+        <div class="modal-buttons">
+          <button type="button" class="modal-btn secondary" onclick="closeEditModal()">Cancel</button>
+          <button type="submit" class="modal-btn primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </body>
 </html>
