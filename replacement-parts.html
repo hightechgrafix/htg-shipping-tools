@@ -240,6 +240,15 @@
       background: #0056b3;
     }
 
+    .btn-checkout {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-checkout:hover {
+      background: #218838;
+    }
+
     .btn-delete {
       background: #dc3545;
       color: white;
@@ -480,6 +489,78 @@
     </div>
   </div>
 
+  <!-- Checkout History Card -->
+  <div class="card">
+    <h2>Recent Checkouts</h2>
+    
+    <div class="search-bar">
+      <div class="form-group">
+        <label>Search By</label>
+        <select id="checkout-search-field">
+          <option value="part_name">Part Name</option>
+          <option value="reason">Reason</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Search Term</label>
+        <input type="text" id="checkout-search-input" placeholder="Enter search term...">
+      </div>
+      <button class="btn-secondary" onclick="searchCheckouts()">Search</button>
+      <button class="btn-clear" onclick="clearCheckoutSearch()">Clear</button>
+    </div>
+
+    <div class="table-container">
+      <table id="checkouts-table">
+        <thead>
+          <tr>
+            <th>Part Name</th>
+            <th>Qty Checked Out</th>
+            <th>Reason</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="checkouts-table-body">
+          <tr>
+            <td colspan="4" class="empty-state">Loading...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Checkout Modal -->
+  <div id="checkout-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Check Out Part</h2>
+        <button class="close-btn" onclick="closeCheckoutModal()">&times;</button>
+      </div>
+      <form id="checkout-form">
+        <input type="hidden" id="checkout-part-id">
+        <div class="form-group">
+          <label>Part Name</label>
+          <input type="text" id="checkout-part-name" readonly style="background: #f5f5f5;">
+        </div>
+        <div class="form-group">
+          <label>Available Quantity</label>
+          <input type="text" id="checkout-available" readonly style="background: #f5f5f5;">
+        </div>
+        <div class="form-group">
+          <label>Quantity to Check Out *</label>
+          <input type="number" id="checkout-quantity" min="1" required>
+        </div>
+        <div class="form-group">
+          <label>Reason *</label>
+          <textarea id="checkout-reason" required placeholder="e.g., Production broke damper on Unit #5"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="closeCheckoutModal()">Cancel</button>
+          <button type="submit" class="btn-primary">Check Out</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.94.1/+esm";
 
@@ -494,12 +575,81 @@
     let currentPage = 1;
     const itemsPerPage = 10;
 
+    // Checkout history state
+    let allCheckouts = [];
+    let filteredCheckouts = [];
+
     // Check authentication on page load
     async function checkAuth() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         window.location.href = 'login.html';
       }
+    }
+
+    // Load all checkouts from database
+    async function loadCheckouts() {
+      try {
+        const { data, error } = await supabase
+          .from('replacement_parts_checkouts')
+          .select('*')
+          .order('checked_out_at', { ascending: false })
+          .limit(5);
+
+        if (error) throw error;
+
+        allCheckouts = data || [];
+        filteredCheckouts = allCheckouts;
+        displayCheckouts();
+      } catch (error) {
+        console.error('Error loading checkouts:', error);
+      }
+    }
+
+    // Filter checkouts based on search
+    function filterCheckouts() {
+      const searchField = document.getElementById('checkout-search-field').value;
+      const searchTerm = document.getElementById('checkout-search-input').value.toLowerCase().trim();
+
+      if (!searchTerm) {
+        filteredCheckouts = allCheckouts;
+      } else {
+        filteredCheckouts = allCheckouts.filter(item => {
+          const fieldValue = item[searchField]?.toLowerCase() || '';
+          return fieldValue.includes(searchTerm);
+        });
+      }
+
+      displayCheckouts();
+    }
+
+    // Display checkouts in table
+    function displayCheckouts() {
+      const tbody = document.getElementById('checkouts-table-body');
+      
+      if (filteredCheckouts.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No checkouts found</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filteredCheckouts.map(item => `
+        <tr>
+          <td>${escapeHtml(item.part_name)}</td>
+          <td>${item.quantity_checked_out}</td>
+          <td>${escapeHtml(item.reason)}</td>
+          <td>${formatDate(item.checked_out_at)}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Search checkouts
+    function searchCheckouts() {
+      filterCheckouts();
+    }
+
+    function clearCheckoutSearch() {
+      document.getElementById('checkout-search-input').value = '';
+      filterCheckouts();
     }
 
     // Load all items from database
@@ -565,6 +715,7 @@
           <td>${formatDate(item.created_at)}</td>
           <td>
             <button class="action-btn btn-edit" onclick="editItem('${item.id}')">Edit</button>
+            <button class="action-btn btn-checkout" onclick="checkoutItem('${item.id}')">Check Out</button>
             <button class="action-btn btn-delete" onclick="deleteItem('${item.id}')">Delete</button>
           </td>
         </tr>
@@ -659,6 +810,40 @@
       document.getElementById('edit-modal').classList.remove('active');
     }
 
+    function closeCheckoutModal() {
+      document.getElementById('checkout-modal').classList.remove('active');
+      document.getElementById('checkout-form').reset();
+    }
+
+    // Checkout item
+    async function checkoutItem(id) {
+      try {
+        const { data, error } = await supabase
+          .from('replacement_parts')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+
+        if (data.quantity <= 0) {
+          showError('No quantity available to check out');
+          return;
+        }
+
+        document.getElementById('checkout-part-id').value = data.id;
+        document.getElementById('checkout-part-name').value = data.part_name;
+        document.getElementById('checkout-available').value = data.quantity;
+        document.getElementById('checkout-quantity').max = data.quantity;
+        document.getElementById('checkout-quantity').value = 1;
+
+        document.getElementById('checkout-modal').classList.add('active');
+      } catch (error) {
+        console.error('Error loading part:', error);
+        showError('Failed to load part');
+      }
+    }
+
     // Make functions globally accessible for onclick handlers
     window.prevPage = prevPage;
     window.nextPage = nextPage;
@@ -667,6 +852,10 @@
     window.editItem = editItem;
     window.deleteItem = deleteItem;
     window.closeModal = closeModal;
+    window.checkoutItem = checkoutItem;
+    window.closeCheckoutModal = closeCheckoutModal;
+    window.searchCheckouts = searchCheckouts;
+    window.clearCheckoutSearch = clearCheckoutSearch;
 
     // Add new part
     document.getElementById('add-form').addEventListener('submit', async (e) => {
@@ -739,10 +928,75 @@
       }
     });
 
+    // Handle checkout form submission
+    document.getElementById('checkout-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const partId = document.getElementById('checkout-part-id').value;
+      const partName = document.getElementById('checkout-part-name').value;
+      const available = parseInt(document.getElementById('checkout-available').value);
+      const quantity = parseInt(document.getElementById('checkout-quantity').value);
+      const reason = document.getElementById('checkout-reason').value.trim();
+
+      // Validation
+      if (quantity > available) {
+        showError(`Cannot check out ${quantity} - only ${available} available`);
+        return;
+      }
+
+      if (quantity <= 0) {
+        showError('Quantity must be greater than 0');
+        return;
+      }
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        // Update the part quantity
+        const newQuantity = available - quantity;
+        const { error: updateError } = await supabase
+          .from('replacement_parts')
+          .update({ 
+            quantity: newQuantity,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', partId);
+
+        if (updateError) throw updateError;
+
+        // Insert checkout record
+        const { error: insertError } = await supabase
+          .from('replacement_parts_checkouts')
+          .insert([{
+            part_id: partId,
+            part_name: partName,
+            quantity_checked_out: quantity,
+            reason: reason,
+            checked_out_by: user.id
+          }]);
+
+        if (insertError) throw insertError;
+
+        closeCheckoutModal();
+        showSuccess(`Checked out ${quantity} ${partName}. ${newQuantity} remaining.`);
+        await loadItems();
+        await loadCheckouts();
+      } catch (error) {
+        console.error('Error checking out part:', error);
+        showError('Failed to check out part');
+      }
+    });
+
     // Close modal on outside click
     document.getElementById('edit-modal').addEventListener('click', (e) => {
       if (e.target.id === 'edit-modal') {
         closeModal();
+      }
+    });
+
+    document.getElementById('checkout-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'checkout-modal') {
+        closeCheckoutModal();
       }
     });
 
@@ -786,6 +1040,7 @@
     // Initialize on page load
     checkAuth();
     loadItems();
+    loadCheckouts();
   </script>
 </body>
 </html>
