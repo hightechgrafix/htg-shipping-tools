@@ -384,7 +384,11 @@
           <input type="text" id="vendor">
         </div>
       </div>
-      <div class="form-row-2">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Department</label>
+          <input type="text" id="department">
+        </div>
         <div class="form-group">
           <label>Quantity</label>
           <input type="number" id="quantity" value="0" min="0">
@@ -410,6 +414,7 @@
           <option value="part_name">Part Name</option>
           <option value="sku">SKU</option>
           <option value="vendor">Vendor</option>
+          <option value="department">Department</option>
         </select>
       </div>
       <div class="form-group">
@@ -427,6 +432,7 @@
             <th>Part Name</th>
             <th>SKU</th>
             <th>Vendor</th>
+            <th>Department</th>
             <th>Qty</th>
             <th>Notes</th>
             <th>Date Added</th>
@@ -471,7 +477,11 @@
             <input type="text" id="edit-vendor">
           </div>
         </div>
-        <div class="form-row-2">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Department</label>
+            <input type="text" id="edit-department">
+          </div>
           <div class="form-group">
             <label>Quantity</label>
             <input type="number" id="edit-quantity" min="0">
@@ -696,7 +706,7 @@
       const tbody = document.getElementById('table-body');
       
       if (filteredItems.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No replacement parts found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No replacement parts found</td></tr>';
         updatePagination();
         return;
       }
@@ -710,6 +720,7 @@
           <td>${escapeHtml(item.part_name)}</td>
           <td>${escapeHtml(item.sku || '-')}</td>
           <td>${escapeHtml(item.vendor || '-')}</td>
+          <td>${escapeHtml(item.department || '-')}</td>
           <td>${item.quantity}</td>
           <td>${escapeHtml(item.notes || '-')}</td>
           <td>${formatDate(item.created_at)}</td>
@@ -773,6 +784,7 @@
         document.getElementById('edit-part-name').value = data.part_name;
         document.getElementById('edit-sku').value = data.sku || '';
         document.getElementById('edit-vendor').value = data.vendor || '';
+        document.getElementById('edit-department').value = data.department || '';
         document.getElementById('edit-quantity').value = data.quantity;
         document.getElementById('edit-notes').value = data.notes || '';
 
@@ -864,6 +876,7 @@
       const partName = document.getElementById('part-name').value.trim();
       const sku = document.getElementById('sku').value.trim();
       const vendor = document.getElementById('vendor').value.trim();
+      const department = document.getElementById('department').value.trim();
       const quantity = parseInt(document.getElementById('quantity').value) || 0;
       const notes = document.getElementById('notes').value.trim();
 
@@ -876,6 +889,7 @@
             part_name: partName,
             sku: sku || null,
             vendor: vendor || null,
+            department: department || null,
             quantity: quantity,
             notes: notes || null,
             created_by: user.id
@@ -901,6 +915,7 @@
       const partName = document.getElementById('edit-part-name').value.trim();
       const sku = document.getElementById('edit-sku').value.trim();
       const vendor = document.getElementById('edit-vendor').value.trim();
+      const department = document.getElementById('edit-department').value.trim();
       const quantity = parseInt(document.getElementById('edit-quantity').value) || 0;
       const notes = document.getElementById('edit-notes').value.trim();
 
@@ -911,6 +926,7 @@
             part_name: partName,
             sku: sku || null,
             vendor: vendor || null,
+            department: department || null,
             quantity: quantity,
             notes: notes || null,
             updated_at: new Date().toISOString()
