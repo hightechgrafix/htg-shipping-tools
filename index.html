@@ -1,390 +1,401 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Shipping Calculator</title>
+  <meta charset="utf-8" />
+  <title>HTG Team Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  * {
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
 
-  <!-- PDF Export -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    padding-top: 40px;
+    justify-content: center;
+    background: #ffffff;
+    color: #111827;
+  }
 
-  <style>
-    body {
-      font-family: sans-serif;
-      margin: 2rem;
-      background-color: #ffffff;
-      color: #111;
-    }
-    h1 {
-      color: #b6282c;
-      border-bottom: 3px solid #b6282c;
-      padding-bottom: 0.3rem;
-      margin-bottom: 1.5rem;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 2rem;
-      background-color: #fff;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-      font-size: 13px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 0.4rem;
-      text-align: center;
-    }
-    th {
-      background: #000;
-      color: #fff;
-    }
-    input[type='number'] {
-      width: 70px;
-      padding: 6px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    h2 {
-      color: #b6282c;
-      margin-top: 2rem;
-    }
-    .summary {
-      max-width: 500px;
-      margin-top: 1.5rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      padding: 1rem;
-      background: #fafafa;
-    }
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-      margin: 0.3rem 0;
-      font-size: 1rem;
-    }
-    .summary-label {
-      font-weight: 600;
-      color: #000;
-    }
-    .summary-value {
-      font-weight: bold;
-      color: #000;
-    }
-    .summary-value.credit {
-      color: #b6282c;
-    }
-    .timestamp {
-      font-size: 0.9rem;
-      margin-top: 1rem;
-      color: #666;
-    }
-    .pdf-button {
-      background:#b6282c;
-      color:#fff;
-      border:none;
-      padding:8px 14px;
-      border-radius:6px;
-      font-size:14px;
-      cursor:pointer;
-      margin-bottom:20px;
-    }
-    .pdf-button:hover {
-      background-color: #991d20;
-    }
-    .pdf-logo {
-      width: 300px;
-      margin: 10px 0 20px 0;
-      display: none;
-    }
-    .credit-note {
-      font-size: 0.85rem;
-      font-style: italic;
-      color: #b6282c;
-      margin-bottom: 0.5rem;
-    }
-  </style>
+  .wrapper {
+    width: 100%;
+    max-width: 420px;
+    padding: 16px;
+  }
+
+  .card {
+    background: #000000;
+    color: #ffffff;
+    border-radius: 12px;
+    padding: 24px 20px 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    border: 1px solid #333;
+  }
+
+  h1 {
+    font-size: 1.3rem;
+    margin: 0 0 0.5rem;
+    text-align: center;
+    color: #ffffff;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  label {
+    display: block;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+    color: #ffffff;
+  }
+
+  input[type="email"],
+  input[type="password"] {
+    width: 100%;
+    padding: 0.6rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid #9ca3af;
+    background: #111;
+    color: #ffffff;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+
+  input::placeholder {
+    color: #e5e5e5;
+    opacity: 1;
+  }
+
+  input:focus {
+    outline: 2px solid #b6282c;
+    border-color: #b6282c;
+  }
+
+  button[type="submit"] {
+    width: 100%;
+    border: none;
+    border-radius: 999px;
+    padding: 0.7rem;
+    background: #b6282c;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    margin-top: 0.25rem;
+  }
+
+  button[type="submit"]:hover {
+    background: #9b1f24;
+  }
+
+  button[type="submit"]:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  .status {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    min-height: 1.1rem;
+    text-align: center;
+    color: #ffffff;
+  }
+
+  .status.error {
+    color: #ff6b6b;
+  }
+
+  .status.success {
+    color: #ffffff;
+  }
+
+  .menu-btn {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    background: #b6282c;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .menu-btn:hover {
+    background: #9b1f24;
+  }
+
+  .menu-btn.logout {
+    background: #b6282c;
+    color: #fff;
+  }
+
+  .menu-btn.logout:hover {
+    background: #9b1f24;
+  }
+
+  #menu {
+    background: #000;
+    color: #fff;
+    padding: 24px;
+    border-radius: 16px;
+  }
+
+  .menu-title {
+    color: #fff !important;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+</style>
 </head>
-
 <body>
-  <h1>Shipping &amp; Handling Calculator</h1>
+  <div class="wrapper">
+    <div class="card">
+      <h1>HTG Team Login</h1>
+      <p class="subtitle">For internal use only</p>
 
-  <div id="pdf-content">
-    <img
-      class="pdf-logo"
-      id="pdf-logo"
-      src="https://irp.cdn-website.com/81de5be8/dms3rep/multi/logo_horiz_2021_black.png"
-      alt="Logo"
-    />
+      <form id="login-form">
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="email" required />
 
-    <table id="shipping-table">
-      <thead>
-        <tr>
-          <th>Level</th>
-          <th>Weight Range (lbs)</th>
-          <th>Qty</th>
-          <th>Shipping per Item</th>
-          <th>Shipping Min</th>
-          <th>Handling per Item</th>
-          <th>Handling Min</th>
-          <th>Shipping Total</th>
-          <th>Handling Total</th>
-        </tr>
-      </thead>
-      <tbody id="shipping-body"></tbody>
-    </table>
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" required />
 
-    <h2>Summary</h2>
-    <div class="credit-note">
-      *Free shipping credit (Level 1) only applies if invoice total is $100 or more.
-    </div>
+        <button id="submit-btn" type="submit">Log in</button>
+      </form>
 
-    <div class="summary">
-      <div class="summary-row">
-        <div class="summary-label">Calculated Shipping:</div>
-        <div class="summary-value" id="shipping-before-credit">$0.00</div>
+      <p id="status" class="status"></p>
+
+      <!-- Menu shown AFTER login -->
+      <div id="menu" style="display: none; text-align: center; margin-top: 1.5rem;">
+        <h2 class="menu-title">HTG Tools Menu</h2>
+        
+        <!-- Spectrum Inventory button - shown to spectrum_users -->
+        <button
+          class="menu-btn"
+          id="spectrum-btn"
+          style="display:none;"
+          onclick="location.href='spectrum_dashboard.html'"
+        >
+          📦 Spectrum Inventory
+        </button>
+
+        <!-- Package Tracker button - shown to package_users -->
+        <button
+          class="menu-btn"
+          id="package-btn"
+          style="display:none;"
+          onclick="location.href='package-tracker.html'"
+        >
+          📦 Package Tracker
+        </button>
+
+        <!-- RA Tracking button - shown to admins and ra_users -->
+        <button
+          class="menu-btn"
+          id="ra-btn"
+          style="display:none;"
+          onclick="location.href='ra-tracking.html'"
+        >
+          📦 RA Tracking
+        </button>
+
+        <!-- Replacement Parts button - shown to admins only -->
+        <button
+          class="menu-btn"
+          id="parts-btn"
+          style="display:none;"
+          onclick="location.href='replacement-parts.html'"
+        >
+          🔧 Replacement Parts
+        </button>
+
+        <!-- Original buttons - shown to everyone except receiving-only users -->
+        <div id="standard-tools">
+          <button class="menu-btn" onclick="location.href='edit-production-times.html'">Edit Production Times</button>  
+          <button class="menu-btn" onclick="location.href='add-item.html'">Add Item</button>
+          <button class="menu-btn" onclick="location.href='item-lookup.html'">Item Lookup</button>
+          <button class="menu-btn" onclick="location.href='shipping-calc.html'">Shipping Calculator</button>
+          <button class="menu-btn" onclick="location.href='warehouse-game/admin.html'">🎮 Coupon Management</button>
+        </div>
+
+        <!-- ADMIN ONLY -->
+        <button
+          class="menu-btn"
+          id="users-btn"
+          style="display:none;"
+          onclick="location.href='admin-users.html'"
+        >
+          User Management
+        </button>
+
+        <button class="menu-btn logout" id="logout-btn" style="margin-top: 2rem;">Log Out</button>
       </div>
-
-      <div class="summary-row">
-        <div class="summary-label">Free Shipping Credit (Level 1):</div>
-        <div class="summary-value credit">–$<span id="shipping-credit">0.00</span></div>
-      </div>
-
-      <div class="summary-row">
-        <div class="summary-label">Total Shipping After Credit:</div>
-        <div class="summary-value" id="total-shipping">$0.00</div>
-      </div>
-
-      <div class="summary-row">
-        <div class="summary-label">Total Handling:</div>
-        <div class="summary-value" id="total-handling">$0.00</div>
-      </div>
-
-      <div class="summary-row" style="border-top: 1px solid #ccc; padding-top: 0.5rem; margin-top: 0.8rem;">
-        <div class="summary-label">Grand Total:</div>
-        <div class="summary-value" id="grand-total">$0.00</div>
-      </div>
-
-      <div class="timestamp" id="timestamp"></div>
     </div>
   </div>
 
-  <br />
-
-  <button class="pdf-button" id="clear-btn" style="margin-right: 1rem; background-color: #000;">
-    Clear
-  </button>
-
-  <button class="pdf-button" id="pdf-btn">
-    Download PDF
-  </button>
-
-  <br />
-
-  <button
-    id="add-item-btn"
-    style="
-      background:#b6282c;
-      color:#fff;
-      border:none;
-      padding:8px 14px;
-      border-radius:6px;
-      font-size:14px;
-      cursor:pointer;
-      margin-bottom:20px;
-    "
-  >
-    Add Item
-  </button>
-
-  <button
-    id="back-btn"
-    style="
-      background:#b6282c;
-      color:#fff;
-      border:none;
-      padding:8px 14px;
-      border-radius:6px;
-      font-size:14px;
-      cursor:pointer;
-      margin-bottom:20px;
-    "
-  >
-    ← Back to Menu
-  </button>
-
   <script type="module">
-    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.94.1/+esm";
 
-    // ===== Supabase Config (use the SAME anon key as your login page) =====
     const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true }
-    });
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ===== Require login (since you added login/menu gating) =====
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      window.location.href = "/login.html";
+    const form = document.getElementById("login-form");
+    const statusEl = document.getElementById("status");
+    const submitBtn = document.getElementById("submit-btn");
+
+    function setStatus(message, type = "") {
+      statusEl.textContent = message;
+      statusEl.className = "status " + type;
     }
 
-    // ===== UI Navigation Buttons =====
-    document.getElementById("add-item-btn").addEventListener("click", () => {
-      window.location.href = "/add-item.html";
-    });
+    function setLoading(isLoading) {
+      submitBtn.disabled = isLoading;
+      submitBtn.textContent = isLoading ? "Signing in..." : "Log in";
+    }
 
-    document.getElementById("back-btn").addEventListener("click", () => {
-      window.location.href = "/login.html";
-    });
+    async function checkExistingSession() {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error(error);
+        return;
+      }
+      if (data.session) {
+        handleLoggedIn(data.session);
+      }
+    }
 
-    // ===== Calculator Logic (restored from your original) =====
-    let cachedLevels = [];
+    async function handleLoggedIn(session) {
+      const user = session.user;
+      const email = user?.email || "";
 
-    async function fetchLevels() {
-      const { data, error } = await supabase
-        .from("shipping_levels")
+      setStatus("Logged in as " + email, "success");
+
+      // Hide login form
+      document.getElementById("login-form").style.display = "none";
+
+      // Show menu
+      document.getElementById("menu").style.display = "block";
+
+      // Get user permissions from unified user_management table
+      const { data: userPermissions, error: permissionError } = await supabase
+        .from("user_management")
         .select("*")
-        .order("min_weight", { ascending: true });
+        .eq("user_id", user.id)
+        .single();
 
-      if (error || !data) {
-        alert("Error loading shipping levels from Supabase.");
-        console.error("Supabase error:", error);
+      // If no permissions record exists, create default permissions
+      if (permissionError && permissionError.code === 'PGRST116') {
+        // Create default permissions for existing user
+        const { error: insertError } = await supabase
+          .from('user_management')
+          .insert({
+            user_id: user.id,
+            is_admin: false,
+            has_spectrum_access: false,
+            has_package_access: true,
+            has_ra_access: false,
+            has_standard_tools: true
+          });
+
+        if (insertError) {
+          console.error('Error creating default permissions:', insertError);
+        }
+
+        // Set default permissions for this session
+        userPermissions = {
+          is_admin: false,
+          has_spectrum_access: false,
+          has_package_access: true,
+          has_ra_access: false,
+          has_standard_tools: true
+        };
+      }
+
+      const permissions = userPermissions || {
+        is_admin: false,
+        has_spectrum_access: false,
+        has_package_access: true,
+        has_ra_access: false,
+        has_standard_tools: true
+      };
+
+      // Show/hide buttons based on permissions
+      if (permissions.is_admin) {
+        document.getElementById("users-btn").style.display = "block";
+        document.getElementById("parts-btn").style.display = "block";
+      }
+
+      if (permissions.has_spectrum_access) {
+        document.getElementById("spectrum-btn").style.display = "block";
+        
+        // If user is spectrum-only (not admin), hide standard tools unless they have explicit access
+        if (!permissions.is_admin && !permissions.has_standard_tools) {
+          document.getElementById("standard-tools").style.display = "none";
+        }
+      }
+
+      if (permissions.has_ra_access) {
+        document.getElementById("ra-btn").style.display = "block";
+      }
+
+      if (permissions.has_package_access) {
+        document.getElementById("package-btn").style.display = "block";
+      }
+
+      // Show/hide standard tools based on permissions
+      if (!permissions.has_standard_tools) {
+        document.getElementById("standard-tools").style.display = "none";
+      }
+
+      // Logout
+      document.getElementById("logout-btn").addEventListener("click", async () => {
+        await supabase.auth.signOut();
+        location.reload();
+      });
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      setStatus("", "");
+      setLoading(true);
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      setLoading(false);
+
+      if (error) {
+        console.error("Login error:", error);
+        setStatus(error.message || "Login failed", "error");
         return;
       }
 
-      cachedLevels = data;
+      if (!data.session) {
+        setStatus("Login failed: no session returned", "error");
+        return;
+      }
 
-      const tbody = document.getElementById("shipping-body");
-      tbody.innerHTML = "";
+      handleLoggedIn(data.session);
+    });
 
-      data.forEach((level, index) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>Level ${level.shipping_level}</td>
-          <td>${level.min_weight} – ${level.max_weight}</td>
-          <td><input type="number" min="0" value="0" data-index="${index}" /></td>
-          <td>$${parseFloat(level.shipping_per_item).toFixed(2)}</td>
-          <td>$${parseFloat(level.shipping_min).toFixed(2)}</td>
-          <td>$${parseFloat(level.handling_per_item).toFixed(2)}</td>
-          <td>$${parseFloat(level.handling_min).toFixed(2)}</td>
-          <td id="ship-${index}">$0.00</td>
-          <td id="handle-${index}">$0.00</td>
-        `;
-        tbody.appendChild(row);
-      });
-
-      addListeners(data);
-      calculate(data); // initialize totals
-    }
-
-    function addListeners(levels) {
-      const inputs = document.querySelectorAll('input[type="number"]');
-      inputs.forEach((input) => {
-        input.addEventListener("input", () => calculate(levels));
-      });
-    }
-
-    function calculate(levels) {
-      let totalShipping = 0;
-      let totalHandling = 0;
-      let level1Shipping = 0;
-      let shippingCredit = 0;
-
-      levels.forEach((level, index) => {
-        const qty =
-          parseInt(document.querySelector(`input[data-index='${index}']`)?.value, 10) || 0;
-
-        const shippingPerItem = Number(level.shipping_per_item) || 0;
-        const shippingMin = Number(level.shipping_min) || 0;
-        const handlingPerItem = Number(level.handling_per_item) || 0;
-        const handlingMin = Number(level.handling_min) || 0;
-
-        const rawShipping = qty * shippingPerItem;
-        const shipTotal = qty > 0 ? Math.max(rawShipping, shippingMin) : 0;
-
-        // Level 1 credit (as you had it)
-        if (index === 0) {
-          level1Shipping = shipTotal;
-          shippingCredit = Math.min(200, level1Shipping);
-        }
-
-        const rawHandling = qty * handlingPerItem;
-        const handleTotal = qty > 0 ? Math.max(rawHandling, handlingMin) : 0;
-
-        const shipCell = document.getElementById(`ship-${index}`);
-        const handleCell = document.getElementById(`handle-${index}`);
-        if (shipCell) shipCell.textContent = `$${shipTotal.toFixed(2)}`;
-        if (handleCell) handleCell.textContent = `$${handleTotal.toFixed(2)}`;
-
-        totalShipping += shipTotal;
-        totalHandling += handleTotal;
-      });
-
-      const totalShippingAfterCredit = totalShipping - shippingCredit;
-      const grandTotal = Math.max(0, totalShippingAfterCredit + totalHandling);
-
-      document.getElementById("shipping-before-credit").textContent = `$${totalShipping.toFixed(2)}`;
-      document.getElementById("shipping-credit").textContent = shippingCredit.toFixed(2);
-      document.getElementById("total-shipping").textContent = `$${totalShippingAfterCredit.toFixed(2)}`;
-      document.getElementById("total-handling").textContent = `$${totalHandling.toFixed(2)}`;
-      document.getElementById("grand-total").textContent = `$${grandTotal.toFixed(2)}`;
-
-      const now = new Date();
-      document.getElementById("timestamp").textContent = `Generated: ${now.toLocaleString()}`;
-    }
-
-    function clearCalculator() {
-      const inputs = document.querySelectorAll('input[type="number"]');
-      inputs.forEach((input) => (input.value = 0));
-
-      // Reset per-row totals
-      const spans = document.querySelectorAll('[id^="ship-"], [id^="handle-"]');
-      spans.forEach((span) => (span.textContent = "$0.00"));
-
-      // Reset summary totals
-      document.getElementById("shipping-before-credit").textContent = "$0.00";
-      document.getElementById("shipping-credit").textContent = "0.00";
-      document.getElementById("total-shipping").textContent = "$0.00";
-      document.getElementById("total-handling").textContent = "$0.00";
-      document.getElementById("grand-total").textContent = "$0.00";
-      document.getElementById("timestamp").textContent = "";
-
-      // Re-fetch / re-render to ensure clean state
-      fetchLevels();
-    }
-
-    function downloadPDF() {
-      const logo = document.getElementById("pdf-logo");
-      logo.style.display = "block";
-      generatePDF();
-    }
-
-    function generatePDF() {
-      const element = document.getElementById("pdf-content");
-      const opt = {
-        margin: 0.5,
-        filename: `shipping-summary-${new Date().toISOString().slice(0, 10)}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: "in", format: "letter", orientation: "portrait" }
-      };
-
-      html2pdf()
-        .set(opt)
-        .from(element)
-        .save()
-        .then(() => {
-          document.getElementById("pdf-logo").style.display = "none";
-        });
-    }
-
-    // ===== Wire up buttons (module-safe; no inline onclick needed) =====
-    document.getElementById("clear-btn").addEventListener("click", clearCalculator);
-    document.getElementById("pdf-btn").addEventListener("click", downloadPDF);
-
-    // ===== Start =====
-    fetchLevels();
+    checkExistingSession();
   </script>
 </body>
 </html>
