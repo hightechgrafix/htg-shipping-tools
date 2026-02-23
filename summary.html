@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTG Summary Board</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: sans-serif;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px;
+      gap: 10px;
+    }
+
+    .container {
+      width: 1080px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+    }
+
+    iframe {
+      border: none;
+      display: block;
+    }
+
+    .top-iframe {
+      width: 1080px;
+      height: 550px;
+    }
+
+    .middle-left {
+      width: 540px;
+      height: 650px;
+    }
+
+    .middle-right {
+      width: 540px;
+      height: 650px;
+    }
+
+    .bottom-iframe {
+      width: 1080px;
+      height: 600px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Top: Summary Board -->
+    <div class="row">
+      <iframe 
+        src="https://track.htgfx.com/htgtracking/htgsummaryboard.aspx?yes" 
+        title="HTG Summary Board" 
+        class="top-iframe"
+        loading="lazy">
+      </iframe>
+    </div>
+
+    <!-- Middle: Approved Summary (Left) & Help Scout (Right) -->
+    <div class="row">
+      <iframe 
+        src="https://track.htgfx.com/htgtracking/approvedsummary.aspx" 
+        title="Approved Summary" 
+        class="middle-left"
+        loading="lazy">
+      </iframe>
+
+      <iframe 
+        src="https://secure.helpscout.net/inboxes/f8585051ca508198/views/1cc36a09-2d8f-47ca-99fe-9eeb1e8ac895" 
+        title="Help Scout Inbox" 
+        class="middle-right"
+        loading="lazy">
+      </iframe>
+    </div>
+
+    <!-- Bottom: Screen Print Efficiency -->
+    <div class="row">
+      <iframe 
+        src="https://track.htgfx.com/htgtracking/ScreenPrintEfficiencyNew.aspx" 
+        title="Screen Print Efficiency" 
+        class="bottom-iframe"
+        loading="lazy">
+      </iframe>
+    </div>
+  </div>
+</body>
+</html>
