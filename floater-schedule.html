@@ -326,8 +326,8 @@
     <div class="login-screen" id="login-screen">
       <h2>Employee Login</h2>
       
-      <!-- Install button on login screen too -->
-      <div style="text-align: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #333;">
+      <!-- Install button on login screen (mobile only) -->
+      <div id="install-section-login" style="display: none; text-align: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #333;">
         <button class="btn btn-primary" onclick="promptInstall()" style="padding: 10px 20px; font-size: 0.9rem;">
           📱 Add to Home Screen
         </button>
@@ -367,8 +367,8 @@
 
     <!-- Schedule Screen -->
     <div class="schedule-screen" id="schedule-screen">
-      <!-- Install Button (always visible at top) -->
-      <div style="text-align: center; margin: 20px 0;">
+      <!-- Install Button (always visible at top, mobile only) -->
+      <div id="install-section-schedule" style="display: none; text-align: center; margin: 20px 0;">
         <button class="btn btn-primary" id="install-btn-top" onclick="promptInstall()" style="padding: 12px 24px;">
           📱 Add to Home Screen
         </button>
@@ -423,6 +423,21 @@
     let employees = [];
     let currentEmployee = null;
     let deferredPrompt = null;
+
+    // Detect if device is mobile
+    function isMobileDevice() {
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
+    // Show install buttons only on mobile
+    function showInstallButtonsIfMobile() {
+      if (isMobileDevice()) {
+        const loginInstall = document.getElementById('install-section-login');
+        const scheduleInstall = document.getElementById('install-section-schedule');
+        if (loginInstall) loginInstall.style.display = 'block';
+        if (scheduleInstall) scheduleInstall.style.display = 'block';
+      }
+    }
 
     // Hash PIN (simple SHA-256)
     async function hashPin(pin) {
@@ -542,10 +557,14 @@
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('schedule-screen').style.display = 'block';
       
-      // Hide install button if already installed
-      if (window.matchMedia('(display-mode: standalone)').matches) {
-        document.getElementById('install-btn-top').style.display = 'none';
-        document.getElementById('install-prompt').style.display = 'none';
+      // Show install button only on mobile
+      if (isMobileDevice()) {
+        // Hide install button if already installed
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+          const scheduleInstall = document.getElementById('install-section-schedule');
+          if (scheduleInstall) scheduleInstall.style.display = 'none';
+          document.getElementById('install-prompt').style.display = 'none';
+        }
       }
       
       // Set welcome message
@@ -720,6 +739,7 @@
 
     // Initialize
     (async function init() {
+      showInstallButtonsIfMobile();
       await loadEmployees();
     })();
   </script>
