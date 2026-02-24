@@ -198,9 +198,10 @@
   /* Grid Layout for Sections */
   .sections-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 400px));
     gap: 1.5rem;
     margin-bottom: 2rem;
+    justify-content: center;
   }
 
   .tool-section {
@@ -208,6 +209,7 @@
     border: 1px solid #333;
     border-radius: 12px;
     padding: 1.5rem;
+    width: 100%;
   }
 
   .tool-section h3 {
