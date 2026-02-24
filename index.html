@@ -15,9 +15,9 @@
     min-height: 100vh;
     display: flex;
     align-items: flex-start;
-    padding-top: 40px;
+    padding: 20px;
     justify-content: center;
-    background: #ffffff;
+    background: #0a0a0a;
     color: #111827;
   }
 
@@ -117,43 +117,176 @@
     color: #ffffff;
   }
 
+  /* Floater Employee Section */
+  #floater-employee-section {
+    text-align: center;
+    padding: 20px 0;
+    border-bottom: 2px solid #333;
+    margin-bottom: 20px;
+  }
+
+  #floater-employee-section h2 {
+    color: #fff;
+    font-size: 1.1rem;
+    margin: 0 0 10px 0;
+  }
+
+  #floater-employee-section p {
+    color: #9ca3af;
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+  }
+
+  #floater-qr {
+    width: 150px;
+    height: 150px;
+    display: block;
+    margin: 0 auto 8px;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+  }
+
+  #floater-employee-section a {
+    display: inline-block;
+    padding: 12px 24px;
+    background: #b6282c;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  #floater-employee-section a:hover {
+    background: #9b1f24;
+  }
+
+  /* Menu Container - switches to wide layout after login */
+  .menu-container {
+    display: none;
+    margin-top: 1.5rem;
+  }
+
+  .menu-container.active {
+    display: block;
+  }
+
+  /* Switch to wide layout */
+  .wrapper.logged-in {
+    max-width: 1400px;
+  }
+
+  .menu-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #333;
+  }
+
+  .menu-header h2 {
+    color: #fff;
+    font-size: 1.5rem;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .menu-header .user-email {
+    color: #9ca3af;
+    font-size: 0.9rem;
+  }
+
+  /* Grid Layout for Sections */
+  .sections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .tool-section {
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+
+  .tool-section h3 {
+    color: #b6282c;
+    font-size: 1rem;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #333;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .section-icon {
+    font-size: 1.2rem;
+  }
+
   .menu-btn {
     width: 100%;
-    padding: 0.75rem;
-    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    margin-bottom: 0.5rem;
     border: none;
     border-radius: 8px;
-    background: #b6282c;
+    background: #1a1a1a;
     color: #fff;
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 0.9rem;
+    font-weight: 500;
     cursor: pointer;
+    text-align: left;
+    border: 1px solid #2a2a2a;
+    transition: all 0.2s;
   }
 
   .menu-btn:hover {
-    background: #9b1f24;
+    background: #b6282c;
+    border-color: #b6282c;
+    transform: translateY(-1px);
+  }
+
+  .menu-btn:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Logout button - full width at bottom */
+  .logout-container {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #333;
   }
 
   .menu-btn.logout {
     background: #b6282c;
     color: #fff;
+    max-width: 300px;
+    margin: 0 auto;
+    text-align: center;
+    font-weight: 600;
+    padding: 0.75rem;
   }
 
   .menu-btn.logout:hover {
     background: #9b1f24;
   }
 
-  #menu {
-    background: #000;
-    color: #fff;
-    padding: 24px;
-    border-radius: 16px;
-  }
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    body {
+      padding: 10px;
+    }
 
-  .menu-title {
-    color: #fff !important;
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
+    .sections-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .tool-section {
+      padding: 1rem;
+    }
   }
 </style>
 </head>
@@ -164,20 +297,16 @@
       <p class="subtitle">For internal use only</p>
 
       <!-- Floater Employee Section (shown before login) -->
-      <div id="floater-employee-section" style="text-align: center; padding: 20px 0; border-bottom: 2px solid #333; margin-bottom: 20px;">
-        <h2 style="color: #fff; font-size: 1.1rem; margin: 0 0 10px 0;">📅 Floater Employees</h2>
-        <p style="color: #9ca3af; font-size: 0.85rem; margin-bottom: 15px;">Check your daily schedule</p>
+      <div id="floater-employee-section">
+        <h2>📅 Floater Employees</h2>
+        <p>Check your daily schedule</p>
         
-        <!-- QR Code Placeholder -->
         <div style="margin-bottom: 15px;">
-          <img id="floater-qr" src="floater_qr.png" alt="Scan QR Code" style="width: 150px; height: 150px; display: block; margin: 0 auto; background: white; padding: 10px; border-radius: 8px;">
+          <img id="floater-qr" src="floater_qr.png" alt="Scan QR Code">
           <p style="color: #6b7280; font-size: 0.75rem; margin-top: 8px;">Scan to open on your phone</p>
         </div>
         
-        <!-- Or click link -->
-        <a href="floater-schedule.html" style="display: inline-block; padding: 12px 24px; background: #b6282c; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.95rem;">
-          Open Floater Schedule
-        </a>
+        <a href="floater-schedule.html">Open Floater Schedule</a>
       </div>
 
       <form id="login-form">
@@ -193,89 +322,19 @@
       <p id="status" class="status"></p>
 
       <!-- Menu shown AFTER login -->
-      <div id="menu" style="display: none; text-align: center; margin-top: 1.5rem;">
-        <h2 class="menu-title">HTG Tools Menu</h2>
-        
-        <!-- Spectrum Inventory button - shown to spectrum_users -->
-        <button
-          class="menu-btn"
-          id="spectrum-btn"
-          style="display:none;"
-          onclick="location.href='spectrum_dashboard.html'"
-        >
-          📦 Spectrum Inventory
-        </button>
-
-        <!-- Package Tracker button - shown to package_users -->
-        <button
-          class="menu-btn"
-          id="package-btn"
-          style="display:none;"
-          onclick="location.href='package-tracker.html'"
-        >
-          📦 Package Tracker
-        </button>
-
-        <!-- IDK Orphaned Inventory button - shown to package_users -->
-        <button
-          class="menu-btn"
-          id="idk-btn"
-          style="display:none;"
-          onclick="location.href='idk_orphaned-inventory.html'"
-        >
-          📦 IDK Orphaned Inventory
-        </button>
-
-        <!-- RA Tracking button - shown to admins and ra_users -->
-        <button
-          class="menu-btn"
-          id="ra-btn"
-          style="display:none;"
-          onclick="location.href='ra-tracking.html'"
-        >
-          📦 RA Tracking
-        </button>
-
-        <!-- Replacement Parts button - shown to admins only -->
-        <button
-          class="menu-btn"
-          id="parts-btn"
-          style="display:none;"
-          onclick="location.href='replacement-parts.html'"
-        >
-          🔧 Replacement Parts
-        </button>
-
-        <!-- Floater Schedule Manager button - shown to admins and floater_schedule users -->
-        <button
-          class="menu-btn"
-          id="floater-schedule-btn"
-          style="display:none;"
-          onclick="location.href='floater-schedule-manager.html'"
-        >
-          📅 Floater Schedule Manager
-        </button>
-
-        <!-- Original buttons - shown to everyone except receiving-only users -->
-        <div id="standard-tools">
-          <button class="menu-btn" onclick="location.href='edit-production-times.html'">Edit Production Times</button>  
-          <button class="menu-btn" onclick="location.href='add-item.html'">Add Item</button>
-          <button class="menu-btn" onclick="location.href='item-lookup.html'">Item Lookup</button>
-          <button class="menu-btn" onclick="location.href='shipping-calc.html'">Shipping Calculator</button>
-          <button class="menu-btn" onclick="location.href='warehouse-game/admin.html'">🎮 Coupon Management</button>
+      <div id="menu" class="menu-container">
+        <div class="menu-header">
+          <h2>HTG Tools</h2>
+          <p class="user-email" id="user-email"></p>
         </div>
 
-        <!-- ADMIN ONLY -->
-        <button
-          class="menu-btn"
-          id="users-btn"
-          style="display:none;"
-          onclick="location.href='admin-users.html'"
-        >
-          User Management
-        </button>
+        <div class="sections-grid" id="sections-grid">
+          <!-- Sections will be dynamically inserted here -->
+        </div>
 
-        <button class="menu-btn logout" id="logout-btn" style="margin-top: 2rem;">Log Out</button>
+        <div class="logout-container">
+          <button class="menu-btn logout" id="logout-btn">Log Out</button>
+        </div>
       </div>
     </div>
   </div>
@@ -302,6 +361,27 @@
       submitBtn.textContent = isLoading ? "Signing in..." : "Log in";
     }
 
+    function createSection(title, icon, buttons) {
+      if (buttons.length === 0) return null;
+
+      const section = document.createElement('div');
+      section.className = 'tool-section';
+      
+      section.innerHTML = `
+        <h3><span class="section-icon">${icon}</span>${title}</h3>
+      `;
+
+      buttons.forEach(btn => {
+        const button = document.createElement('button');
+        button.className = 'menu-btn';
+        button.textContent = btn.label;
+        button.onclick = () => location.href = btn.href;
+        section.appendChild(button);
+      });
+
+      return section;
+    }
+
     async function checkExistingSession() {
       const { data, error } = await supabase.auth.getSession();
       if (error) {
@@ -323,8 +403,10 @@
       document.getElementById("login-form").style.display = "none";
       document.getElementById("floater-employee-section").style.display = "none";
 
-      // Show menu
-      document.getElementById("menu").style.display = "block";
+      // Expand wrapper and show menu
+      document.querySelector('.wrapper').classList.add('logged-in');
+      document.getElementById("menu").classList.add('active');
+      document.getElementById("user-email").textContent = email;
 
       // Get user permissions from unified user_management table
       const { data: userPermissions, error: permissionError } = await supabase
@@ -334,8 +416,8 @@
         .single();
 
       // If no permissions record exists, create default permissions
+      let permissions = userPermissions;
       if (permissionError && permissionError.code === 'PGRST116') {
-        // Create default permissions for existing user
         const { error: insertError } = await supabase
           .from('user_management')
           .insert({
@@ -351,8 +433,7 @@
           console.error('Error creating default permissions:', insertError);
         }
 
-        // Set default permissions for this session
-        userPermissions = {
+        permissions = {
           is_admin: false,
           has_spectrum_access: false,
           has_package_access: true,
@@ -361,7 +442,7 @@
         };
       }
 
-      const permissions = userPermissions || {
+      permissions = permissions || {
         is_admin: false,
         has_spectrum_access: false,
         has_package_access: true,
@@ -369,38 +450,56 @@
         has_standard_tools: true
       };
 
-      // Show/hide buttons based on permissions
-      if (permissions.is_admin) {
-        document.getElementById("users-btn").style.display = "block";
-        document.getElementById("parts-btn").style.display = "block";
-      }
-
-      if (permissions.has_floater_schedule_access || permissions.is_admin) {
-        document.getElementById("floater-schedule-btn").style.display = "block";
-      }
-
+      // Build sections based on permissions
+      const sectionsGrid = document.getElementById('sections-grid');
+      
+      // Warehouse & Inventory Section
+      const warehouseButtons = [];
       if (permissions.has_spectrum_access) {
-        document.getElementById("spectrum-btn").style.display = "block";
-        
-        // If user is spectrum-only (not admin), hide standard tools unless they have explicit access
-        if (!permissions.is_admin && !permissions.has_standard_tools) {
-          document.getElementById("standard-tools").style.display = "none";
-        }
+        warehouseButtons.push({ label: '📦 Spectrum Inventory', href: 'spectrum_dashboard.html' });
       }
-
-      if (permissions.has_ra_access) {
-        document.getElementById("ra-btn").style.display = "block";
-      }
-
       if (permissions.has_package_access) {
-        document.getElementById("package-btn").style.display = "block";
-        document.getElementById("idk-btn").style.display = "block";
+        warehouseButtons.push({ label: '📦 Package Tracker', href: 'package-tracker.html' });
+        warehouseButtons.push({ label: '📦 IDK Orphaned Inventory', href: 'idk_orphaned-inventory.html' });
       }
+      if (permissions.has_ra_access || permissions.is_admin) {
+        warehouseButtons.push({ label: '📦 RA Tracking', href: 'ra-tracking.html' });
+      }
+      const warehouseSection = createSection('Warehouse & Inventory', '🏭', warehouseButtons);
+      if (warehouseSection) sectionsGrid.appendChild(warehouseSection);
 
-      // Show/hide standard tools based on permissions
-      if (!permissions.has_standard_tools) {
-        document.getElementById("standard-tools").style.display = "none";
+      // Production & Items Section
+      const productionButtons = [];
+      if (permissions.has_standard_tools || permissions.is_admin) {
+        productionButtons.push({ label: 'Edit Production Times', href: 'edit-production-times.html' });
+        productionButtons.push({ label: 'Add Item', href: 'add-item.html' });
+        productionButtons.push({ label: 'Item Lookup', href: 'item-lookup.html' });
+        productionButtons.push({ label: 'Shipping Calculator', href: 'shipping-calc.html' });
       }
+      const productionSection = createSection('Production & Items', '⚙️', productionButtons);
+      if (productionSection) sectionsGrid.appendChild(productionSection);
+
+      // Specialized Tools Section
+      const specializedButtons = [];
+      if (permissions.is_admin) {
+        specializedButtons.push({ label: '🔧 Replacement Parts', href: 'replacement-parts.html' });
+      }
+      if (permissions.has_floater_schedule_access || permissions.is_admin) {
+        specializedButtons.push({ label: '📅 Floater Schedule Manager', href: 'floater-schedule-manager.html' });
+      }
+      const specializedSection = createSection('Specialized Tools', '🛠️', specializedButtons);
+      if (specializedSection) sectionsGrid.appendChild(specializedSection);
+
+      // Admin & Management Section
+      const adminButtons = [];
+      if (permissions.is_admin || permissions.has_standard_tools) {
+        adminButtons.push({ label: '🎮 Coupon Management', href: 'warehouse-game/admin.html' });
+      }
+      if (permissions.is_admin) {
+        adminButtons.push({ label: 'User Management', href: 'admin-users.html' });
+      }
+      const adminSection = createSection('Admin & Management', '👤', adminButtons);
+      if (adminSection) sectionsGrid.appendChild(adminSection);
 
       // Logout
       document.getElementById("logout-btn").addEventListener("click", async () => {
