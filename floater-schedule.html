@@ -351,6 +351,14 @@
 
     <!-- Schedule Screen -->
     <div class="schedule-screen" id="schedule-screen">
+      <!-- Install Button (always visible at top) -->
+      <div style="text-align: center; margin: 20px 0;">
+        <button class="btn btn-primary" id="install-btn-top" onclick="promptInstall()" style="padding: 12px 24px;">
+          📱 Add to Home Screen
+        </button>
+        <p style="font-size: 0.75rem; color: #6b7280; margin-top: 8px;">Install for quick access!</p>
+      </div>
+
       <div class="welcome">
         <h2 id="welcome-name">Welcome!</h2>
         <p id="current-date"></p>
@@ -518,6 +526,12 @@
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('schedule-screen').style.display = 'block';
       
+      // Hide install button if already installed
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        document.getElementById('install-btn-top').style.display = 'none';
+        document.getElementById('install-prompt').style.display = 'none';
+      }
+      
       // Set welcome message
       document.getElementById('welcome-name').textContent = 
         `Hi, ${currentEmployee.first_name}!`;
@@ -649,12 +663,30 @@
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      document.getElementById('install-prompt').style.display = 'block';
+      // Keep the button visible since we added a permanent one
     });
 
     window.promptInstall = async function() {
+      // Check if already installed (standalone mode)
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        showStatus('App is already installed! 🎉', 'success');
+        document.getElementById('install-btn-top').style.display = 'none';
+        document.getElementById('install-prompt').style.display = 'none';
+        return;
+      }
+
+      // Check if it's iOS
+      const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+      
+      if (isIos) {
+        // iOS requires manual installation
+        alert('To install on iPhone/iPad:\n\n1. Tap the Share button (square with arrow)\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add" in the top right\n\nThe app icon will appear on your home screen!');
+        return;
+      }
+
+      // Android/Chrome - use the install prompt
       if (!deferredPrompt) {
-        showStatus('App is already installed or not available for install', 'info');
+        alert('To install this app:\n\n1. Tap the menu (⋮) in your browser\n2. Select "Add to Home Screen" or "Install App"\n3. Tap "Add" or "Install"\n\nThe app will appear on your home screen!');
         return;
       }
 
@@ -662,7 +694,8 @@
       const { outcome } = await deferredPrompt.userChoice;
       
       if (outcome === 'accepted') {
-        showStatus('App installed successfully!', 'success');
+        showStatus('App installed successfully! Check your home screen 🎉', 'success');
+        document.getElementById('install-btn-top').style.display = 'none';
         document.getElementById('install-prompt').style.display = 'none';
       }
       
