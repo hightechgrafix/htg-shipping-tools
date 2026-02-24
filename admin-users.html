@@ -86,7 +86,8 @@
         td:nth-child(5),  /* Spectrum */
         td:nth-child(6),  /* Package */
         td:nth-child(7),  /* RA */
-        td:nth-child(8) { /* Standard Tools */
+        td:nth-child(8),  /* Floater Schedule */
+        td:nth-child(9) { /* Standard Tools */
         text-align: center;
         }
 
@@ -94,7 +95,8 @@
         th:nth-child(5),  /* Spectrum */
         th:nth-child(6),  /* Package */
         th:nth-child(7),  /* RA */
-        th:nth-child(8) { /* Standard Tools */
+        th:nth-child(8),  /* Floater Schedule */
+        th:nth-child(9) { /* Standard Tools */
         text-align: center;
         }
 
@@ -147,6 +149,7 @@
         <th>Spectrum</th>
         <th>Package Tracker</th>
         <th>RA Tracking</th>
+        <th>Floater Schedule</th>
         <th>Standard Tools</th>
         <th>Actions</th>
     </tr>
@@ -257,6 +260,7 @@
                 has_spectrum_access: false,
                 has_package_access: true, // Default true
                 has_ra_access: false,
+                has_floater_schedule_access: false,
                 has_standard_tools: true // Default true
             };
 
@@ -269,6 +273,7 @@
             <td><input type="checkbox" ${permissions.has_spectrum_access ? 'checked' : ''} data-permission="has_spectrum_access" data-user-id="${u.id}"></td>
             <td><input type="checkbox" ${permissions.has_package_access ? 'checked' : ''} data-permission="has_package_access" data-user-id="${u.id}"></td>
             <td><input type="checkbox" ${permissions.has_ra_access ? 'checked' : ''} data-permission="has_ra_access" data-user-id="${u.id}"></td>
+            <td><input type="checkbox" ${permissions.has_floater_schedule_access ? 'checked' : ''} data-permission="has_floater_schedule_access" data-user-id="${u.id}"></td>
             <td><input type="checkbox" ${permissions.has_standard_tools ? 'checked' : ''} data-permission="has_standard_tools" data-user-id="${u.id}"></td>
             <td>
                 <button
