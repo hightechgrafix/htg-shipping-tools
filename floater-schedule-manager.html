@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>HTG Floater Schedule Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <!-- FullCalendar CSS -->
+  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css' rel='stylesheet' />
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .header {
+      background: #000000;
+      color: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+
+    .header-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #b6282c;
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: #9b1f24;
+    }
+
+    .btn-secondary {
+      background: #6b7280;
+      color: #ffffff;
+    }
+
+    .btn-secondary:hover {
+      background: #4b5563;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: #ffffff;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .content-wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .calendar-container {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.3rem;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #6b7280;
+    }
+
+    .close-btn:hover {
+      color: #111827;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #374151;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    .employee-list {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .employee-list h2 {
+      margin-top: 0;
+      font-size: 1.2rem;
+    }
+
+    .employee-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .employee-item:last-child {
+      border-bottom: none;
+    }
+
+    .employee-info {
+      flex: 1;
+    }
+
+    .employee-name {
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .employee-status {
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+
+    .employee-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+    }
+
+    .status-message {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .status-error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .status-success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    /* FullCalendar customization */
+    .fc-event {
+      cursor: pointer;
+    }
+
+    .fc-daygrid-event {
+      padding: 4px;
+      border-radius: 4px;
+      margin-bottom: 2px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="content-wrapper">
+    <!-- Header -->
+    <div class="header">
+      <h1>📅 HTG Floater Schedule Manager</h1>
+      <div class="header-buttons">
+        <button class="btn btn-primary" onclick="openAddAssignmentModal()">+ Add Assignment</button>
+        <button class="btn btn-secondary" onclick="toggleEmployeeList()">Manage Employees</button>
+        <button class="btn btn-secondary" onclick="location.href='index.html'">← Back to Menu</button>
+      </div>
+    </div>
+
+    <!-- Status Messages -->
+    <div id="status-message"></div>
+
+    <!-- Calendar -->
+    <div class="calendar-container">
+      <div id="calendar"></div>
+    </div>
+
+    <!-- Employee Management (Hidden by default) -->
+    <div class="employee-list" id="employee-list" style="display: none;">
+      <h2>Manage Floater Employees</h2>
+      <button class="btn btn-primary" style="margin-bottom: 20px;" onclick="openAddEmployeeModal()">+ Add Employee</button>
+      <div id="employee-list-container">
+        <div class="loading">Loading employees...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Assignment Modal -->
+  <div class="modal" id="assignment-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="assignment-modal-title">Add Assignment</h2>
+        <button class="close-btn" onclick="closeAssignmentModal()">×</button>
+      </div>
+      <form id="assignment-form">
+        <input type="hidden" id="assignment-id" />
+        
+        <div class="form-group">
+          <label for="employee-select">Employee *</label>
+          <select id="employee-select" required>
+            <option value="">Select employee...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="department-select">Department *</label>
+          <select id="department-select" required>
+            <option value="">Select department...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="assignment-date">Date *</label>
+          <input type="date" id="assignment-date" required />
+        </div>
+
+        <div class="form-group">
+          <label for="assignment-notes">Notes (optional)</label>
+          <textarea id="assignment-notes" placeholder="Any special instructions..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeAssignmentModal()">Cancel</button>
+          <button type="button" class="btn btn-danger" id="delete-btn" style="display: none;" onclick="deleteAssignment()">Delete</button>
+          <button type="submit" class="btn btn-primary">Save Assignment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Employee Modal -->
+  <div class="modal" id="employee-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add Floater Employee</h2>
+        <button class="close-btn" onclick="closeEmployeeModal()">×</button>
+      </div>
+      <form id="employee-form">
+        <div class="form-group">
+          <label for="employee-first-name">First Name *</label>
+          <input type="text" id="employee-first-name" required />
+        </div>
+
+        <div class="form-group">
+          <label for="employee-last-name">Last Name *</label>
+          <input type="text" id="employee-last-name" required />
+        </div>
+
+        <div class="form-group">
+          <label for="employee-number">Employee Number</label>
+          <input type="text" id="employee-number" placeholder="Optional" />
+        </div>
+
+        <div class="form-group">
+          <label for="employee-phone">Phone</label>
+          <input type="tel" id="employee-phone" placeholder="Optional" />
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeEmployeeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Employee</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- FullCalendar JS -->
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+
+  <!-- Supabase -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.94.1/+esm";
+
+    const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let calendar;
+    let employees = [];
+    let departments = [];
+    let currentEditingAssignment = null;
+
+    // Check authentication and permissions
+    async function checkAuth() {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error || !session) {
+        window.location.href = 'index.html';
+        return false;
+      }
+
+      // Check if user has floater schedule access
+      const { data: permissions } = await supabase
+        .from('user_management')
+        .select('has_floater_schedule_access, is_admin')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (!permissions || (!permissions.has_floater_schedule_access && !permissions.is_admin)) {
+        showStatus('You do not have permission to access this page.', 'error');
+        setTimeout(() => window.location.href = 'index.html', 2000);
+        return false;
+      }
+
+      return true;
+    }
+
+    // Initialize calendar
+    async function initCalendar() {
+      const calendarEl = document.getElementById('calendar');
+      
+      calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridWeek',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridWeek,dayGridMonth'
+        },
+        height: 'auto',
+        eventClick: function(info) {
+          editAssignment(info.event);
+        },
+        dateClick: function(info) {
+          openAddAssignmentModal(info.dateStr);
+        },
+        events: fetchScheduleEvents
+      });
+
+      calendar.render();
+    }
+
+    // Fetch schedule events for calendar
+    async function fetchScheduleEvents(fetchInfo, successCallback, failureCallback) {
+      try {
+        const { data, error } = await supabase
+          .from('floater_schedule')
+          .select(`
+            *,
+            floater_employees!floater_schedule_employee_id_fkey (
+              first_name,
+              last_name
+            ),
+            floater_departments!floater_schedule_department_id_fkey (
+              name,
+              color_code
+            )
+          `)
+          .gte('assignment_date', fetchInfo.startStr)
+          .lte('assignment_date', fetchInfo.endStr);
+
+        if (error) throw error;
+
+        const events = data.map(assignment => ({
+          id: assignment.id,
+          title: `${assignment.floater_employees.first_name} ${assignment.floater_employees.last_name} - ${assignment.floater_departments.name}`,
+          start: assignment.assignment_date,
+          backgroundColor: assignment.floater_departments.color_code,
+          borderColor: assignment.floater_departments.color_code,
+          extendedProps: {
+            employeeId: assignment.employee_id,
+            departmentId: assignment.department_id,
+            notes: assignment.notes,
+            employeeName: `${assignment.floater_employees.first_name} ${assignment.floater_employees.last_name}`,
+            departmentName: assignment.floater_departments.name
+          }
+        }));
+
+        successCallback(events);
+      } catch (error) {
+        console.error('Error fetching events:', error);
+        failureCallback(error);
+      }
+    }
+
+    // Load employees and departments for dropdowns
+    async function loadDropdownData() {
+      try {
+        // Load employees
+        const { data: empData, error: empError } = await supabase
+          .from('floater_employees')
+          .select('*')
+          .eq('is_active', true)
+          .eq('is_floater', true)
+          .order('last_name', { ascending: true });
+
+        if (empError) throw empError;
+        employees = empData;
+
+        // Populate employee dropdown
+        const employeeSelect = document.getElementById('employee-select');
+        employeeSelect.innerHTML = '<option value="">Select employee...</option>';
+        employees.forEach(emp => {
+          const option = document.createElement('option');
+          option.value = emp.id;
+          option.textContent = `${emp.first_name} ${emp.last_name}`;
+          employeeSelect.appendChild(option);
+        });
+
+        // Load departments
+        const { data: deptData, error: deptError } = await supabase
+          .from('floater_departments')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+
+        if (deptError) throw deptError;
+        departments = deptData;
+
+        // Populate department dropdown
+        const departmentSelect = document.getElementById('department-select');
+        departmentSelect.innerHTML = '<option value="">Select department...</option>';
+        departments.forEach(dept => {
+          const option = document.createElement('option');
+          option.value = dept.id;
+          option.textContent = dept.name;
+          departmentSelect.appendChild(option);
+        });
+
+      } catch (error) {
+        console.error('Error loading dropdown data:', error);
+        showStatus('Error loading data. Please refresh the page.', 'error');
+      }
+    }
+
+    // Open add assignment modal
+    window.openAddAssignmentModal = function(dateStr = null) {
+      currentEditingAssignment = null;
+      document.getElementById('assignment-modal-title').textContent = 'Add Assignment';
+      document.getElementById('assignment-form').reset();
+      document.getElementById('assignment-id').value = '';
+      document.getElementById('delete-btn').style.display = 'none';
+      
+      if (dateStr) {
+        document.getElementById('assignment-date').value = dateStr;
+      } else {
+        // Default to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('assignment-date').value = today;
+      }
+      
+      document.getElementById('assignment-modal').classList.add('active');
+    };
+
+    // Edit assignment
+    function editAssignment(event) {
+      currentEditingAssignment = event;
+      document.getElementById('assignment-modal-title').textContent = 'Edit Assignment';
+      document.getElementById('assignment-id').value = event.id;
+      document.getElementById('employee-select').value = event.extendedProps.employeeId;
+      document.getElementById('department-select').value = event.extendedProps.departmentId;
+      document.getElementById('assignment-date').value = event.startStr;
+      document.getElementById('assignment-notes').value = event.extendedProps.notes || '';
+      document.getElementById('delete-btn').style.display = 'block';
+      document.getElementById('assignment-modal').classList.add('active');
+    }
+
+    // Close assignment modal
+    window.closeAssignmentModal = function() {
+      document.getElementById('assignment-modal').classList.remove('active');
+      currentEditingAssignment = null;
+    };
+
+    // Save assignment
+    document.getElementById('assignment-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const assignmentId = document.getElementById('assignment-id').value;
+      const employeeId = document.getElementById('employee-select').value;
+      const departmentId = document.getElementById('department-select').value;
+      const assignmentDate = document.getElementById('assignment-date').value;
+      const notes = document.getElementById('assignment-notes').value;
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      try {
+        if (assignmentId) {
+          // Update existing
+          const { error } = await supabase
+            .from('floater_schedule')
+            .update({
+              employee_id: employeeId,
+              department_id: departmentId,
+              assignment_date: assignmentDate,
+              notes: notes,
+              updated_by: user.id,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', assignmentId);
+
+          if (error) throw error;
+          showStatus('Assignment updated successfully!', 'success');
+        } else {
+          // Insert new
+          const { error } = await supabase
+            .from('floater_schedule')
+            .insert({
+              employee_id: employeeId,
+              department_id: departmentId,
+              assignment_date: assignmentDate,
+              notes: notes,
+              created_by: user.id
+            });
+
+          if (error) throw error;
+          showStatus('Assignment created successfully!', 'success');
+        }
+
+        closeAssignmentModal();
+        calendar.refetchEvents();
+      } catch (error) {
+        console.error('Error saving assignment:', error);
+        showStatus(error.message || 'Error saving assignment', 'error');
+      }
+    });
+
+    // Delete assignment
+    window.deleteAssignment = async function() {
+      if (!confirm('Are you sure you want to delete this assignment?')) return;
+
+      const assignmentId = document.getElementById('assignment-id').value;
+
+      try {
+        const { error } = await supabase
+          .from('floater_schedule')
+          .delete()
+          .eq('id', assignmentId);
+
+        if (error) throw error;
+
+        showStatus('Assignment deleted successfully!', 'success');
+        closeAssignmentModal();
+        calendar.refetchEvents();
+      } catch (error) {
+        console.error('Error deleting assignment:', error);
+        showStatus(error.message || 'Error deleting assignment', 'error');
+      }
+    };
+
+    // Toggle employee list
+    window.toggleEmployeeList = function() {
+      const employeeList = document.getElementById('employee-list');
+      if (employeeList.style.display === 'none') {
+        employeeList.style.display = 'block';
+        loadEmployeeList();
+      } else {
+        employeeList.style.display = 'none';
+      }
+    };
+
+    // Load employee list
+    async function loadEmployeeList() {
+      const container = document.getElementById('employee-list-container');
+      container.innerHTML = '<div class="loading">Loading employees...</div>';
+
+      try {
+        const { data, error } = await supabase
+          .from('floater_employees')
+          .select('*')
+          .eq('is_floater', true)
+          .order('last_name', { ascending: true });
+
+        if (error) throw error;
+
+        if (data.length === 0) {
+          container.innerHTML = '<p style="text-align: center; color: #6b7280;">No employees added yet.</p>';
+          return;
+        }
+
+        container.innerHTML = '';
+        data.forEach(employee => {
+          const item = document.createElement('div');
+          item.className = 'employee-item';
+          item.innerHTML = `
+            <div class="employee-info">
+              <div class="employee-name">${employee.first_name} ${employee.last_name}</div>
+              <div class="employee-status">
+                ${employee.employee_number ? `#${employee.employee_number}` : 'No employee number'} • 
+                ${employee.is_active ? 'Active' : 'Inactive'}
+              </div>
+            </div>
+            <div class="employee-actions">
+              <button class="btn btn-small btn-${employee.is_active ? 'secondary' : 'primary'}" 
+                      onclick="toggleEmployeeStatus(${employee.id}, ${!employee.is_active})">
+                ${employee.is_active ? 'Deactivate' : 'Activate'}
+              </button>
+            </div>
+          `;
+          container.appendChild(item);
+        });
+      } catch (error) {
+        console.error('Error loading employees:', error);
+        container.innerHTML = '<p style="text-align: center; color: #ef4444;">Error loading employees</p>';
+      }
+    }
+
+    // Toggle employee active status
+    window.toggleEmployeeStatus = async function(employeeId, isActive) {
+      try {
+        const { error } = await supabase
+          .from('floater_employees')
+          .update({ is_active: isActive })
+          .eq('id', employeeId);
+
+        if (error) throw error;
+
+        showStatus(`Employee ${isActive ? 'activated' : 'deactivated'} successfully!`, 'success');
+        loadEmployeeList();
+        loadDropdownData(); // Refresh dropdowns
+      } catch (error) {
+        console.error('Error toggling employee status:', error);
+        showStatus('Error updating employee status', 'error');
+      }
+    };
+
+    // Open add employee modal
+    window.openAddEmployeeModal = function() {
+      document.getElementById('employee-form').reset();
+      document.getElementById('employee-modal').classList.add('active');
+    };
+
+    // Close employee modal
+    window.closeEmployeeModal = function() {
+      document.getElementById('employee-modal').classList.remove('active');
+    };
+
+    // Add employee
+    document.getElementById('employee-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const firstName = document.getElementById('employee-first-name').value.trim();
+      const lastName = document.getElementById('employee-last-name').value.trim();
+      const employeeNumber = document.getElementById('employee-number').value.trim();
+      const phone = document.getElementById('employee-phone').value.trim();
+
+      try {
+        const { error } = await supabase
+          .from('floater_employees')
+          .insert({
+            first_name: firstName,
+            last_name: lastName,
+            employee_number: employeeNumber || null,
+            phone: phone || null,
+            is_floater: true,
+            is_active: true
+          });
+
+        if (error) throw error;
+
+        showStatus('Employee added successfully!', 'success');
+        closeEmployeeModal();
+        loadEmployeeList();
+        loadDropdownData(); // Refresh dropdowns
+      } catch (error) {
+        console.error('Error adding employee:', error);
+        showStatus(error.message || 'Error adding employee', 'error');
+      }
+    });
+
+    // Show status message
+    function showStatus(message, type) {
+      const statusDiv = document.getElementById('status-message');
+      statusDiv.className = `status-message status-${type}`;
+      statusDiv.textContent = message;
+      
+      setTimeout(() => {
+        statusDiv.className = '';
+        statusDiv.textContent = '';
+      }, 5000);
+    }
+
+    // Initialize everything
+    (async function init() {
+      const hasAccess = await checkAuth();
+      if (!hasAccess) return;
+
+      await loadDropdownData();
+      await initCalendar();
+    })();
+  </script>
+</body>
+</html>

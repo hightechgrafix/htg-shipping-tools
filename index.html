@@ -219,6 +219,16 @@
           🔧 Replacement Parts
         </button>
 
+        <!-- Floater Schedule Manager button - shown to admins and floater_schedule users -->
+        <button
+          class="menu-btn"
+          id="floater-schedule-btn"
+          style="display:none;"
+          onclick="location.href='floater-schedule-manager.html'"
+        >
+          📅 Floater Schedule Manager
+        </button>
+
         <!-- Original buttons - shown to everyone except receiving-only users -->
         <div id="standard-tools">
           <button class="menu-btn" onclick="location.href='edit-production-times.html'">Edit Production Times</button>  
@@ -335,6 +345,10 @@
       if (permissions.is_admin) {
         document.getElementById("users-btn").style.display = "block";
         document.getElementById("parts-btn").style.display = "block";
+      }
+
+      if (permissions.has_floater_schedule_access || permissions.is_admin) {
+        document.getElementById("floater-schedule-btn").style.display = "block";
       }
 
       if (permissions.has_spectrum_access) {
