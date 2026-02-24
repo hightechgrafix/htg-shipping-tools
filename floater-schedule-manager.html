@@ -444,7 +444,8 @@
             *,
             floater_employees!floater_schedule_employee_id_fkey (
               first_name,
-              last_name
+              last_name,
+              is_active
             ),
             floater_departments!floater_schedule_department_id_fkey (
               name,
@@ -456,7 +457,12 @@
 
         if (error) throw error;
 
-        const events = data.map(assignment => ({
+        // Filter out assignments for inactive employees
+        const activeAssignments = data.filter(assignment => 
+          assignment.floater_employees && assignment.floater_employees.is_active
+        );
+
+        const events = activeAssignments.map(assignment => ({
           id: assignment.id,
           title: `${assignment.floater_employees.first_name} ${assignment.floater_employees.last_name} - ${assignment.floater_departments.name}`,
           start: assignment.assignment_date,
@@ -663,6 +669,7 @@
           .from('floater_employees')
           .select('*')
           .eq('is_floater', true)
+          .eq('is_active', true)
           .order('last_name', { ascending: true });
 
         if (error) throw error;
@@ -712,6 +719,7 @@
         showStatus(`Employee ${isActive ? 'activated' : 'deactivated'} successfully!`, 'success');
         loadEmployeeList();
         loadDropdownData(); // Refresh dropdowns
+        calendar.refetchEvents(); // Refresh calendar to hide deactivated employee's assignments
       } catch (error) {
         console.error('Error toggling employee status:', error);
         showStatus('Error updating employee status', 'error');
