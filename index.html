@@ -163,6 +163,23 @@
       <h1>HTG Team Login</h1>
       <p class="subtitle">For internal use only</p>
 
+      <!-- Floater Employee Section (shown before login) -->
+      <div id="floater-employee-section" style="text-align: center; padding: 20px 0; border-bottom: 2px solid #333; margin-bottom: 20px;">
+        <h2 style="color: #fff; font-size: 1.1rem; margin: 0 0 10px 0;">📅 Floater Employees</h2>
+        <p style="color: #9ca3af; font-size: 0.85rem; margin-bottom: 15px;">Check your daily schedule</p>
+        
+        <!-- QR Code Placeholder -->
+        <div style="margin-bottom: 15px;">
+          <img id="floater-qr" src="floater_qr.png" alt="Scan QR Code" style="width: 150px; height: 150px; display: block; margin: 0 auto; background: white; padding: 10px; border-radius: 8px;">
+          <p style="color: #6b7280; font-size: 0.75rem; margin-top: 8px;">Scan to open on your phone</p>
+        </div>
+        
+        <!-- Or click link -->
+        <a href="floater-schedule.html" style="display: inline-block; padding: 12px 24px; background: #b6282c; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.95rem;">
+          Open Floater Schedule
+        </a>
+      </div>
+
       <form id="login-form">
         <label for="email">Email</label>
         <input id="email" type="email" autocomplete="email" required />
@@ -292,8 +309,9 @@
 
       setStatus("Logged in as " + email, "success");
 
-      // Hide login form
+      // Hide login form and floater employee section
       document.getElementById("login-form").style.display = "none";
+      document.getElementById("floater-employee-section").style.display = "none";
 
       // Show menu
       document.getElementById("menu").style.display = "block";

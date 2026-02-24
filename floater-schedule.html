@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HTG Floater Schedule</title>
+  
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#b6282c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="HTG Schedule">
+  <link rel="manifest" href="floater-manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #000000;
+      color: #ffffff;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+
+    .header {
+      background: #b6282c;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .header h1 {
+      font-size: 1.3rem;
+      margin-bottom: 5px;
+    }
+
+    .header p {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Login Screen */
+    .login-screen {
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 30px 20px;
+      margin-top: 20px;
+    }
+
+    .login-screen h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.2rem;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      color: #e5e5e5;
+    }
+
+    .form-group select,
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      border: 1px solid #333;
+      border-radius: 8px;
+      background: #000;
+      color: #fff;
+    }
+
+    .form-group select:focus,
+    .form-group input:focus {
+      outline: 2px solid #b6282c;
+      border-color: #b6282c;
+    }
+
+    .pin-input {
+      text-align: center;
+      font-size: 1.5rem;
+      letter-spacing: 8px;
+      font-weight: 600;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #b6282c;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #9b1f24;
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .status-message {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .status-error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .status-success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-info {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    /* Schedule Display */
+    .schedule-screen {
+      display: none;
+    }
+
+    .welcome {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .welcome h2 {
+      font-size: 1.4rem;
+      margin-bottom: 5px;
+    }
+
+    .welcome p {
+      color: #9ca3af;
+      font-size: 0.9rem;
+    }
+
+    .today-card {
+      background: #b6282c;
+      border-radius: 12px;
+      padding: 25px;
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    .today-card h3 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      opacity: 0.9;
+    }
+
+    .today-card .department {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin: 10px 0;
+    }
+
+    .today-card .date {
+      font-size: 1rem;
+      opacity: 0.9;
+      margin-bottom: 15px;
+    }
+
+    .today-card .notes {
+      background: rgba(0,0,0,0.2);
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-top: 15px;
+    }
+
+    .no-assignment {
+      background: #1a1a1a;
+      border: 2px dashed #333;
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .no-assignment p {
+      font-size: 1.1rem;
+      color: #9ca3af;
+    }
+
+    .upcoming {
+      margin-top: 30px;
+    }
+
+    .upcoming h3 {
+      font-size: 1.1rem;
+      margin-bottom: 15px;
+      padding-left: 5px;
+    }
+
+    .upcoming-list {
+      background: #1a1a1a;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .upcoming-item {
+      padding: 15px;
+      border-bottom: 1px solid #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .upcoming-item:last-child {
+      border-bottom: none;
+    }
+
+    .upcoming-date {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .upcoming-dept {
+      color: #b6282c;
+      font-weight: 600;
+    }
+
+    .upcoming-empty {
+      padding: 30px;
+      text-align: center;
+      color: #6b7280;
+    }
+
+    .actions {
+      margin-top: 30px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-secondary {
+      background: #333;
+      color: #fff;
+      flex: 1;
+    }
+
+    .btn-secondary:hover {
+      background: #444;
+    }
+
+    .install-prompt {
+      background: #1a1a1a;
+      border: 2px solid #b6282c;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    .install-prompt h4 {
+      margin-bottom: 10px;
+      color: #b6282c;
+    }
+
+    .install-prompt p {
+      font-size: 0.9rem;
+      color: #9ca3af;
+      margin-bottom: 15px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📅 HTG Floater Schedule</h1>
+    <p>Check your daily assignment</p>
+  </div>
+
+  <div class="container">
+    <div id="status-message"></div>
+
+    <!-- Login Screen -->
+    <div class="login-screen" id="login-screen">
+      <h2>Employee Login</h2>
+      
+      <form id="login-form">
+        <div class="form-group">
+          <label for="employee-select">Select Your Name</label>
+          <select id="employee-select" required>
+            <option value="">Loading employees...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="pin-input">Enter Your PIN</label>
+          <input 
+            type="password" 
+            id="pin-input" 
+            maxlength="4" 
+            pattern="[0-9]{4}" 
+            inputmode="numeric"
+            placeholder="••••"
+            class="pin-input"
+            required 
+          />
+          <p style="font-size: 0.75rem; color: #6b7280; margin-top: 5px;">
+            First time? Enter a new 4-digit PIN to set up your account
+          </p>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="login-btn">
+          Sign In
+        </button>
+      </form>
+    </div>
+
+    <!-- Schedule Screen -->
+    <div class="schedule-screen" id="schedule-screen">
+      <div class="welcome">
+        <h2 id="welcome-name">Welcome!</h2>
+        <p id="current-date"></p>
+      </div>
+
+      <!-- Today's Assignment -->
+      <div id="today-container"></div>
+
+      <!-- Upcoming Schedule -->
+      <div class="upcoming">
+        <h3>📆 Upcoming Schedule</h3>
+        <div class="upcoming-list" id="upcoming-list">
+          <div class="loading">Loading schedule...</div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="refreshSchedule()">
+          🔄 Refresh
+        </button>
+        <button class="btn btn-secondary" onclick="logout()">
+          🚪 Logout
+        </button>
+      </div>
+
+      <!-- Install Prompt (shown if PWA not installed) -->
+      <div class="install-prompt" id="install-prompt" style="display: none;">
+        <h4>📱 Add to Home Screen</h4>
+        <p>Install this app for quick access to your schedule!</p>
+        <button class="btn btn-primary" onclick="promptInstall()">
+          Install App
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.94.1/+esm";
+
+    const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let employees = [];
+    let currentEmployee = null;
+    let deferredPrompt = null;
+
+    // Hash PIN (simple SHA-256)
+    async function hashPin(pin) {
+      const msgBuffer = new TextEncoder().encode(pin);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Show status message
+    function showStatus(message, type) {
+      const statusDiv = document.getElementById('status-message');
+      statusDiv.className = `status-message status-${type}`;
+      statusDiv.textContent = message;
+      
+      setTimeout(() => {
+        statusDiv.className = '';
+        statusDiv.textContent = '';
+      }, 5000);
+    }
+
+    // Load employees for dropdown
+    async function loadEmployees() {
+      try {
+        const { data, error } = await supabase
+          .from('floater_employees')
+          .select('*')
+          .eq('is_active', true)
+          .eq('is_floater', true)
+          .order('last_name', { ascending: true });
+
+        if (error) throw error;
+
+        employees = data;
+        const select = document.getElementById('employee-select');
+        select.innerHTML = '<option value="">-- Select Your Name --</option>';
+        
+        employees.forEach(emp => {
+          const option = document.createElement('option');
+          option.value = emp.id;
+          option.textContent = `${emp.first_name} ${emp.last_name}`;
+          select.appendChild(option);
+        });
+
+      } catch (error) {
+        console.error('Error loading employees:', error);
+        showStatus('Error loading employee list. Please refresh the page.', 'error');
+      }
+    }
+
+    // Handle login
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const employeeId = document.getElementById('employee-select').value;
+      const pin = document.getElementById('pin-input').value;
+
+      if (!employeeId) {
+        showStatus('Please select your name', 'error');
+        return;
+      }
+
+      if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+        showStatus('PIN must be exactly 4 digits', 'error');
+        return;
+      }
+
+      const loginBtn = document.getElementById('login-btn');
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Signing in...';
+
+      try {
+        // Find employee
+        const employee = employees.find(e => e.id == employeeId);
+        if (!employee) {
+          throw new Error('Employee not found');
+        }
+
+        const pinHash = await hashPin(pin);
+
+        // Check if PIN is set
+        if (!employee.pin_hash) {
+          // First time login - set PIN
+          const { error } = await supabase
+            .from('floater_employees')
+            .update({ pin_hash: pinHash })
+            .eq('id', employeeId);
+
+          if (error) throw error;
+
+          showStatus('PIN set successfully! Welcome!', 'success');
+          currentEmployee = employee;
+          showScheduleScreen();
+        } else {
+          // Validate PIN
+          if (employee.pin_hash === pinHash) {
+            currentEmployee = employee;
+            showScheduleScreen();
+          } else {
+            showStatus('Incorrect PIN. Please try again.', 'error');
+            document.getElementById('pin-input').value = '';
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Sign In';
+          }
+        }
+
+      } catch (error) {
+        console.error('Login error:', error);
+        showStatus('Login failed. Please try again.', 'error');
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Sign In';
+      }
+    });
+
+    // Show schedule screen
+    function showScheduleScreen() {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('schedule-screen').style.display = 'block';
+      
+      // Set welcome message
+      document.getElementById('welcome-name').textContent = 
+        `Hi, ${currentEmployee.first_name}!`;
+      
+      // Set current date
+      const today = new Date();
+      const dateStr = today.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      document.getElementById('current-date').textContent = dateStr;
+
+      // Load schedule
+      loadSchedule();
+    }
+
+    // Load schedule
+    async function loadSchedule() {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Get today's assignment
+        const { data: todayData, error: todayError } = await supabase
+          .from('floater_schedule')
+          .select(`
+            *,
+            floater_departments (name, color_code)
+          `)
+          .eq('employee_id', currentEmployee.id)
+          .eq('assignment_date', today)
+          .single();
+
+        if (todayError && todayError.code !== 'PGRST116') {
+          throw todayError;
+        }
+
+        // Display today's assignment
+        const todayContainer = document.getElementById('today-container');
+        if (todayData) {
+          const dept = todayData.floater_departments;
+          todayContainer.innerHTML = `
+            <div class="today-card">
+              <h3>Today's Assignment</h3>
+              <div class="date">${new Date(todayData.assignment_date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</div>
+              <div class="department">${dept.name}</div>
+              ${todayData.notes ? `<div class="notes">📝 ${todayData.notes}</div>` : ''}
+            </div>
+          `;
+        } else {
+          todayContainer.innerHTML = `
+            <div class="no-assignment">
+              <p>✨ No assignment for today</p>
+              <p style="font-size: 0.9rem; margin-top: 10px; color: #6b7280;">Enjoy your day off or check with your manager</p>
+            </div>
+          `;
+        }
+
+        // Get upcoming assignments (next 7 days)
+        const nextWeek = new Date();
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        const nextWeekStr = nextWeek.toISOString().split('T')[0];
+
+        const { data: upcomingData, error: upcomingError } = await supabase
+          .from('floater_schedule')
+          .select(`
+            *,
+            floater_departments (name, color_code)
+          `)
+          .eq('employee_id', currentEmployee.id)
+          .gt('assignment_date', today)
+          .lte('assignment_date', nextWeekStr)
+          .order('assignment_date', { ascending: true });
+
+        if (upcomingError) throw upcomingError;
+
+        // Display upcoming assignments
+        const upcomingList = document.getElementById('upcoming-list');
+        if (upcomingData && upcomingData.length > 0) {
+          upcomingList.innerHTML = '';
+          upcomingData.forEach(assignment => {
+            const dept = assignment.floater_departments;
+            const date = new Date(assignment.assignment_date);
+            const dateStr = date.toLocaleDateString('en-US', { 
+              weekday: 'short', 
+              month: 'short', 
+              day: 'numeric' 
+            });
+
+            const item = document.createElement('div');
+            item.className = 'upcoming-item';
+            item.innerHTML = `
+              <div class="upcoming-date">${dateStr}</div>
+              <div class="upcoming-dept">${dept.name}</div>
+            `;
+            upcomingList.appendChild(item);
+          });
+        } else {
+          upcomingList.innerHTML = `
+            <div class="upcoming-empty">
+              No upcoming assignments in the next 7 days
+            </div>
+          `;
+        }
+
+      } catch (error) {
+        console.error('Error loading schedule:', error);
+        showStatus('Error loading schedule. Please try again.', 'error');
+      }
+    }
+
+    // Refresh schedule
+    window.refreshSchedule = function() {
+      loadSchedule();
+      showStatus('Schedule refreshed!', 'success');
+    };
+
+    // Logout
+    window.logout = function() {
+      currentEmployee = null;
+      document.getElementById('schedule-screen').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'block';
+      document.getElementById('login-form').reset();
+      document.getElementById('pin-input').value = '';
+    };
+
+    // PWA Install Prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('install-prompt').style.display = 'block';
+    });
+
+    window.promptInstall = async function() {
+      if (!deferredPrompt) {
+        showStatus('App is already installed or not available for install', 'info');
+        return;
+      }
+
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
+        showStatus('App installed successfully!', 'success');
+        document.getElementById('install-prompt').style.display = 'none';
+      }
+      
+      deferredPrompt = null;
+    };
+
+    // Initialize
+    (async function init() {
+      await loadEmployees();
+    })();
+  </script>
+</body>
+</html>
