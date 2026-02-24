@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>IDK Orphaned Inventory</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* ===== BASE STYLES ===== */
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #000;
+      color: #fff;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: #fff;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #9ca3af;
+      margin-bottom: 30px;
+      font-size: 0.9rem;
+    }
+
+    .back-btn {
+      display: inline-block;
+      padding: 8px 16px;
+      background: #333;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+
+    .back-btn:hover {
+      background: #444;
+    }
+
+    /* ===== FORM SECTION ===== */
+    .form-section {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 30px;
+    }
+
+    .form-section h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #fff;
+      font-size: 1.2rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+
+    input[type="text"],
+    select,
+    textarea {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #555;
+      background: #222;
+      color: #fff;
+      font-size: 0.95rem;
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: 2px solid #b6282c;
+      border-color: #b6282c;
+    }
+
+    /* ===== BUTTONS ===== */
+    .button-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: #b6282c;
+      color: #fff;
+      flex: 1;
+    }
+
+    .btn-primary:hover {
+      background: #9b1f24;
+    }
+
+    .btn-secondary {
+      background: #555;
+      color: #fff;
+      flex: 1;
+    }
+
+    .btn-secondary:hover {
+      background: #666;
+    }
+
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+    }
+
+    .btn-edit {
+      background: #333;
+      color: #fff;
+    }
+
+    .btn-edit:hover {
+      background: #444;
+    }
+
+    .btn-clear {
+      background: #b6282c;
+      color: #fff;
+    }
+
+    .btn-clear:hover {
+      background: #9b1f24;
+    }
+
+    /* ===== TABLE SECTION ===== */
+    .table-section {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 24px;
+      overflow-x: auto;
+    }
+
+    .table-section h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #fff;
+      font-size: 1.2rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background: #222;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #555;
+      color: #fff;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #333;
+      color: #fff;
+    }
+
+    tr:hover {
+      background: #1a1a1a;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #9ca3af;
+    }
+
+    /* ===== MODAL (for clearing items) ===== */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    .modal-content h3 {
+      margin-top: 0;
+      color: #fff;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    /* ===== STATUS MESSAGES ===== */
+    .status {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .status.show {
+      display: block;
+    }
+
+    .status.error {
+      background: #ff6b6b33;
+      border: 1px solid #ff6b6b;
+      color: #ff6b6b;
+    }
+
+    .status.success {
+      background: #51cf6633;
+      border: 1px solid #51cf66;
+      color: #51cf66;
+    }
+
+    /* ===== MOBILE RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        font-size: 0.85rem;
+      }
+
+      th, td {
+        padding: 8px;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Back button to return to main menu -->
+    <a href="index.html" class="back-btn">← Back to Menu</a>
+    
+    <h1>📦 IDK Orphaned Inventory</h1>
+    <p class="subtitle">Track apparel items separated from their original jobs</p>
+
+    <!-- Status message area (shows success/error messages) -->
+    <div id="status" class="status"></div>
+
+    <!-- ===== ADD/EDIT FORM ===== -->
+    <div class="form-section">
+      <h2 id="form-title">Add New Item</h2>
+      
+      <form id="item-form">
+        <div class="form-grid">
+          <!-- Job Number input -->
+          <div class="form-group">
+            <label for="job-number">Job Number *</label>
+            <input 
+              type="text" 
+              id="job-number" 
+              maxlength="6" 
+              pattern="[0-9]{6}" 
+              placeholder="XXXXXX"
+              required
+            />
+          </div>
+
+          <!-- Location input -->
+          <div class="form-group">
+            <label for="location">Location *</label>
+            <input 
+              type="text" 
+              id="location" 
+              placeholder="e.g., Rack A-3, IDK Pile"
+              required
+            />
+          </div>
+
+          <!-- Reason dropdown -->
+          <div class="form-group">
+            <label for="reason">Reason *</label>
+            <select id="reason" required>
+              <option value="">Select a reason...</option>
+              <option value="Count Team Error">Count Team Error</option>
+              <option value="Sales Team">Sales Team</option>
+              <option value="Customer">Customer</option>
+              <option value="Misc (see notes)">Misc (see notes)</option>
+            </select>
+          </div>
+
+          <!-- Notes textarea (spans full width) -->
+          <div class="form-group full-width">
+            <label for="notes">Notes</label>
+            <textarea 
+              id="notes" 
+              placeholder="Optional notes about this item..."
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Submit and Cancel buttons -->
+        <div class="button-group">
+          <button type="submit" class="btn-primary" id="submit-btn">Add Item</button>
+          <button type="button" class="btn-secondary" id="cancel-btn" style="display: none;">Cancel</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ===== ACTIVE ITEMS TABLE ===== -->
+    <div class="table-section">
+      <h2>Active Items</h2>
+      <div id="table-container">
+        <p class="empty-state">Loading...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CLEAR ITEM MODAL ===== -->
+  <!-- This pops up when user clicks "Clear" button -->
+  <div id="clear-modal" class="modal">
+    <div class="modal-content">
+      <h3>Clear Item</h3>
+      <p>This will move the item to the resolved archive. Please provide resolution notes:</p>
+      
+      <label for="resolution-notes">Resolution Notes *</label>
+      <textarea 
+        id="resolution-notes" 
+        placeholder="How was this resolved? Where did the items go?"
+        required
+        style="width: 100%; margin-top: 8px; min-height: 100px;"
+      ></textarea>
+
+      <div class="modal-buttons">
+        <button class="btn-primary" id="confirm-clear">Clear Item</button>
+        <button class="btn-secondary" id="cancel-clear">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== JAVASCRIPT ===== -->
+  <script type="module">
+    // Import Supabase
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.94.1/+esm";
+
+    // Your Supabase credentials
+    const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Track which item we're editing (null = not editing)
+    let editingItemId = null;
+    // Track which item we're clearing
+    let clearingItem = null;
+
+    // Grab all the DOM elements we'll need
+    const form = document.getElementById('item-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const formTitle = document.getElementById('form-title');
+    const tableContainer = document.getElementById('table-container');
+    const statusEl = document.getElementById('status');
+    const clearModal = document.getElementById('clear-modal');
+    const resolutionNotesInput = document.getElementById('resolution-notes');
+
+    // ===== STEP 1: CHECK AUTHENTICATION & PERMISSIONS =====
+    async function checkAuth() {
+      // Get current session
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error || !session) {
+        // Not logged in - send them back to login
+        window.location.href = 'index.html';
+        return false;
+      }
+
+      // Check if user has package access permission
+      const { data: permissions } = await supabase
+        .from('user_management')
+        .select('has_package_access')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (!permissions?.has_package_access) {
+        // User doesn't have permission
+        showStatus('You do not have permission to access this page', 'error');
+        setTimeout(() => window.location.href = 'index.html', 2000);
+        return false;
+      }
+
+      return true;
+    }
+
+    // ===== STEP 2: SHOW STATUS MESSAGES =====
+    function showStatus(message, type = 'success') {
+      statusEl.textContent = message;
+      statusEl.className = `status ${type} show`;
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+        statusEl.classList.remove('show');
+      }, 3000);
+    }
+
+    // ===== STEP 3: LOAD AND DISPLAY ITEMS =====
+    async function loadItems() {
+      // Fetch all items from the active table, newest first
+      const { data, error } = await supabase
+        .from('idk_orphaned_inventory')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading items:', error);
+        tableContainer.innerHTML = '<p class="empty-state">Error loading items</p>';
+        return;
+      }
+
+      // If no items, show empty state
+      if (!data || data.length === 0) {
+        tableContainer.innerHTML = '<p class="empty-state">No orphaned items. Great job! 🎉</p>';
+        return;
+      }
+
+      // Build the table HTML
+      const table = `
+        <table>
+          <thead>
+            <tr>
+              <th>Job Number</th>
+              <th>Location</th>
+              <th>Reason</th>
+              <th>Notes</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map(item => `
+              <tr>
+                <td>${item.job_number}</td>
+                <td>${item.location}</td>
+                <td>${item.reason}</td>
+                <td>${item.notes || '—'}</td>
+                <td>${new Date(item.created_at).toLocaleDateString()}</td>
+                <td>
+                  <div class="actions">
+                    <button class="btn-edit btn-small" onclick="window.editItem('${item.id}')">Edit</button>
+                    <button class="btn-clear btn-small" onclick="window.showClearModal('${item.id}')">Clear</button>
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+
+      tableContainer.innerHTML = table;
+    }
+
+    // ===== STEP 4: HANDLE FORM SUBMISSION (ADD OR UPDATE) =====
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Get form values
+      const jobNumber = document.getElementById('job-number').value.trim();
+      const location = document.getElementById('location').value.trim();
+      const reason = document.getElementById('reason').value;
+      const notes = document.getElementById('notes').value.trim();
+
+      if (editingItemId) {
+        // ===== UPDATE EXISTING ITEM =====
+        const { error } = await supabase
+          .from('idk_orphaned_inventory')
+          .update({
+            job_number: jobNumber,
+            location: location,
+            reason: reason,
+            notes: notes || null
+          })
+          .eq('id', editingItemId);
+
+        if (error) {
+          console.error('Error updating item:', error);
+          showStatus('Error updating item', 'error');
+          return;
+        }
+
+        showStatus('Item updated successfully');
+        resetForm();
+      } else {
+        // ===== ADD NEW ITEM =====
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        const { error } = await supabase
+          .from('idk_orphaned_inventory')
+          .insert({
+            job_number: jobNumber,
+            location: location,
+            reason: reason,
+            notes: notes || null,
+            created_by: user.id
+          });
+
+        if (error) {
+          console.error('Error adding item:', error);
+          showStatus('Error adding item', 'error');
+          return;
+        }
+
+        showStatus('Item added successfully');
+        form.reset();
+      }
+
+      // Reload the table to show changes
+      loadItems();
+    });
+
+    // ===== STEP 5: EDIT ITEM =====
+    window.editItem = async (itemId) => {
+      // Fetch the item data
+      const { data, error } = await supabase
+        .from('idk_orphaned_inventory')
+        .select('*')
+        .eq('id', itemId)
+        .single();
+
+      if (error || !data) {
+        showStatus('Error loading item', 'error');
+        return;
+      }
+
+      // Populate the form with existing data
+      document.getElementById('job-number').value = data.job_number;
+      document.getElementById('location').value = data.location;
+      document.getElementById('reason').value = data.reason;
+      document.getElementById('notes').value = data.notes || '';
+
+      // Change UI to "edit mode"
+      editingItemId = itemId;
+      formTitle.textContent = 'Edit Item';
+      submitBtn.textContent = 'Update Item';
+      cancelBtn.style.display = 'block';
+
+      // Scroll to top so user sees the form
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // ===== STEP 6: CANCEL EDIT =====
+    cancelBtn.addEventListener('click', resetForm);
+
+    function resetForm() {
+      form.reset();
+      editingItemId = null;
+      formTitle.textContent = 'Add New Item';
+      submitBtn.textContent = 'Add Item';
+      cancelBtn.style.display = 'none';
+    }
+
+    // ===== STEP 7: SHOW CLEAR MODAL =====
+    window.showClearModal = async (itemId) => {
+      // Fetch the item we're about to clear
+      const { data } = await supabase
+        .from('idk_orphaned_inventory')
+        .select('*')
+        .eq('id', itemId)
+        .single();
+
+      if (!data) return;
+
+      // Store it and show the modal
+      clearingItem = data;
+      resolutionNotesInput.value = '';
+      clearModal.classList.add('show');
+    };
+
+    // Cancel clear
+    document.getElementById('cancel-clear').addEventListener('click', () => {
+      clearModal.classList.remove('show');
+      clearingItem = null;
+    });
+
+    // ===== STEP 8: CONFIRM CLEAR (MOVE TO CLEARED TABLE) =====
+    document.getElementById('confirm-clear').addEventListener('click', async () => {
+      const resolutionNotes = resolutionNotesInput.value.trim();
+
+      // Make sure they entered resolution notes
+      if (!resolutionNotes) {
+        alert('Please provide resolution notes');
+        return;
+      }
+
+      if (!clearingItem) return;
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // STEP 1: Insert into cleared table
+      const { error: insertError } = await supabase
+        .from('idk_orphaned_inventory_cleared')
+        .insert({
+          id: clearingItem.id,
+          job_number: clearingItem.job_number,
+          location: clearingItem.location,
+          reason: clearingItem.reason,
+          notes: clearingItem.notes,
+          resolution_notes: resolutionNotes,
+          created_at: clearingItem.created_at,
+          created_by: clearingItem.created_by,
+          cleared_by: user.id
+        });
+
+      if (insertError) {
+        console.error('Error moving to cleared table:', insertError);
+        showStatus('Error clearing item', 'error');
+        return;
+      }
+
+      // STEP 2: Delete from active table
+      const { error: deleteError } = await supabase
+        .from('idk_orphaned_inventory')
+        .delete()
+        .eq('id', clearingItem.id);
+
+      if (deleteError) {
+        console.error('Error deleting from active table:', deleteError);
+        showStatus('Error clearing item', 'error');
+        return;
+      }
+
+      // Success! Close modal and refresh table
+      clearModal.classList.remove('show');
+      clearingItem = null;
+      showStatus('Item cleared successfully');
+      loadItems();
+    });
+
+    // ===== INITIALIZE THE PAGE =====
+    async function init() {
+      const hasAccess = await checkAuth();
+      if (hasAccess) {
+        loadItems();
+      }
+    }
+
+    // Start everything when page loads
+    init();
+  </script>
+</body>
+</html>
