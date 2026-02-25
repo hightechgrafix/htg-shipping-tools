@@ -98,7 +98,7 @@
         }
         
         async function lookupScreenPrintPrice(colors, quantity) {
-            const { data, error } = await supabaseClientClient
+            const { data, error } = await supabaseClient
                 .from('pricing_calc_screen_print_pricing')
                 .select('price')
                 .eq('colors', colors)
