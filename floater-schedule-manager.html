@@ -568,12 +568,12 @@
     // Toggle date selection
     window.toggleDate = function(dateStr, event) {
       // Allow selecting today and future dates
-      const date = new Date(dateStr);
+      const date = new Date(dateStr + 'T00:00:00');
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      date.setHours(0, 0, 0, 0);
-      // Skip if date is in the past (but allow today)
-      if (date < today) return;
+      
+      // Skip if date is before today (but allow today)
+      if (date.getTime() < today.getTime()) return;
       
       // Check for shift key (range selection)
       if (event && event.shiftKey && lastClickedDate) {
