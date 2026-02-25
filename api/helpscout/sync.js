@@ -1,6 +1,5 @@
 // HelpScout Data Sync Function
 // Runs daily to pull sales team metrics from HelpScout API
-// Now syncs per-mailbox for accurate filtering
 
 const { createClient } = require('@supabase/supabase-js');
 
@@ -69,37 +68,31 @@ async function fetchHelpScoutUsers(accessToken) {
   return data._embedded.users.filter(user => user.type === 'user');
 }
 
-  // Fetch company report (includes per-user breakdown for a mailbox)
-  async function fetchCompanyReport(accessToken, mailboxId, startDate, endDate) {
-    const start = `${startDate}T00:00:00Z`;
-    const end = `${endDate}T23:59:59Z`;
-    
-    const url = `${HELPSCOUT_API_URL}/reports/company?mailboxes=${mailboxId}&start=${start}&end=${end}&viewBy=user`;
-    
-    console.log(`Fetching company report for mailbox ${mailboxId}`);
-    
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    });
+// Fetch user metrics for a specific date range
+async function fetchUserMetrics(accessToken, userId, startDate, endDate) {
+  const start = `${startDate}T00:00:00Z`;
+  const end = `${endDate}T23:59:59Z`;
+  
+  const url = `${HELPSCOUT_API_URL}/reports/user?user=${userId}&start=${start}&end=${end}`;
+  
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+    },
+  });
 
-    const responseText = await response.text();
-    
-    if (!response.ok) {
-      console.error(`Failed to fetch company report for mailbox ${mailboxId}:`);
-      console.error(`Status: ${response.status}`);
-      console.error(`Response: ${responseText}`);
-      return null;
-    }
-
-    const data = JSON.parse(responseText);
-    
-    // ADD THIS LINE TO SEE THE STRUCTURE
-    console.log(`Company report structure:`, JSON.stringify(data, null, 2));
-    
-    return data;
+  const responseText = await response.text();
+  
+  if (!response.ok) {
+    console.error(`Failed to fetch metrics for user ${userId}:`);
+    console.error(`Status: ${response.status}`);
+    console.error(`Response: ${responseText}`);
+    return null;
   }
+
+  const data = JSON.parse(responseText);
+  return data;
+}
 
 // Upsert mailbox into database
 async function upsertMailbox(mailbox) {
@@ -142,37 +135,50 @@ async function upsertUser(user) {
     throw error;
   }
 
+  // Also ensure user exists in display settings (default to displayed)
+  await supabase
+    .from('helpscout_user_display')
+    .upsert({
+      helpscout_user_id: user.id,
+      is_displayed: true,
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'helpscout_user_id',
+    });
+
   return data;
 }
 
-// Upsert daily metrics into database (now with mailbox_id)
-async function upsertMetrics(userId, mailboxId, metricDate, metrics) {
+// Upsert daily metrics into database
+async function upsertMetrics(userId, metricDate, metrics) {
+  const current = metrics.current;
+  
   const { data, error } = await supabase
     .from('helpscout_daily_metrics')
     .upsert({
       helpscout_user_id: userId,
-      mailbox_id: mailboxId,
+      mailbox_id: null, // Not tracking by mailbox anymore
       metric_date: metricDate,
-      total_replies: metrics.totalReplies || 0,
-      conversations_created: 0, // Not available in company report
-      conversations_resolved: 0, // Not available in company report  
-      customers_helped: metrics.customersHelped || 0,
-      avg_response_time: null, // Not available in company report
-      avg_first_response_time: null, // Not available in company report
-      avg_resolution_time: null, // Not available in company report
-      avg_handle_time: metrics.handleTime || null,
-      resolved_on_first_reply: 0, // Not available in company report
-      percent_resolved_first_reply: null, // Not available in company report
-      avg_replies_to_resolve: null, // Not available in company report
-      happiness_score: metrics.happinessScore || null,
-      replies_per_day: metrics.totalReplies || 0, // Same as total for single day
+      total_replies: current.totalReplies || 0,
+      conversations_created: current.conversationsCreated || 0,
+      conversations_resolved: current.resolved || 0,
+      customers_helped: current.customersHelped || 0,
+      avg_response_time: current.responseTime || null,
+      avg_first_response_time: current.averageFirstResponseTime || null,
+      avg_resolution_time: current.resolutionTime || null,
+      avg_handle_time: current.handleTime || null,
+      resolved_on_first_reply: current.resolvedOnFirstReply || 0,
+      percent_resolved_first_reply: current.percentResolvedOnFirstReply || null,
+      avg_replies_to_resolve: current.repliesToResolve || null,
+      happiness_score: current.happinessScore || null,
+      replies_per_day: current.repliesPerDay || null,
       synced_at: new Date().toISOString(),
     }, {
-      onConflict: 'helpscout_user_id,mailbox_id,metric_date',
+      onConflict: 'helpscout_user_id,metric_date',
     });
 
   if (error) {
-    console.error(`Error upserting metrics for user ${userId} in mailbox ${mailboxId}:`, error);
+    console.error(`Error upserting metrics for user ${userId}:`, error);
     throw error;
   }
 
@@ -201,7 +207,7 @@ module.exports = async function handler(req, res) {
   console.log('Starting HelpScout sync...');
   
   let syncLogId;
-  let metricsInserted = 0;
+  let usersSynced = 0;
 
   try {
     // Create sync log entry
@@ -220,60 +226,32 @@ module.exports = async function handler(req, res) {
       console.log(`✓ Synced mailbox: ${mailbox.name}`);
     }
 
-    // Fetch all users (to ensure user table is up to date)
+    // Fetch all users
     const users = await fetchHelpScoutUsers(accessToken);
     console.log(`✓ Found ${users.length} users`);
-
-    for (const user of users) {
-      await upsertUser(user);
-      console.log(`✓ Synced user: ${user.firstName} ${user.lastName}`);
-    }
 
     // Get yesterday's date for metrics
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const metricDate = yesterday.toISOString().split('T')[0];
 
-    // Sync metrics for each mailbox
-    for (const mailbox of mailboxes) {
+    // Sync each user
+    for (const user of users) {
       try {
-        console.log(`\nFetching metrics for mailbox: ${mailbox.name}`);
-        
-        const report = await fetchCompanyReport(accessToken, mailbox.id, metricDate, metricDate);
-        
-        if (!report || !report.users || report.users.length === 0) {
-          console.log(`No user data in report for mailbox ${mailbox.name}`);
-          continue;
-        }
+        // Upsert user info
+        await upsertUser(user);
+        console.log(`✓ Synced user: ${user.firstName} ${user.lastName}`);
 
-        // Process each user's metrics in this mailbox
-        for (const userMetrics of report.users) {
-          try {
-            const userId = userMetrics.user;  // Just the ID, not nested
-            const userName = userMetrics.name;
-            
-            // Only insert if there's actual activity
-            if (userMetrics.replies > 0 || userMetrics.closed > 0) {
-              // Map the company report format to our database format
-              const mappedMetrics = {
-                totalReplies: userMetrics.replies || 0,
-                customersHelped: userMetrics.customersHelped || 0,
-                handleTime: userMetrics.handleTime || null,
-                happinessScore: userMetrics.happinessScore || null,
-                // Note: Company report doesn't include all the detailed metrics
-                // We'll store what we have and set the rest to null
-              };
-              
-              await upsertMetrics(userId, mailbox.id, metricDate, mappedMetrics);
-              console.log(`  ✓ Synced metrics for ${userName} in ${mailbox.name}`);
-              metricsInserted++;
-            }
-          } catch (userError) {
-            console.error(`Error syncing user metrics:`, userError);
-          }
+        // Fetch and upsert metrics for yesterday
+        const metrics = await fetchUserMetrics(accessToken, user.id, metricDate, metricDate);
+        
+        if (metrics) {
+          await upsertMetrics(user.id, metricDate, metrics);
+          console.log(`✓ Synced metrics for ${user.firstName} ${user.lastName}`);
+          usersSynced++;
         }
-      } catch (mailboxError) {
-        console.error(`Error syncing mailbox ${mailbox.name}:`, mailboxError);
+      } catch (userError) {
+        console.error(`Error syncing user ${user.id}:`, userError);
       }
     }
 
@@ -283,15 +261,15 @@ module.exports = async function handler(req, res) {
       .update({
         sync_completed_at: new Date().toISOString(),
         status: 'success',
-        users_synced: metricsInserted,
+        users_synced: usersSynced,
       })
       .eq('id', syncLogId);
 
-    console.log(`\n✓ Sync completed successfully! Inserted ${metricsInserted} metric records.`);
+    console.log(`✓ Sync completed successfully! Synced ${usersSynced} users.`);
 
     return res.status(200).json({
       success: true,
-      metricsInserted,
+      usersSynced,
       message: 'Sync completed successfully',
     });
 
@@ -304,7 +282,7 @@ module.exports = async function handler(req, res) {
         .update({
           sync_completed_at: new Date().toISOString(),
           status: 'failed',
-          users_synced: metricsInserted,
+          users_synced: usersSynced,
           error_message: error.message,
         })
         .eq('id', syncLogId);
