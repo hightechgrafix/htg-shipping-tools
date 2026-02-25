@@ -212,10 +212,6 @@ module.exports = async function handler(req, res) {
     const accessToken = await getAccessToken();
     console.log('✓ Got access token');
 
-    // Get access token
-    const accessToken = await getAccessToken();
-    console.log('✓ Got access token');
-
     // Fetch and store mailboxes
     const mailboxes = await fetchMailboxes(accessToken);
     console.log(`✓ Found ${mailboxes.length} mailboxes`);
