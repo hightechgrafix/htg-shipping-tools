@@ -195,7 +195,14 @@
             );
             
             const shippingWithDiscount = applyFreeShipping(shipping, decorationsTotal);
-            const grandTotal = decorationsTotal + shippingWithDiscount.cost;
+            
+            // Calculate subtotal before CC fee
+            const subtotalBeforeCCFee = decorationsTotal + shippingWithDiscount.cost;
+            
+            // Add 3% CC processing fee (applied by default)
+            const ccProcessingFee = subtotalBeforeCCFee * 0.03;
+            
+            const grandTotal = subtotalBeforeCCFee + ccProcessingFee;
             
             quoteData.totals = {
                 decorations_subtotal: decorationsTotal,
@@ -203,6 +210,7 @@
                 rush_fees: 0,
                 spoilage_insurance: 0,
                 beyond_styles_charge: 0,
+                cc_processing_fee: ccProcessingFee,
                 grand_total: grandTotal
             };
             
@@ -255,10 +263,11 @@
                 html += '<h4 style="margin-top: 20px;">Quote Totals:</h4>';
                 html += `<div class="price-line">Decorations: $${result.totals.decorations_subtotal.toFixed(2)}</div>`;
                 html += `<div class="price-line">Shipping: $${result.totals.shipping.cost.toFixed(2)} ${result.totals.shipping.free_shipping_applied ? '(Free!)' : ''}</div>`;
+                html += `<div class="price-line">CC Processing Fee (3%): $${result.totals.cc_processing_fee.toFixed(2)}</div>`;
                 html += `<div class="total">GRAND TOTAL: $${result.totals.grand_total.toFixed(2)}</div>`;
                 html += '<div style="margin-top: 20px; padding: 15px; background: #d4edda; border-radius: 4px;">';
-                html += `<strong>Expected:</strong> ~$508<br><strong>Actual:</strong> $${result.totals.grand_total.toFixed(2)}`;
-                if (Math.abs(result.totals.grand_total - 508) < 1) {
+                html += `<strong>Expected:</strong> ~$523 ($508 + 3% CC fee)<br><strong>Actual:</strong> $${result.totals.grand_total.toFixed(2)}`;
+                if (Math.abs(result.totals.grand_total - 523.24) < 1) {
                     html += '<br><span class="success">🎉 Perfect match!</span>';
                 }
                 html += '</div>';
