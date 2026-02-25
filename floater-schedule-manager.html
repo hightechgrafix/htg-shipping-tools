@@ -320,6 +320,24 @@
         </div>
 
         <div class="form-group">
+          <label for="repeat-option">Repeat Assignment</label>
+          <select id="repeat-option">
+            <option value="none">Single day only</option>
+            <option value="daily">Daily for next 7 days</option>
+            <option value="weekdays">Weekdays only (Mon-Fri) for next 2 weeks</option>
+            <option value="custom">Custom date range</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="custom-end-date-group" style="display: none;">
+          <label for="end-date">End Date</label>
+          <input type="date" id="end-date" />
+          <p style="font-size: 0.75rem; color: #6b7280; margin-top: 5px;">
+            Will create assignments from start date through end date
+          </p>
+        </div>
+
+        <div class="form-group">
           <label for="assignment-notes">Notes (optional)</label>
           <textarea id="assignment-notes" placeholder="Any special instructions..."></textarea>
         </div>
@@ -541,6 +559,10 @@
       document.getElementById('assignment-form').reset();
       document.getElementById('assignment-id').value = '';
       document.getElementById('delete-btn').style.display = 'none';
+      document.getElementById('custom-end-date-group').style.display = 'none';
+      
+      // Show repeat options for new assignments
+      document.getElementById('repeat-option').closest('.form-group').style.display = 'block';
       
       if (dateStr) {
         document.getElementById('assignment-date').value = dateStr;
@@ -553,6 +575,16 @@
       document.getElementById('assignment-modal').classList.add('active');
     };
 
+    // Show/hide custom end date based on repeat option
+    document.getElementById('repeat-option').addEventListener('change', function() {
+      const customGroup = document.getElementById('custom-end-date-group');
+      if (this.value === 'custom') {
+        customGroup.style.display = 'block';
+      } else {
+        customGroup.style.display = 'none';
+      }
+    });
+
     // Edit assignment
     function editAssignment(event) {
       currentEditingAssignment = event;
@@ -563,6 +595,12 @@
       document.getElementById('assignment-date').value = event.startStr;
       document.getElementById('assignment-notes').value = event.extendedProps.notes || '';
       document.getElementById('delete-btn').style.display = 'block';
+      
+      // Hide repeat options when editing (only for new assignments)
+      document.getElementById('repeat-option').value = 'none';
+      document.getElementById('repeat-option').closest('.form-group').style.display = 'none';
+      document.getElementById('custom-end-date-group').style.display = 'none';
+      
       document.getElementById('assignment-modal').classList.add('active');
     }
 
@@ -579,20 +617,22 @@
       const assignmentId = document.getElementById('assignment-id').value;
       const employeeId = document.getElementById('employee-select').value;
       const departmentId = document.getElementById('department-select').value;
-      const assignmentDate = document.getElementById('assignment-date').value;
+      const startDate = document.getElementById('assignment-date').value;
       const notes = document.getElementById('assignment-notes').value;
+      const repeatOption = document.getElementById('repeat-option').value;
+      const endDate = document.getElementById('end-date').value;
 
       const { data: { user } } = await supabase.auth.getUser();
 
       try {
         if (assignmentId) {
-          // Update existing
+          // Update existing (single assignment only)
           const { error } = await supabase
             .from('floater_schedule')
             .update({
               employee_id: employeeId,
               department_id: departmentId,
-              assignment_date: assignmentDate,
+              assignment_date: startDate,
               notes: notes,
               updated_by: user.id,
               updated_at: new Date().toISOString()
@@ -602,26 +642,68 @@
           if (error) throw error;
           showStatus('Assignment updated successfully!', 'success');
         } else {
-          // Insert new
+          // Insert new - handle repeat options
+          const datesToCreate = [];
+          const start = new Date(startDate);
+          
+          if (repeatOption === 'none') {
+            // Single day
+            datesToCreate.push(startDate);
+          } else if (repeatOption === 'daily') {
+            // Daily for next 7 days
+            for (let i = 0; i < 7; i++) {
+              const date = new Date(start);
+              date.setDate(date.getDate() + i);
+              datesToCreate.push(date.toISOString().split('T')[0]);
+            }
+          } else if (repeatOption === 'weekdays') {
+            // Weekdays only for next 2 weeks
+            for (let i = 0; i < 14; i++) {
+              const date = new Date(start);
+              date.setDate(date.getDate() + i);
+              const dayOfWeek = date.getDay();
+              if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Not Sunday or Saturday
+                datesToCreate.push(date.toISOString().split('T')[0]);
+              }
+            }
+          } else if (repeatOption === 'custom' && endDate) {
+            // Custom date range
+            const end = new Date(endDate);
+            const current = new Date(start);
+            while (current <= end) {
+              datesToCreate.push(current.toISOString().split('T')[0]);
+              current.setDate(current.getDate() + 1);
+            }
+          }
+
+          // Create all assignments
+          const assignments = datesToCreate.map(date => ({
+            employee_id: employeeId,
+            department_id: departmentId,
+            assignment_date: date,
+            notes: notes,
+            created_by: user.id
+          }));
+
           const { error } = await supabase
             .from('floater_schedule')
-            .insert({
-              employee_id: employeeId,
-              department_id: departmentId,
-              assignment_date: assignmentDate,
-              notes: notes,
-              created_by: user.id
-            });
+            .insert(assignments);
 
           if (error) throw error;
-          showStatus('Assignment created successfully!', 'success');
+          
+          const count = assignments.length;
+          showStatus(`${count} assignment${count > 1 ? 's' : ''} created successfully!`, 'success');
         }
 
         closeAssignmentModal();
         calendar.refetchEvents();
       } catch (error) {
         console.error('Error saving assignment:', error);
-        showStatus(error.message || 'Error saving assignment', 'error');
+        if (error.code === '23505') {
+          showStatus('Error: This employee is already assigned for one or more of these dates', 'error');
+        } else {
+          showStatus(error.message || 'Error saving assignment', 'error');
+        }
       }
     });
 
