@@ -45,7 +45,12 @@
       gap: 10px;
     }
 
-    .back-btn {
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .back-btn, .manage-btn {
       padding: 8px 20px;
       background: #1a1a1a;
       color: #fff;
@@ -57,7 +62,7 @@
       display: inline-block;
     }
 
-    .back-btn:hover {
+    .back-btn:hover, .manage-btn:hover {
       background: #b6282c;
       border-color: #b6282c;
     }
@@ -223,10 +228,124 @@
       border: 1px solid #fecaca;
     }
 
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #fff;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .modal-header h2 {
+      color: #111827;
+      font-size: 1.3rem;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #6b7280;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .close-btn:hover {
+      color: #b6282c;
+    }
+
+    .user-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .user-item {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      background: #f9fafb;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .user-item label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      flex: 1;
+      font-size: 0.95rem;
+    }
+
+    .user-item input[type="checkbox"] {
+      margin-right: 12px;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .save-selection-btn {
+      width: 100%;
+      padding: 12px;
+      background: #b6282c;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .save-selection-btn:hover {
+      background: #9b1f24;
+    }
+
     @media (max-width: 768px) {
       .header {
         flex-direction: column;
         gap: 15px;
+      }
+
+      .header-actions {
+        width: 100%;
+        flex-direction: column;
       }
 
       .controls {
@@ -252,27 +371,25 @@
   <div class="container">
     <div class="header">
       <h1>📊 HelpScout Sales Team Performance</h1>
-      <a href="index.html" class="back-btn">← Back to Menu</a>
+      <div class="header-actions">
+        <button class="manage-btn" id="manage-users-btn">👥 Manage Users</button>
+        <a href="index.html" class="back-btn">← Back to Menu</a>
+      </div>
     </div>
 
     <div id="error-message" class="error" style="display: none;"></div>
 
     <div class="controls">
-    <label for="mailbox-filter">Mailbox:</label>
-    <select id="mailbox-filter">
-        <option value="">Loading mailboxes...</option>
-    </select>
-
-    <label for="date-range">Time Period:</label>
-    <select id="date-range">
+      <label for="date-range">Time Period:</label>
+      <select id="date-range">
         <option value="today">Today</option>
         <option value="yesterday" selected>Yesterday</option>
         <option value="7">Last 7 Days</option>
         <option value="30">Last 30 Days</option>
         <option value="90">Last 90 Days</option>
-    </select>
+      </select>
 
-    <button class="refresh-btn" id="refresh-btn">🔄 Refresh Data</button>
+      <button class="refresh-btn" id="refresh-btn">🔄 Refresh Data</button>
     </div>
 
     <div class="stats-grid">
@@ -289,8 +406,8 @@
         <div class="value" id="stat-customers">-</div>
       </div>
       <div class="stat-card">
-        <h3>Avg Response Time</h3>
-        <div class="value" id="stat-response-time">-</div>
+        <h3>Avg First Response</h3>
+        <div class="value" id="stat-first-response">-</div>
       </div>
     </div>
 
@@ -305,6 +422,7 @@
             <th class="sortable" data-sort="replies">Replies</th>
             <th class="sortable" data-sort="resolved">Resolved</th>
             <th class="sortable" data-sort="customers">Customers</th>
+            <th class="sortable" data-sort="first_response">First Response</th>
             <th class="sortable" data-sort="response_time">Avg Response</th>
             <th class="sortable" data-sort="first_reply_pct">First Reply %</th>
             <th class="sortable" data-sort="happiness">Happiness</th>
@@ -313,6 +431,20 @@
         <tbody id="leaderboard-body">
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- User Management Modal -->
+  <div id="user-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Manage Displayed Users</h2>
+        <button class="close-btn" id="close-modal">&times;</button>
+      </div>
+      <div class="user-list" id="user-list">
+        <div class="loading">Loading users...</div>
+      </div>
+      <button class="save-selection-btn" id="save-selection">Save Selection</button>
     </div>
   </div>
 
@@ -325,7 +457,7 @@
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let currentData = [];
-    let currentSort = { column: 'replies', direction: 'desc' };
+    let currentSort = { column: 'first_response', direction: 'asc' };
 
     // Check auth and admin access
     async function checkAuth() {
@@ -336,7 +468,6 @@
         return false;
       }
 
-      // Check if user is admin
       const { data: permissions } = await supabase
         .from('user_management')
         .select('is_admin')
@@ -350,35 +481,6 @@
       }
 
       return true;
-    }
-
-    // Load mailboxes into dropdown
-    async function loadMailboxes() {
-    const { data: mailboxes, error } = await supabase
-        .from('helpscout_mailboxes')
-        .select('*')
-        .order('name');
-
-    if (error) {
-        console.error('Error loading mailboxes:', error);
-        return;
-    }
-
-    const select = document.getElementById('mailbox-filter');
-    select.innerHTML = '<option value="">All Mailboxes</option>';
-    
-    mailboxes.forEach(mailbox => {
-        const option = document.createElement('option');
-        option.value = mailbox.mailbox_id;
-        option.textContent = mailbox.name;
-        
-        // Default to HTG SALES if it exists
-        if (mailbox.name.toUpperCase().includes('HTG SALES')) {
-        option.selected = true;
-        }
-        
-        select.appendChild(option);
-    });
     }
 
     function showError(message) {
@@ -437,25 +539,24 @@
         startDate = daysAgo.toISOString().split('T')[0];
       }
 
-      // Fetch metrics
+      // Fetch metrics WITH display filter
       const { data: metrics, error } = await supabase
         .from('helpscout_daily_metrics')
         .select(`
           *,
-          helpscout_users!inner(name, email, is_active)
+          helpscout_users!inner(name, email, is_active),
+          helpscout_user_display!inner(is_displayed)
         `)
         .gte('metric_date', startDate)
         .lte('metric_date', endDate)
-        .eq('helpscout_users.is_active', true);
+        .eq('helpscout_users.is_active', true)
+        .eq('helpscout_user_display.is_displayed', true);
 
       if (error) {
         showError('Error loading data: ' + error.message);
         document.getElementById('loading').style.display = 'none';
         return;
       }
-    console.log('Query params:', { startDate, endDate });
-    console.log('Metrics returned:', metrics);
-    console.log('Number of rows:', metrics?.length);
 
       // Aggregate by user
       const userMap = {};
@@ -469,6 +570,7 @@
             conversations_resolved: 0,
             customers_helped: 0,
             avg_response_time: [],
+            avg_first_response_time: [],
             resolved_first_reply: 0,
             total_resolved: 0,
             happiness_scores: []
@@ -481,6 +583,10 @@
         
         if (m.avg_response_time) {
           userMap[userId].avg_response_time.push(Number(m.avg_response_time));
+        }
+
+        if (m.avg_first_response_time) {
+          userMap[userId].avg_first_response_time.push(Number(m.avg_first_response_time));
         }
         
         userMap[userId].resolved_first_reply += m.resolved_on_first_reply || 0;
@@ -500,6 +606,9 @@
         response_time: user.avg_response_time.length > 0 
           ? user.avg_response_time.reduce((a, b) => a + b, 0) / user.avg_response_time.length 
           : 0,
+        first_response: user.avg_first_response_time.length > 0 
+          ? user.avg_first_response_time.reduce((a, b) => a + b, 0) / user.avg_first_response_time.length 
+          : 0,
         first_reply_pct: user.total_resolved > 0 
           ? (user.resolved_first_reply / user.total_resolved * 100) 
           : 0,
@@ -513,17 +622,17 @@
         replies: acc.replies + user.replies,
         resolved: acc.resolved + user.resolved,
         customers: acc.customers + user.customers,
-        response_times: user.response_time > 0 ? [...acc.response_times, user.response_time] : acc.response_times
-      }), { replies: 0, resolved: 0, customers: 0, response_times: [] });
+        first_response_times: user.first_response > 0 ? [...acc.first_response_times, user.first_response] : acc.first_response_times
+      }), { replies: 0, resolved: 0, customers: 0, first_response_times: [] });
 
       document.getElementById('stat-replies').textContent = totals.replies;
       document.getElementById('stat-resolved').textContent = totals.resolved;
       document.getElementById('stat-customers').textContent = totals.customers;
       
-      const avgResponseTime = totals.response_times.length > 0
-        ? totals.response_times.reduce((a, b) => a + b, 0) / totals.response_times.length
+      const avgFirstResponse = totals.first_response_times.length > 0
+        ? totals.first_response_times.reduce((a, b) => a + b, 0) / totals.first_response_times.length
         : 0;
-      document.getElementById('stat-response-time').textContent = formatTime(avgResponseTime);
+      document.getElementById('stat-first-response').textContent = formatTime(avgFirstResponse);
 
       renderTable();
     }
@@ -533,7 +642,7 @@
         currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
       } else {
         currentSort.column = column;
-        currentSort.direction = 'desc';
+        currentSort.direction = column === 'first_response' || column === 'response_time' ? 'asc' : 'desc';
       }
 
       currentData.sort((a, b) => {
@@ -564,6 +673,7 @@
           <td>${user.replies}</td>
           <td>${user.resolved}</td>
           <td>${user.customers}</td>
+          <td class="${getResponseTimeClass(user.first_response)}">${formatTime(user.first_response)}</td>
           <td class="${getResponseTimeClass(user.response_time)}">${formatTime(user.response_time)}</td>
           <td>${user.first_reply_pct.toFixed(1)}%</td>
           <td class="${getHappinessClass(user.happiness)}">${user.happiness > 0 ? user.happiness.toFixed(0) + '%' : 'N/A'}</td>
@@ -575,10 +685,72 @@
       document.getElementById('leaderboard-table').style.display = 'table';
     }
 
+    // User Management Modal
+    async function loadUserList() {
+      const userList = document.getElementById('user-list');
+      userList.innerHTML = '<div class="loading">Loading users...</div>';
+
+      const { data: users, error } = await supabase
+        .from('helpscout_users')
+        .select(`
+          helpscout_user_id,
+          name,
+          email,
+          is_active,
+          helpscout_user_display(is_displayed)
+        `)
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) {
+        userList.innerHTML = '<div class="error">Error loading users</div>';
+        return;
+      }
+
+      userList.innerHTML = '';
+      users.forEach(user => {
+        const isDisplayed = user.helpscout_user_display?.is_displayed !== false;
+        
+        const userItem = document.createElement('div');
+        userItem.className = 'user-item';
+        userItem.innerHTML = `
+          <label>
+            <input type="checkbox" 
+                   data-user-id="${user.helpscout_user_id}" 
+                   ${isDisplayed ? 'checked' : ''}>
+            ${user.name}
+          </label>
+        `;
+        userList.appendChild(userItem);
+      });
+    }
+
+    async function saveUserSelection() {
+      const checkboxes = document.querySelectorAll('#user-list input[type="checkbox"]');
+      
+      for (const checkbox of checkboxes) {
+        const userId = parseInt(checkbox.dataset.userId);
+        const isDisplayed = checkbox.checked;
+
+        await supabase
+          .from('helpscout_user_display')
+          .upsert({
+            helpscout_user_id: userId,
+            is_displayed: isDisplayed,
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'helpscout_user_id',
+          });
+      }
+
+      // Close modal and reload data
+      document.getElementById('user-modal').classList.remove('active');
+      loadData();
+    }
+
     // Event listeners
     document.getElementById('date-range').addEventListener('change', loadData);
     document.getElementById('refresh-btn').addEventListener('click', loadData);
-    document.getElementById('mailbox-filter').addEventListener('change', loadData);
 
     document.querySelectorAll('th.sortable').forEach(th => {
       th.addEventListener('click', () => {
@@ -586,12 +758,29 @@
       });
     });
 
+    document.getElementById('manage-users-btn').addEventListener('click', () => {
+      document.getElementById('user-modal').classList.add('active');
+      loadUserList();
+    });
+
+    document.getElementById('close-modal').addEventListener('click', () => {
+      document.getElementById('user-modal').classList.remove('active');
+    });
+
+    document.getElementById('save-selection').addEventListener('click', saveUserSelection);
+
+    // Close modal on outside click
+    document.getElementById('user-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'user-modal') {
+        document.getElementById('user-modal').classList.remove('active');
+      }
+    });
+
     // Initialize
     checkAuth().then(isAuthorized => {
-    if (isAuthorized) {
-        loadMailboxes();
+      if (isAuthorized) {
         loadData();
-    }
+      }
     });
   </script>
 </body>
