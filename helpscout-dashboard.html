@@ -258,16 +258,21 @@
     <div id="error-message" class="error" style="display: none;"></div>
 
     <div class="controls">
-      <label for="date-range">Time Period:</label>
-      <select id="date-range">
+    <label for="mailbox-filter">Mailbox:</label>
+    <select id="mailbox-filter">
+        <option value="">Loading mailboxes...</option>
+    </select>
+
+    <label for="date-range">Time Period:</label>
+    <select id="date-range">
         <option value="today">Today</option>
         <option value="yesterday" selected>Yesterday</option>
         <option value="7">Last 7 Days</option>
         <option value="30">Last 30 Days</option>
         <option value="90">Last 90 Days</option>
-      </select>
+    </select>
 
-      <button class="refresh-btn" id="refresh-btn">🔄 Refresh Data</button>
+    <button class="refresh-btn" id="refresh-btn">🔄 Refresh Data</button>
     </div>
 
     <div class="stats-grid">
@@ -345,6 +350,35 @@
       }
 
       return true;
+    }
+
+    // Load mailboxes into dropdown
+    async function loadMailboxes() {
+    const { data: mailboxes, error } = await supabase
+        .from('helpscout_mailboxes')
+        .select('*')
+        .order('name');
+
+    if (error) {
+        console.error('Error loading mailboxes:', error);
+        return;
+    }
+
+    const select = document.getElementById('mailbox-filter');
+    select.innerHTML = '<option value="">All Mailboxes</option>';
+    
+    mailboxes.forEach(mailbox => {
+        const option = document.createElement('option');
+        option.value = mailbox.mailbox_id;
+        option.textContent = mailbox.name;
+        
+        // Default to HTG SALES if it exists
+        if (mailbox.name.toUpperCase().includes('HTG SALES')) {
+        option.selected = true;
+        }
+        
+        select.appendChild(option);
+    });
     }
 
     function showError(message) {
@@ -544,6 +578,7 @@
     // Event listeners
     document.getElementById('date-range').addEventListener('change', loadData);
     document.getElementById('refresh-btn').addEventListener('click', loadData);
+    document.getElementById('mailbox-filter').addEventListener('change', loadData);
 
     document.querySelectorAll('th.sortable').forEach(th => {
       th.addEventListener('click', () => {
@@ -553,9 +588,10 @@
 
     // Initialize
     checkAuth().then(isAuthorized => {
-      if (isAuthorized) {
+    if (isAuthorized) {
+        loadMailboxes();
         loadData();
-      }
+    }
     });
   </script>
 </body>
