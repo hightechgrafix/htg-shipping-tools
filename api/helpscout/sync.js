@@ -60,7 +60,7 @@ async function fetchUserMetrics(accessToken, userId, startDate, endDate) {
   
   const url = `${HELPSCOUT_API_URL}/reports/user?user=${userId}&start=${start}&end=${end}`;
   
-  console.log(`Fetching metrics for user ${userId}: ${url}`);
+  // console.log(`Fetching metrics for user ${userId}: ${url}`);
   
   const response = await fetch(url, {
     headers: {
@@ -80,7 +80,7 @@ async function fetchUserMetrics(accessToken, userId, startDate, endDate) {
   const data = JSON.parse(responseText);
   
   // LOG THE RAW DATA TO SEE STRUCTURE
-  console.log(`Raw metrics data for user ${userId}:`, JSON.stringify(data, null, 2));
+  //console.log(`Raw metrics data for user ${userId}:`, JSON.stringify(data, null, 2));
   
   return data;
 }
