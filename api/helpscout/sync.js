@@ -36,6 +36,22 @@ async function getAccessToken() {
   return data.access_token;
 }
 
+// Fetch all mailboxes
+async function fetchMailboxes(accessToken) {
+  const response = await fetch(`${HELPSCOUT_API_URL}/mailboxes`, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch mailboxes: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data._embedded.mailboxes;
+}
+
 // Fetch all active users from HelpScout
 async function fetchHelpScoutUsers(accessToken) {
   const response = await fetch(`${HELPSCOUT_API_URL}/users`, {
@@ -54,13 +70,10 @@ async function fetchHelpScoutUsers(accessToken) {
 
 // Fetch user metrics for a specific date range
 async function fetchUserMetrics(accessToken, userId, startDate, endDate) {
-  // Try different date format - HelpScout might want YYYY-MM-DDTHH:MM:SSZ
   const start = `${startDate}T00:00:00Z`;
   const end = `${endDate}T23:59:59Z`;
   
   const url = `${HELPSCOUT_API_URL}/reports/user?user=${userId}&start=${start}&end=${end}`;
-  
-  // console.log(`Fetching metrics for user ${userId}: ${url}`);
   
   const response = await fetch(url, {
     headers: {
@@ -78,33 +91,6 @@ async function fetchUserMetrics(accessToken, userId, startDate, endDate) {
   }
 
   const data = JSON.parse(responseText);
-  
-  // LOG THE RAW DATA TO SEE STRUCTURE
-  //console.log(`Raw metrics data for user ${userId}:`, JSON.stringify(data, null, 2));
-  
-  return data;
-}
-
-// Upsert user into database
-async function upsertUser(user) {
-  const { data, error } = await supabase
-    .from('helpscout_users')
-    .upsert({
-      helpscout_user_id: user.id,
-      name: `${user.firstName} ${user.lastName}`,
-      email: user.email,
-      role: user.role,
-      is_active: true, // Default to true, can manually deactivate in Supabase if needed
-      updated_at: new Date().toISOString(),
-    }, {
-      onConflict: 'helpscout_user_id',
-    });
-
-  if (error) {
-    console.error(`Error upserting user ${user.id}:`, error);
-    throw error;
-  }
-
   return data;
 }
 
@@ -129,25 +115,32 @@ async function upsertMailbox(mailbox) {
   return data;
 }
 
-// Fetch all mailboxes
-async function fetchMailboxes(accessToken) {
-  const response = await fetch(`${HELPSCOUT_API_URL}/mailboxes`, {
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-    },
-  });
+// Upsert user into database
+async function upsertUser(user) {
+  const { data, error } = await supabase
+    .from('helpscout_users')
+    .upsert({
+      helpscout_user_id: user.id,
+      name: `${user.firstName} ${user.lastName}`,
+      email: user.email,
+      role: user.role,
+      is_active: true,
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'helpscout_user_id',
+    });
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch mailboxes: ${response.statusText}`);
+  if (error) {
+    console.error(`Error upserting user ${user.id}:`, error);
+    throw error;
   }
 
-  const data = await response.json();
-  return data._embedded.mailboxes;
+  return data;
 }
 
 // Upsert daily metrics into database
 async function upsertMetrics(userId, metricDate, metrics) {
-  const current = metrics.current; // Data is in the 'current' object
+  const current = metrics.current;
   
   const { data, error } = await supabase
     .from('helpscout_daily_metrics')
@@ -221,10 +214,6 @@ module.exports = async function handler(req, res) {
       console.log(`✓ Synced mailbox: ${mailbox.name}`);
     }
 
-// Fetch all users
-const users = await fetchHelpScoutUsers(accessToken);
-console.log(`✓ Found ${users.length} users`);
-
     // Fetch all users
     const users = await fetchHelpScoutUsers(accessToken);
     console.log(`✓ Found ${users.length} users`);
@@ -232,7 +221,7 @@ console.log(`✓ Found ${users.length} users`);
     // Get yesterday's date for metrics
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    const metricDate = yesterday.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const metricDate = yesterday.toISOString().split('T')[0];
 
     // Sync each user
     for (const user of users) {
@@ -251,7 +240,6 @@ console.log(`✓ Found ${users.length} users`);
         }
       } catch (userError) {
         console.error(`Error syncing user ${user.id}:`, userError);
-        // Continue with other users even if one fails
       }
     }
 
@@ -276,7 +264,6 @@ console.log(`✓ Found ${users.length} users`);
   } catch (error) {
     console.error('Sync failed:', error);
 
-    // Update sync log to failed
     if (syncLogId) {
       await supabase
         .from('helpscout_sync_log')
@@ -294,4 +281,4 @@ console.log(`✓ Found ${users.length} users`);
       error: error.message,
     });
   }
-}
+};
