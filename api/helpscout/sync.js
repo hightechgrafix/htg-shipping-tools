@@ -110,24 +110,26 @@ async function upsertUser(user) {
 
 // Upsert daily metrics into database
 async function upsertMetrics(userId, metricDate, metrics) {
+  const current = metrics.current; // Data is in the 'current' object
+  
   const { data, error } = await supabase
     .from('helpscout_daily_metrics')
     .upsert({
       helpscout_user_id: userId,
       metric_date: metricDate,
-      total_replies: metrics.repliesSent || 0,
-      conversations_created: metrics.conversationsCreated || 0,
-      conversations_resolved: metrics.resolved || 0,
-      customers_helped: metrics.customersHelped || 0,
-      avg_response_time: metrics.responseTime?.averageSeconds || null,
-      avg_first_response_time: metrics.firstResponseTime?.averageSeconds || null,
-      avg_resolution_time: metrics.resolutionTime?.averageSeconds || null,
-      avg_handle_time: metrics.handleTime?.average || null,
-      resolved_on_first_reply: metrics.resolvedOnFirstReply?.count || 0,
-      percent_resolved_first_reply: metrics.resolvedOnFirstReply?.percent || null,
-      avg_replies_to_resolve: metrics.repliesToResolve?.average || null,
-      happiness_score: metrics.happinessScore?.current || null,
-      replies_per_day: metrics.repliesPerDay || null,
+      total_replies: current.totalReplies || 0,
+      conversations_created: current.conversationsCreated || 0,
+      conversations_resolved: current.resolved || 0,
+      customers_helped: current.customersHelped || 0,
+      avg_response_time: current.responseTime || null,
+      avg_first_response_time: current.averageFirstResponseTime || null,
+      avg_resolution_time: current.resolutionTime || null,
+      avg_handle_time: current.handleTime || null,
+      resolved_on_first_reply: current.resolvedOnFirstReply || 0,
+      percent_resolved_first_reply: current.percentResolvedOnFirstReply || null,
+      avg_replies_to_resolve: current.repliesToResolve || null,
+      happiness_score: current.happinessScore || null,
+      replies_per_day: current.repliesPerDay || null,
       synced_at: new Date().toISOString(),
     }, {
       onConflict: 'helpscout_user_id,metric_date',
