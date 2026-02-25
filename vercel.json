@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/helpscout/sync",
-      "schedule": "0 * * * *"
+      "schedule": "*/15 * * * *"
     }
   ]
 }
