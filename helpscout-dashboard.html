@@ -426,6 +426,7 @@
             <th class="sortable" data-sort="response_time">Avg Response</th>
             <th class="sortable" data-sort="first_reply_pct">First Reply %</th>
             <th class="sortable" data-sort="happiness">Happiness</th>
+            <th class="sortable" data-sort="waiting">Waiting >2hrs</th>
           </tr>
         </thead>
         <tbody id="leaderboard-body">
@@ -606,26 +607,29 @@
         }
       });
 
-      // Calculate averages and format
-      currentData = Object.values(userMap).map(user => ({
-        name: user.name,
-        replies: user.total_replies,
-        resolved: user.conversations_resolved,
-        customers: user.customers_helped,
-        response_time: user.avg_response_time.length > 0 
-          ? user.avg_response_time.reduce((a, b) => a + b, 0) / user.avg_response_time.length 
-          : 0,
-        first_response: user.avg_first_response_time.length > 0 
-          ? user.avg_first_response_time.reduce((a, b) => a + b, 0) / user.avg_first_response_time.length 
-          : 0,
-        first_reply_pct: user.total_resolved > 0 
-          ? (user.resolved_first_reply / user.total_resolved * 100) 
-          : 0,
-        happiness: user.happiness_scores.length > 0 
-          ? user.happiness_scores.reduce((a, b) => a + b, 0) / user.happiness_scores.length 
-          : 0
-      }));
-
+        // Calculate averages and format
+        currentData = Object.keys(userMap).map(userId => {
+        const user = userMap[userId];
+        return {
+            userId: parseInt(userId),
+            name: user.name,
+            replies: user.total_replies,
+            resolved: user.conversations_resolved,
+            customers: user.customers_helped,
+            response_time: user.avg_response_time.length > 0 
+            ? user.avg_response_time.reduce((a, b) => a + b, 0) / user.avg_response_time.length 
+            : 0,
+            first_response: user.avg_first_response_time.length > 0 
+            ? user.avg_first_response_time.reduce((a, b) => a + b, 0) / user.avg_first_response_time.length 
+            : 0,
+            first_reply_pct: user.total_resolved > 0 
+            ? (user.resolved_first_reply / user.total_resolved * 100) 
+            : 0,
+            happiness: user.happiness_scores.length > 0 
+            ? user.happiness_scores.reduce((a, b) => a + b, 0) / user.happiness_scores.length 
+            : 0
+        };
+        });
       // Update stats
       const totals = currentData.reduce((acc, user) => ({
         replies: acc.replies + user.replies,
@@ -677,15 +681,16 @@
       currentData.forEach((user, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td class="rank">${index + 1}</td>
-          <td>${user.name}</td>
-          <td>${user.replies}</td>
-          <td>${user.resolved}</td>
-          <td>${user.customers}</td>
-          <td class="${getResponseTimeClass(user.first_response)}">${formatTime(user.first_response)}</td>
-          <td class="${getResponseTimeClass(user.response_time)}">${formatTime(user.response_time)}</td>
-          <td>${user.first_reply_pct.toFixed(1)}%</td>
-          <td class="${getHappinessClass(user.happiness)}">${user.happiness > 0 ? user.happiness.toFixed(0) + '%' : 'N/A'}</td>
+        <td class="rank">${index + 1}</td>
+        <td>${user.name}</td>
+        <td>${user.replies}</td>
+        <td>${user.resolved}</td>
+        <td>${user.customers}</td>
+        <td class="${getResponseTimeClass(user.first_response)}">${formatTime(user.first_response)}</td>
+        <td class="${getResponseTimeClass(user.response_time)}">${formatTime(user.response_time)}</td>
+        <td>${user.first_reply_pct.toFixed(1)}%</td>
+        <td class="${getHappinessClass(user.happiness)}">${user.happiness > 0 ? user.happiness.toFixed(0) + '%' : 'N/A'}</td>
+        <td class="waiting-count">-</td>
         `;
         tbody.appendChild(row);
       });
@@ -791,10 +796,108 @@
 
     // Initialize
     checkAuth().then(isAuthorized => {
-      if (isAuthorized) {
+    if (isAuthorized) {
         loadData();
-      }
+        startLiveCountsRefresh();
+    }
     });
-  </script>
+    // Live conversation counts
+    let liveCountsData = {};
+    let refreshTimer = null;
+
+    async function loadLiveCounts() {
+    try {
+        const response = await fetch('/api/helpscout/live-conversations');
+        const data = await response.json();
+        
+        if (data.success) {
+        liveCountsData = data.counts;
+        updateLiveCountsInTable();
+        }
+    } catch (error) {
+        console.error('Error loading live counts:', error);
+    }
+    }
+
+    function updateLiveCountsInTable() {
+    const tbody = document.getElementById('leaderboard-body');
+    const rows = tbody.querySelectorAll('tr');
+    
+    rows.forEach((row, index) => {
+        const user = currentData[index];
+        if (!user) return;
+        
+        // Find the user's ID from the data
+        const userId = user.userId; // We'll need to add this to currentData
+        const count = liveCountsData.byUser?.[userId] || 0;
+        
+        // Update or add the waiting cell
+        let waitingCell = row.querySelector('.waiting-count');
+        if (!waitingCell) {
+        waitingCell = document.createElement('td');
+        waitingCell.className = 'waiting-count';
+        row.appendChild(waitingCell);
+        }
+        
+        // Style based on count
+        if (count > 5) {
+        waitingCell.className = 'waiting-count metric-poor';
+        } else if (count > 2) {
+        waitingCell.className = 'waiting-count metric-ok';
+        } else {
+        waitingCell.className = 'waiting-count metric-good';
+        }
+        
+        waitingCell.textContent = count;
+    });
+    
+    // Add or update unassigned row
+    addUnassignedRow();
+    }
+
+    function addUnassignedRow() {
+    const tbody = document.getElementById('leaderboard-body');
+    let unassignedRow = tbody.querySelector('.unassigned-row');
+    
+    if (!unassignedRow) {
+        unassignedRow = document.createElement('tr');
+        unassignedRow.className = 'unassigned-row';
+        unassignedRow.style.borderTop = '2px solid #b6282c';
+        unassignedRow.style.fontWeight = '600';
+        tbody.appendChild(unassignedRow);
+    }
+    
+    const unassignedCount = liveCountsData.unassigned || 0;
+    const countClass = unassignedCount > 5 ? 'metric-poor' : unassignedCount > 2 ? 'metric-ok' : 'metric-good';
+    
+    unassignedRow.innerHTML = `
+        <td></td>
+        <td style="color: #b6282c;">⚠️ Unassigned</td>
+        <td colspan="7" style="color: #6b7280; font-size: 0.9rem;">Conversations not assigned to anyone</td>
+        <td class="${countClass}">${unassignedCount}</td>
+    `;
+    }
+
+    function startLiveCountsRefresh() {
+    // Clear any existing timer
+    if (refreshTimer) {
+        clearInterval(refreshTimer);
+    }
+    
+    // Load immediately
+    loadLiveCounts();
+    
+    // Then refresh every 15 minutes
+    refreshTimer = setInterval(loadLiveCounts, 15 * 60 * 1000);
+    }
+
+    // Stop refresh when leaving page
+    window.addEventListener('beforeunload', () => {
+    if (refreshTimer) {
+        clearInterval(refreshTimer);
+    }
+    });
+
+</script>
 </body>
 </html>
