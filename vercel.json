@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/helpscout/sync",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}
