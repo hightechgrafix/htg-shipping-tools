@@ -69,33 +69,37 @@ async function fetchHelpScoutUsers(accessToken) {
   return data._embedded.users.filter(user => user.type === 'user');
 }
 
-// Fetch company report (includes per-user breakdown for a mailbox)
-async function fetchCompanyReport(accessToken, mailboxId, startDate, endDate) {
-  const start = `${startDate}T00:00:00Z`;
-  const end = `${endDate}T23:59:59Z`;
-  
-  const url = `${HELPSCOUT_API_URL}/reports/company?mailboxes=${mailboxId}&start=${start}&end=${end}&viewBy=user`;
-  
-  console.log(`Fetching company report for mailbox ${mailboxId}`);
-  
-  const response = await fetch(url, {
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-    },
-  });
+  // Fetch company report (includes per-user breakdown for a mailbox)
+  async function fetchCompanyReport(accessToken, mailboxId, startDate, endDate) {
+    const start = `${startDate}T00:00:00Z`;
+    const end = `${endDate}T23:59:59Z`;
+    
+    const url = `${HELPSCOUT_API_URL}/reports/company?mailboxes=${mailboxId}&start=${start}&end=${end}&viewBy=user`;
+    
+    console.log(`Fetching company report for mailbox ${mailboxId}`);
+    
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
 
-  const responseText = await response.text();
-  
-  if (!response.ok) {
-    console.error(`Failed to fetch company report for mailbox ${mailboxId}:`);
-    console.error(`Status: ${response.status}`);
-    console.error(`Response: ${responseText}`);
-    return null;
+    const responseText = await response.text();
+    
+    if (!response.ok) {
+      console.error(`Failed to fetch company report for mailbox ${mailboxId}:`);
+      console.error(`Status: ${response.status}`);
+      console.error(`Response: ${responseText}`);
+      return null;
+    }
+
+    const data = JSON.parse(responseText);
+    
+    // ADD THIS LINE TO SEE THE STRUCTURE
+    console.log(`Company report structure:`, JSON.stringify(data, null, 2));
+    
+    return data;
   }
-
-  const data = JSON.parse(responseText);
-  return data;
-}
 
 // Upsert mailbox into database
 async function upsertMailbox(mailbox) {
