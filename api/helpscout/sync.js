@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 // Initialize Supabase client with service key (bypasses RLS)
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 // HelpScout API configuration
