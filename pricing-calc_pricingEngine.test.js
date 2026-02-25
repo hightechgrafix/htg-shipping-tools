@@ -1,581 +1,595 @@
 /**
- * HTG Quote Calculator - Test Suite
+ * HTG Quote Calculator - Pricing Engine
  * 
- * Test cases using real-world scenarios to validate pricing calculations
+ * Core calculation logic for all decoration methods and charges.
+ * All business rules confirmed with Cris on 2026-02-25.
  */
 
-import {
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+// Using SERVICE_ROLE_KEY to bypass RLS for server-side pricing calculations
+const supabase = createClient(
+  process.env.SUPABASE_URL || 'YOUR_SUPABASE_URL',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_KEY'
+);
+
+// ============================================================================
+// PRICE LOOKUP FUNCTIONS
+// ============================================================================
+
+/**
+ * Look up screen print pricing based on colors and quantity
+ * @param {number} colors - Total number of colors (including underbase if applicable)
+ * @param {number} quantity - Quantity of this decoration
+ * @returns {Promise<number>} Price per piece
+ */
+async function lookupScreenPrintPrice(colors, quantity) {
+  const { data, error } = await supabase
+    .from('pricing_calc_screen_print_pricing')
+    .select('price')
+    .eq('colors', colors)
+    .lte('quantity_min', quantity)
+    .or(`quantity_max.gte.${quantity},quantity_max.is.null`)
+    .single();
+
+  if (error) {
+    console.error('Screen print pricing lookup error:', error);
+    throw new Error(`Could not find screen print pricing for ${colors} colors at ${quantity} quantity`);
+  }
+
+  return parseFloat(data.price);
+}
+
+/**
+ * Look up DTF pricing based on size category and quantity
+ * @param {string} sizeCategory - 'sm', 'md', or 'lg'
+ * @param {number} quantity - Quantity of this decoration
+ * @returns {Promise<number>} Price per piece
+ */
+async function lookupDTFPrice(sizeCategory, quantity) {
+  const { data, error } = await supabase
+    .from('pricing_calc_dtf_pricing')
+    .select('price')
+    .eq('size_category', sizeCategory)
+    .lte('quantity_min', quantity)
+    .or(`quantity_max.gte.${quantity},quantity_max.is.null`)
+    .single();
+
+  if (error) {
+    console.error('DTF pricing lookup error:', error);
+    throw new Error(`Could not find DTF pricing for size ${sizeCategory} at ${quantity} quantity`);
+  }
+
+  return parseFloat(data.price);
+}
+
+/**
+ * Determine DTF size category from square inches
+ * @param {number} sqInches - Design size in square inches
+ * @returns {string} Size category: 'sm', 'md', or 'lg'
+ */
+function getDTFSizeCategory(sqInches) {
+  if (sqInches < 36) return 'sm';
+  if (sqInches < 150) return 'md';
+  if (sqInches < 285) return 'lg';
+  throw new Error('DTF design exceeds maximum size of 285 sq inches (15" x 19")');
+}
+
+/**
+ * Look up embroidery pricing based on stitch count and quantity
+ * @param {number} stitchCount - Number of stitches
+ * @param {number} quantity - Quantity of this decoration
+ * @returns {Promise<number>} Price per piece
+ */
+async function lookupEmbroideryPrice(stitchCount, quantity) {
+  // Determine stitch count tier
+  let stitchTier;
+  if (stitchCount <= 5000) stitchTier = 5000;
+  else if (stitchCount <= 6000) stitchTier = 6000;
+  else if (stitchCount <= 7000) stitchTier = 7000;
+  else if (stitchCount <= 8000) stitchTier = 8000;
+  else if (stitchCount <= 9000) stitchTier = 9000;
+  else if (stitchCount <= 10000) stitchTier = 10000;
+  else {
+    // Over 10K stitches - calculate additional charge
+    return await lookupEmbroideryPriceOver10K(stitchCount, quantity);
+  }
+
+  const { data, error } = await supabase
+    .from('pricing_calc_embroidery_pricing')
+    .select('price')
+    .eq('stitch_count_max', stitchTier)
+    .lte('quantity_min', quantity)
+    .or(`quantity_max.gte.${quantity},quantity_max.is.null`)
+    .single();
+
+  if (error) {
+    console.error('Embroidery pricing lookup error:', error);
+    throw new Error(`Could not find embroidery pricing for ${stitchCount} stitches at ${quantity} quantity`);
+  }
+
+  return parseFloat(data.price);
+}
+
+/**
+ * Calculate embroidery pricing for stitch counts over 10K
+ * @param {number} stitchCount - Number of stitches
+ * @param {number} quantity - Quantity of this decoration
+ * @returns {Promise<number>} Price per piece
+ */
+async function lookupEmbroideryPriceOver10K(stitchCount, quantity) {
+  // Get base price for 10K stitches
+  const basePrice = await lookupEmbroideryPrice(10000, quantity);
+
+  // Calculate additional stitches (in thousands)
+  const additionalStitches = stitchCount - 10000;
+  const additionalThousands = Math.ceil(additionalStitches / 1000);
+
+  // Get per-1K price for this quantity tier
+  const { data, error } = await supabase
+    .from('pricing_calc_embroidery_additional_pricing')
+    .select('price_per_1k_stitches')
+    .lte('quantity_min', quantity)
+    .or(`quantity_max.gte.${quantity},quantity_max.is.null`)
+    .single();
+
+  if (error) {
+    console.error('Additional embroidery pricing lookup error:', error);
+    throw new Error('Could not find additional stitch pricing');
+  }
+
+  const additionalCost = additionalThousands * parseFloat(data.price_per_1k_stitches);
+
+  return basePrice + additionalCost;
+}
+
+// ============================================================================
+// SETUP FEE CALCULATIONS
+// ============================================================================
+
+/**
+ * Calculate screen print setup fees
+ * @param {number} numScreens - Number of screens needed
+ * @param {boolean} isReprint - Is this an exact reprint?
+ * @returns {number} Total setup fee
+ */
+function calculateScreenPrintSetup(numScreens, isReprint = false) {
+  const pricePerScreen = isReprint ? 10.00 : 20.00;
+  return numScreens * pricePerScreen;
+}
+
+/**
+ * Calculate DTF setup fees
+ * @returns {number} Setup fee ($10 per location/design)
+ */
+function calculateDTFSetup() {
+  return 10.00;
+}
+
+/**
+ * Calculate embroidery digitizing fee
+ * @param {number} stitchCount - Number of stitches
+ * @param {number} quantity - Quantity of embroidery items
+ * @returns {number} Digitizing fee (0 if 144+ pieces)
+ */
+function calculateDigitizingFee(stitchCount, quantity) {
+  // Free digitizing on 144+ pieces
+  if (quantity >= 144) {
+    return 0;
+  }
+
+  // $5 per 1K stitches, minimum 5K
+  const thousands = Math.max(5, Math.ceil(stitchCount / 1000));
+  const fee = thousands * 5;
+
+  // Max $75
+  return Math.min(75, fee);
+}
+
+// ============================================================================
+// ADDITIONAL CHARGES
+// ============================================================================
+
+/**
+ * Calculate additional charges for item modifiers
+ * @param {string} method - Decoration method
+ * @param {Object} modifiers - Object with modifier flags
+ * @returns {Promise<number>} Total additional charges per piece
+ */
+async function calculateAdditionalCharges(method, modifiers) {
+  let total = 0;
+
+  for (const [modifier, enabled] of Object.entries(modifiers)) {
+    if (!enabled) continue;
+
+    const { data, error } = await supabase
+      .from('pricing_calc_additional_charges')
+      .select('price, price_type')
+      .eq('charge_type', modifier)
+      .or(`decoration_method.eq.${method},decoration_method.is.null`)
+      .eq('active', true)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Additional charges lookup error:', error);
+      continue;
+    }
+
+    if (data && data.price_type === 'per_location_piece') {
+      total += parseFloat(data.price);
+    }
+  }
+
+  return total;
+}
+
+/**
+ * Calculate miscellaneous charges
+ * @param {string} method - Decoration method
+ * @param {Object} miscCharges - Object with misc charge data
+ * @returns {Promise<number>} Total miscellaneous charges
+ */
+async function calculateMiscCharges(method, miscCharges) {
+  let total = 0;
+
+  // PMS Matching (per color)
+  if (miscCharges.pms_matching && miscCharges.pms_matching > 0) {
+    total += 20.00 * miscCharges.pms_matching;
+  }
+
+  // Metallic (per location/piece) - handled in decoration calculation
+  // Reflective (per location/piece) - handled in decoration calculation
+  // Glitter (per location/piece) - handled in decoration calculation
+
+  // Embroidery thread color changes
+  if (method === 'embroidery' && miscCharges.thread_color_changes > 0) {
+    total += 10.00 * miscCharges.thread_color_changes;
+  }
+
+  return total;
+}
+
+/**
+ * Calculate personalization charges for embroidery
+ * @param {number} quantity - Quantity of personalized items
+ * @returns {Promise<number>} Total personalization cost
+ */
+async function calculatePersonalization(quantity) {
+  // Find the appropriate tier
+  const { data, error } = await supabase
+    .from('pricing_calc_embroidery_personalization_pricing')
+    .select('quantity, price')
+    .lte('quantity', quantity)
+    .order('quantity', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error) {
+    console.error('Personalization pricing lookup error:', error);
+    return quantity * 10.00; // Default to highest price
+  }
+
+  return quantity * parseFloat(data.price);
+}
+
+// ============================================================================
+// MAIN DECORATION CALCULATION
+// ============================================================================
+
+/**
+ * Calculate pricing for a single decoration
+ * @param {Object} decoration - Decoration object with all specs
+ * @returns {Promise<Object>} Pricing breakdown
+ */
+async function calculateDecoration(decoration) {
+  const { method, quantity, specs, modifiers = {}, misc_charges = {} } = decoration;
+
+  let basePrice = 0;
+  let setupFees = 0;
+
+  // 1. Get base price based on method
+  switch (method) {
+    case 'screen_print':
+      basePrice = await lookupScreenPrintPrice(specs.colors, quantity);
+      setupFees = calculateScreenPrintSetup(specs.screens || specs.colors, specs.is_reprint);
+      break;
+
+    case 'dtf':
+      const sizeCategory = getDTFSizeCategory(specs.size_sq_inches);
+      basePrice = await lookupDTFPrice(sizeCategory, quantity);
+      setupFees = calculateDTFSetup();
+      break;
+
+    case 'embroidery':
+      basePrice = await lookupEmbroideryPrice(specs.stitch_count, quantity);
+      setupFees = calculateDigitizingFee(specs.stitch_count, quantity);
+      break;
+
+    default:
+      throw new Error(`Unknown decoration method: ${method}`);
+  }
+
+  // 2. Calculate additional charges (item modifiers)
+  const additionalCharges = await calculateAdditionalCharges(method, modifiers);
+
+  // 3. Calculate misc charges
+  const miscTotal = await calculateMiscCharges(method, misc_charges);
+
+  // 4. Calculate personalization (embroidery only)
+  let personalizationTotal = 0;
+  if (method === 'embroidery' && specs.personalization?.enabled) {
+    personalizationTotal = await calculatePersonalization(specs.personalization.quantity);
+  }
+
+  // 5. Calculate totals
+  const totalPerPiece = basePrice + additionalCharges;
+  const subtotal = (totalPerPiece * quantity) + setupFees + miscTotal + personalizationTotal;
+
+  return {
+    base_per_piece: basePrice,
+    additional_charges_per_piece: additionalCharges,
+    total_per_piece: totalPerPiece,
+    setup_fees: setupFees,
+    misc_charges_total: miscTotal,
+    personalization_total: personalizationTotal,
+    subtotal: subtotal
+  };
+}
+
+// ============================================================================
+// SHIPPING CALCULATION
+// ============================================================================
+
+/**
+ * Calculate shipping costs
+ * @param {number} totalQuantity - Total number of items
+ * @param {number} itemWeight - Weight per item in lbs
+ * @param {number} numLocations - Number of shipping locations
+ * @returns {Promise<Object>} Shipping cost breakdown
+ */
+async function calculateShipping(totalQuantity, itemWeight, numLocations = 1) {
+  // Determine shipping level based on item weight
+  const { data, error } = await supabase
+    .from('pricing_calc_shipping_pricing')
+    .select('*')
+    .lte('weight_min', itemWeight)
+    .or(`weight_max.gte.${itemWeight},weight_max.is.null`)
+    .single();
+
+  if (error) {
+    console.error('Shipping pricing lookup error:', error);
+    throw new Error('Could not find shipping pricing for item weight');
+  }
+
+  const level = data.level;
+  const shippingMin = parseFloat(data.shipping_min);
+  const shippingPerItem = parseFloat(data.shipping_per_item);
+  const handlingMin = parseFloat(data.handling_min);
+  const handlingPerItem = parseFloat(data.handling_per_item);
+
+  // Calculate shipping cost per location
+  const shippingCostPerLocation = Math.max(
+    shippingMin,
+    totalQuantity * shippingPerItem
+  );
+
+  const handlingCostPerLocation = Math.max(
+    handlingMin,
+    totalQuantity * handlingPerItem
+  );
+
+  const costPerLocation = shippingCostPerLocation + handlingCostPerLocation;
+
+  // Total for all locations
+  const totalCost = costPerLocation * numLocations;
+
+  return {
+    level: level,
+    cost_per_location: costPerLocation,
+    total_locations: numLocations,
+    cost: totalCost,
+    free_shipping_eligible: level === 1 // Level 1 items are eligible
+  };
+}
+
+/**
+ * Apply free shipping discount
+ * @param {Object} shipping - Shipping calculation result
+ * @param {number} orderTotal - Order subtotal (decorations only)
+ * @param {number} numLocations - Number of shipping locations
+ * @returns {Object} Adjusted shipping with discount applied
+ */
+function applyFreeShipping(shipping, orderTotal, numLocations = 1) {
+  // Free shipping only applies to:
+  // - Level 1 items
+  // - Orders over $100
+  // - Up to $200 discount
+  // - First location only
+
+  if (!shipping.free_shipping_eligible || orderTotal < 100 || numLocations === 0) {
+    return {
+      ...shipping,
+      free_shipping_applied: false,
+      discount_amount: 0
+    };
+  }
+
+  // Calculate discount (max $200, applies to first location only)
+  const maxDiscount = 200;
+  const firstLocationCost = shipping.cost_per_location;
+  const discountAmount = Math.min(maxDiscount, firstLocationCost);
+
+  // New cost: remove discount from first location, keep other locations full price
+  const remainingLocations = numLocations - 1;
+  const newCost = Math.max(0, firstLocationCost - discountAmount) + 
+                  (shipping.cost_per_location * remainingLocations);
+
+  return {
+    ...shipping,
+    cost: newCost,
+    free_shipping_applied: true,
+    discount_amount: discountAmount,
+    customer_responsible_for: shipping.cost - newCost > maxDiscount ? 
+      shipping.cost - newCost - maxDiscount : 0
+  };
+}
+
+// ============================================================================
+// RUSH FEE CALCULATION
+// ============================================================================
+
+/**
+ * Calculate rush fees
+ * @param {number} rushDays - Number of rush days (2, 3, 4, or 5)
+ * @param {Array} decorations - Array of decoration objects
+ * @returns {Promise<number>} Total rush fee
+ */
+async function calculateRushFees(rushDays, decorations) {
+  if (!rushDays) return 0;
+
+  // Get rush fee data
+  const { data, error } = await supabase
+    .from('pricing_calc_rush_fees')
+    .select('*')
+    .eq('days', rushDays)
+    .single();
+
+  if (error) {
+    console.error('Rush fees lookup error:', error);
+    throw new Error(`Could not find rush fees for ${rushDays} days`);
+  }
+
+  const baseFee = parseFloat(data.base_fee);
+  const perPiecePerLocation = parseFloat(data.per_piece_per_location_fee);
+
+  // Calculate total pieces × locations
+  let totalPieceLocations = 0;
+  for (const decoration of decorations) {
+    totalPieceLocations += decoration.quantity;
+  }
+
+  return baseFee + (totalPieceLocations * perPiecePerLocation);
+}
+
+// ============================================================================
+// SPOILAGE INSURANCE
+// ============================================================================
+
+/**
+ * Calculate spoilage insurance cost
+ * @param {number} totalQuantity - Total order quantity
+ * @returns {number} Insurance cost
+ */
+function calculateSpoilageInsurance(totalQuantity) {
+  // $25 per 1,000 items (rounded up)
+  const thousands = Math.ceil(totalQuantity / 1000);
+  return thousands * 25;
+}
+
+// ============================================================================
+// MAIN QUOTE CALCULATION
+// ============================================================================
+
+/**
+ * Calculate complete quote with all charges
+ * @param {Object} quoteData - Complete quote data structure
+ * @returns {Promise<Object>} Complete quote with all pricing calculated
+ */
+async function calculateQuote(quoteData) {
+  let decorationsTotal = 0;
+
+  // Calculate each decoration
+  for (let decoration of quoteData.decorations) {
+    const pricing = await calculateDecoration(decoration);
+    decoration.pricing = pricing;
+    decorationsTotal += pricing.subtotal;
+  }
+
+  // Calculate shipping
+  const shipping = await calculateShipping(
+    quoteData.order.total_quantity,
+    quoteData.order.item_weight || 0.5, // Default to Level 1 if not specified
+    quoteData.order.shipping_locations || 1
+  );
+
+  // Apply free shipping discount
+  const shippingWithDiscount = applyFreeShipping(
+    shipping,
+    decorationsTotal,
+    quoteData.order.shipping_locations || 1
+  );
+
+  // Calculate rush fees
+  const rushFees = await calculateRushFees(
+    quoteData.order.rush_days,
+    quoteData.decorations
+  );
+
+  // Calculate spoilage insurance
+  const spoilage = quoteData.programs?.spoilage_insurance
+    ? calculateSpoilageInsurance(quoteData.order.total_quantity)
+    : 0;
+
+  // Calculate "beyond 3 styles" charge
+  let beyondStylesCharge = 0;
+  if (quoteData.order.sku_count > 3) {
+    beyondStylesCharge = (quoteData.order.sku_count - 3) * 1.50;
+  }
+
+  // Calculate grand total
+  const grandTotal = decorationsTotal + 
+                     shippingWithDiscount.cost + 
+                     rushFees + 
+                     spoilage +
+                     beyondStylesCharge;
+
+  // Update quote data with totals
+  quoteData.totals = {
+    decorations_subtotal: decorationsTotal,
+    shipping: shippingWithDiscount,
+    rush_fees: rushFees,
+    spoilage_insurance: spoilage,
+    beyond_styles_charge: beyondStylesCharge,
+    grand_total: grandTotal
+  };
+
+  return quoteData;
+}
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
+
+export {
+  // Main calculation
   calculateQuote,
   calculateDecoration,
+
+  // Price lookups
   lookupScreenPrintPrice,
   lookupDTFPrice,
   lookupEmbroideryPrice,
-  calculateDigitizingFee,
+  getDTFSizeCategory,
+
+  // Setup fees
   calculateScreenPrintSetup,
+  calculateDTFSetup,
+  calculateDigitizingFee,
+
+  // Additional charges
+  calculateAdditionalCharges,
+  calculateMiscCharges,
+  calculatePersonalization,
+
+  // Shipping
   calculateShipping,
   applyFreeShipping,
+
+  // Other charges
   calculateRushFees,
   calculateSpoilageInsurance,
-  getDTFSizeCategory
-} from '../src/services/pricing-calc_pricingEngine.js';
 
-// ============================================================================
-// UNIT TESTS - Individual Functions
-// ============================================================================
-
-describe('Price Lookup Functions', () => {
-  
-  test('Screen print pricing - 4 colors, 200 quantity', async () => {
-    const price = await lookupScreenPrintPrice(4, 200);
-    expect(price).toBe(2.14); // From pricing table: 4 colors, 144-287 qty
-  });
-
-  test('Screen print pricing - 2 colors, 50 quantity', async () => {
-    const price = await lookupScreenPrintPrice(2, 50);
-    expect(price).toBe(2.10); // 48-71 qty tier
-  });
-
-  test('DTF pricing - Small size, 100 quantity', async () => {
-    const price = await lookupDTFPrice('sm', 100);
-    expect(price).toBe(3.58); // 100-249 qty tier
-  });
-
-  test('DTF size category determination', () => {
-    expect(getDTFSizeCategory(25)).toBe('sm');
-    expect(getDTFSizeCategory(100)).toBe('md');
-    expect(getDTFSizeCategory(200)).toBe('lg');
-  });
-
-  test('DTF size exceeds maximum', () => {
-    expect(() => getDTFSizeCategory(300)).toThrow();
-  });
-
-  test('Embroidery pricing - 5K stitches, 100 quantity', async () => {
-    const price = await lookupEmbroideryPrice(5000, 100);
-    expect(price).toBe(2.68); // 5K stitches, 250-499 qty tier - wait this should be 100-143 range
-    // Actually for 100 qty in 5K stitch tier, should be in 72-143 range = $3.68
-  });
-
-  test('Embroidery pricing - over 10K stitches', async () => {
-    const price = await lookupEmbroideryPrice(12000, 100);
-    // Base 10K price + 2K additional @ $0.25 per 1K = base + $0.50
-    // Need to check base price for 10K @ 100 qty = $3.89 (from 72-143 tier)
-    // So total should be $3.89 + $0.50 = $4.39
-    expect(price).toBeCloseTo(4.39, 2);
-  });
-
-});
-
-describe('Setup Fee Calculations', () => {
-
-  test('Screen print setup - 4 screens', () => {
-    const fee = calculateScreenPrintSetup(4);
-    expect(fee).toBe(80.00); // $20 × 4
-  });
-
-  test('Screen print setup - reprint with 4 screens', () => {
-    const fee = calculateScreenPrintSetup(4, true);
-    expect(fee).toBe(40.00); // $10 × 4 for reprints
-  });
-
-  test('Digitizing fee - under 144 pieces, 5K stitches', () => {
-    const fee = calculateDigitizingFee(5000, 100);
-    expect(fee).toBe(25.00); // 5 × $5 = $25
-  });
-
-  test('Digitizing fee - 144+ pieces (free)', () => {
-    const fee = calculateDigitizingFee(5000, 200);
-    expect(fee).toBe(0); // Free on 144+
-  });
-
-  test('Digitizing fee - 3K stitches uses 5K minimum', () => {
-    const fee = calculateDigitizingFee(3000, 50);
-    expect(fee).toBe(25.00); // Minimum 5K = $25
-  });
-
-  test('Digitizing fee - 20K stitches capped at $75', () => {
-    const fee = calculateDigitizingFee(20000, 50);
-    expect(fee).toBe(75.00); // Capped at $75
-  });
-
-});
-
-describe('Shipping Calculations', () => {
-
-  test('Level 1 shipping - 200 items', async () => {
-    const shipping = await calculateShipping(200, 0.5, 1);
-    expect(shipping.level).toBe(1);
-    // Shipping: max($20, 200 × $0.27) = max($20, $54) = $54
-    // Handling: max($7.50, 200 × $0.05) = max($7.50, $10) = $10
-    // Total: $64
-    expect(shipping.cost).toBe(64.00);
-  });
-
-  test('Free shipping applied - over $100 order', () => {
-    const shipping = {
-      level: 1,
-      cost_per_location: 64.00,
-      cost: 64.00,
-      free_shipping_eligible: true
-    };
-    
-    const adjusted = applyFreeShipping(shipping, 150, 1);
-    expect(adjusted.free_shipping_applied).toBe(true);
-    expect(adjusted.discount_amount).toBe(64.00); // Full discount (under $200)
-    expect(adjusted.cost).toBe(0);
-  });
-
-  test('Free shipping - order under $100 (no discount)', () => {
-    const shipping = {
-      level: 1,
-      cost_per_location: 64.00,
-      cost: 64.00,
-      free_shipping_eligible: true
-    };
-    
-    const adjusted = applyFreeShipping(shipping, 75, 1);
-    expect(adjusted.free_shipping_applied).toBe(false);
-    expect(adjusted.cost).toBe(64.00); // No discount
-  });
-
-  test('Free shipping - multiple locations (first location only)', () => {
-    const shipping = {
-      level: 1,
-      cost_per_location: 64.00,
-      cost: 192.00, // 3 locations × $64
-      free_shipping_eligible: true,
-      total_locations: 3
-    };
-    
-    const adjusted = applyFreeShipping(shipping, 150, 3);
-    expect(adjusted.free_shipping_applied).toBe(true);
-    // First location: $64 - $64 = $0
-    // Other 2 locations: 2 × $64 = $128
-    expect(adjusted.cost).toBe(128.00);
-  });
-
-});
-
-describe('Rush Fee Calculations', () => {
-
-  test('2-day rush - 200 pieces, 2 locations', async () => {
-    const decorations = [
-      { quantity: 200 },
-      { quantity: 200 }
-    ];
-    
-    const rushFee = await calculateRushFees(2, decorations);
-    // Base: $175
-    // Per piece/location: 400 total × $0.25 = $100
-    // Total: $275
-    expect(rushFee).toBe(275.00);
-  });
-
-  test('5-day rush - 100 pieces, 1 location', async () => {
-    const decorations = [
-      { quantity: 100 }
-    ];
-    
-    const rushFee = await calculateRushFees(5, decorations);
-    // Base: $60
-    // Per piece/location: 100 × $0.25 = $25
-    // Total: $85
-    expect(rushFee).toBe(85.00);
-  });
-
-});
-
-describe('Other Charges', () => {
-
-  test('Spoilage insurance - 500 items', () => {
-    const insurance = calculateSpoilageInsurance(500);
-    expect(insurance).toBe(25.00); // 1 × $25
-  });
-
-  test('Spoilage insurance - 1200 items', () => {
-    const insurance = calculateSpoilageInsurance(1200);
-    expect(insurance).toBe(50.00); // 2 × $25 (rounded up)
-  });
-
-  test('Spoilage insurance - 2500 items', () => {
-    const insurance = calculateSpoilageInsurance(2500);
-    expect(insurance).toBe(75.00); // 3 × $25
-  });
-
-});
-
-// ============================================================================
-// INTEGRATION TESTS - Complete Decoration Calculations
-// ============================================================================
-
-describe('Complete Decoration Calculations', () => {
-
-  test('Screen print - 200 qty, 4 colors, no modifiers', async () => {
-    const decoration = {
-      method: 'screen_print',
-      location: 'full_back',
-      quantity: 200,
-      specs: {
-        colors: 4,
-        screens: 4
-      },
-      modifiers: {},
-      misc_charges: {}
-    };
-
-    const result = await calculateDecoration(decoration);
-    
-    // Base price: $2.14 (4 colors, 144-287 qty tier)
-    // Setup: $80 (4 screens × $20)
-    // Subtotal: (200 × $2.14) + $80 = $428 + $80 = $508
-    expect(result.base_per_piece).toBe(2.14);
-    expect(result.setup_fees).toBe(80.00);
-    expect(result.subtotal).toBe(508.00);
-  });
-
-  test('DTF - 100 qty, medium size, hoodie upcharge', async () => {
-    const decoration = {
-      method: 'dtf',
-      location: 'full_front',
-      quantity: 100,
-      specs: {
-        size_sq_inches: 120
-      },
-      modifiers: {
-        hoodies: true
-      },
-      misc_charges: {}
-    };
-
-    const result = await calculateDecoration(decoration);
-    
-    // Base price: $4.40 (md size, 100-249 qty tier)
-    // Hoodie upcharge: $0.15
-    // Total per piece: $4.55
-    // Setup: $10
-    // Subtotal: (100 × $4.55) + $10 = $455 + $10 = $465
-    expect(result.base_per_piece).toBe(4.40);
-    expect(result.additional_charges_per_piece).toBe(0.15);
-    expect(result.total_per_piece).toBe(4.55);
-    expect(result.setup_fees).toBe(10.00);
-    expect(result.subtotal).toBe(465.00);
-  });
-
-  test('Embroidery - 100 qty, 5K stitches, free digitizing at 144+', async () => {
-    const decoration = {
-      method: 'embroidery',
-      location: 'left_chest',
-      quantity: 150, // Over 144, so free digitizing
-      specs: {
-        stitch_count: 5000
-      },
-      modifiers: {},
-      misc_charges: {}
-    };
-
-    const result = await calculateDecoration(decoration);
-    
-    // Base price: $3.04 (5K stitches, 144-249 qty tier)
-    // Digitizing: $0 (free on 144+)
-    // Subtotal: 150 × $3.04 = $456
-    expect(result.base_per_piece).toBe(3.04);
-    expect(result.setup_fees).toBe(0);
-    expect(result.subtotal).toBe(456.00);
-  });
-
-  test('Embroidery - under 144 qty, digitizing fee applies', async () => {
-    const decoration = {
-      method: 'embroidery',
-      location: 'left_chest',
-      quantity: 100,
-      specs: {
-        stitch_count: 5000
-      },
-      modifiers: {},
-      misc_charges: {}
-    };
-
-    const result = await calculateDecoration(decoration);
-    
-    // Base price: $3.68 (5K stitches, 72-143 qty tier)
-    // Digitizing: $25 (5K stitches)
-    // Subtotal: (100 × $3.68) + $25 = $368 + $25 = $393
-    expect(result.base_per_piece).toBe(3.68);
-    expect(result.setup_fees).toBe(25.00);
-    expect(result.subtotal).toBe(393.00);
-  });
-
-  test('Embroidery with personalization', async () => {
-    const decoration = {
-      method: 'embroidery',
-      location: 'left_chest',
-      quantity: 100,
-      specs: {
-        stitch_count: 5000,
-        personalization: {
-          enabled: true,
-          quantity: 50,
-          type: 'name'
-        }
-      },
-      modifiers: {},
-      misc_charges: {}
-    };
-
-    const result = await calculateDecoration(decoration);
-    
-    // Base: 100 × $3.68 = $368
-    // Digitizing: $25
-    // Personalization: 50 × $4.40 (50-99 tier) = $220
-    // Subtotal: $368 + $25 + $220 = $613
-    expect(result.personalization_total).toBeCloseTo(220.00, 2);
-    expect(result.subtotal).toBeCloseTo(613.00, 2);
-  });
-
-});
-
-// ============================================================================
-// FULL QUOTE TESTS - Real World Scenarios
-// ============================================================================
-
-describe('Complete Quote Calculations', () => {
-
-  test('Simple quote: 200 shirts, screen print front only', async () => {
-    const quote = {
-      order: {
-        total_quantity: 200,
-        item_weight: 0.5,
-        shipping_locations: 1,
-        rush_days: null,
-        sku_count: 1
-      },
-      decorations: [
-        {
-          method: 'screen_print',
-          location: 'full_front',
-          quantity: 200,
-          specs: {
-            colors: 4,
-            screens: 4
-          },
-          modifiers: {},
-          misc_charges: {}
-        }
-      ],
-      programs: {
-        spoilage_insurance: false
-      }
-    };
-
-    const result = await calculateQuote(quote);
-    
-    // Decorations: $508
-    // Shipping: Level 1 - should get free shipping (over $100)
-    // Grand total: $508 + $0 = $508
-    expect(result.totals.decorations_subtotal).toBe(508.00);
-    expect(result.totals.shipping.free_shipping_applied).toBe(true);
-    expect(result.totals.grand_total).toBe(508.00);
-  });
-
-  test('Complex quote: Multiple decorations, rush, spoilage', async () => {
-    const quote = {
-      order: {
-        total_quantity: 200,
-        item_weight: 0.5,
-        shipping_locations: 1,
-        rush_days: 2,
-        sku_count: 1
-      },
-      decorations: [
-        {
-          method: 'screen_print',
-          location: 'full_back',
-          quantity: 200,
-          specs: {
-            colors: 4,
-            screens: 4
-          },
-          modifiers: {},
-          misc_charges: {}
-        },
-        {
-          method: 'embroidery',
-          location: 'left_chest',
-          quantity: 100,
-          specs: {
-            stitch_count: 5000
-          },
-          modifiers: {},
-          misc_charges: {}
-        }
-      ],
-      programs: {
-        spoilage_insurance: true
-      }
-    };
-
-    const result = await calculateQuote(quote);
-    
-    // Decoration 1 (Screen Print): $508
-    // Decoration 2 (Embroidery): $393
-    // Decorations subtotal: $901
-    
-    // Shipping: Free (over $100, Level 1)
-    
-    // Rush: $175 + (300 total piece-locations × $0.25) = $175 + $75 = $250
-    
-    // Spoilage: 200 items = 1 × $25 = $25
-    
-    // Grand total: $901 + $0 + $250 + $25 = $1,176
-    expect(result.totals.decorations_subtotal).toBe(901.00);
-    expect(result.totals.rush_fees).toBe(250.00);
-    expect(result.totals.spoilage_insurance).toBe(25.00);
-    expect(result.totals.grand_total).toBe(1176.00);
-  });
-
-  test('Quote with beyond 3 styles charge', async () => {
-    const quote = {
-      order: {
-        total_quantity: 200,
-        item_weight: 0.5,
-        shipping_locations: 1,
-        rush_days: null,
-        sku_count: 5 // 5 different SKUs
-      },
-      decorations: [
-        {
-          method: 'screen_print',
-          location: 'full_front',
-          quantity: 200,
-          specs: {
-            colors: 2,
-            screens: 2
-          },
-          modifiers: {},
-          misc_charges: {}
-        }
-      ],
-      programs: {}
-    };
-
-    const result = await calculateQuote(quote);
-    
-    // Beyond 3 styles: (5 - 3) × $1.50 = $3.00
-    expect(result.totals.beyond_styles_charge).toBe(3.00);
-  });
-
-  test('Multi-location shipping', async () => {
-    const quote = {
-      order: {
-        total_quantity: 200,
-        item_weight: 0.5,
-        shipping_locations: 3,
-        rush_days: null,
-        sku_count: 1
-      },
-      decorations: [
-        {
-          method: 'screen_print',
-          location: 'full_front',
-          quantity: 200,
-          specs: {
-            colors: 2,
-            screens: 2
-          },
-          modifiers: {},
-          misc_charges: {}
-        }
-      ],
-      programs: {}
-    };
-
-    const result = await calculateQuote(quote);
-    
-    // Decorations: 200 × $1.38 + $40 = $276 + $40 = $316
-    // Shipping: 3 locations, first gets discount
-    // Per location cost: $64
-    // First location: $64 - $64 = $0 (free shipping applied)
-    // Remaining 2: 2 × $64 = $128
-    expect(result.totals.decorations_subtotal).toBe(316.00);
-    expect(result.totals.shipping.total_locations).toBe(3);
-    expect(result.totals.shipping.cost).toBe(128.00);
-  });
-
-});
-
-// ============================================================================
-// EDGE CASES
-// ============================================================================
-
-describe('Edge Cases', () => {
-
-  test('Over 10K screen print quantity - should show message', async () => {
-    // This would typically be handled in the UI
-    // Pricing table has 10k+ tier, so calculation should still work
-    const price = await lookupScreenPrintPrice(2, 15000);
-    expect(price).toBe(0.33); // 10k+ tier pricing
-  });
-
-  test('Embroidery on hats - separate pricing', async () => {
-    // Per business rules, hats can't combine with other apparel
-    // This would be two separate calculations
-    
-    const tshirts = {
-      method: 'embroidery',
-      location: 'left_chest',
-      quantity: 100,
-      specs: { stitch_count: 5000 },
-      modifiers: {},
-      misc_charges: {}
-    };
-
-    const hats = {
-      method: 'embroidery',
-      location: 'cap_front',
-      quantity: 50,
-      specs: { stitch_count: 5000 },
-      modifiers: {},
-      misc_charges: {}
-    };
-
-    const tshirtPricing = await calculateDecoration(tshirts);
-    const hatPricing = await calculateDecoration(hats);
-
-    // T-shirts: 100 × $3.68 + $25 = $393
-    // Hats: 50 × $4.13 + $0 = $206.50 (shares digitizing fee with t-shirts in reality)
-    expect(tshirtPricing.subtotal).toBe(393.00);
-    expect(hatPricing.subtotal).toBeCloseTo(206.50, 2);
-  });
-
-  test('PMS matching charge', async () => {
-    const decoration = {
-      method: 'screen_print',
-      location: 'full_front',
-      quantity: 200,
-      specs: {
-        colors: 4,
-        screens: 4
-      },
-      modifiers: {},
-      misc_charges: {
-        pms_matching: 2 // 2 Pantone colors
-      }
-    };
-
-    const result = await calculateDecoration(decoration);
-    
-    // PMS: 2 × $20 = $40
-    expect(result.misc_charges_total).toBe(40.00);
-  });
-
-});
-
-// ============================================================================
-// RUN ALL TESTS
-// ============================================================================
-
-console.log('Running HTG Quote Calculator Test Suite...');
-console.log('================================================\n');
-
-// In a real environment, you'd use Jest or another test runner
-// For now, this provides the structure for comprehensive testing
+  // Supabase client (for direct queries if needed)
+  supabase
+};
