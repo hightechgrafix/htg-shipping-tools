@@ -78,6 +78,10 @@ async function fetchUserMetrics(accessToken, userId, startDate, endDate) {
   }
 
   const data = JSON.parse(responseText);
+  
+  // LOG THE RAW DATA TO SEE STRUCTURE
+  console.log(`Raw metrics data for user ${userId}:`, JSON.stringify(data, null, 2));
+  
   return data;
 }
 
