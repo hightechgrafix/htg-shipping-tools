@@ -108,6 +108,22 @@ async function upsertUser(user) {
   return data;
 }
 
+  // Fetch all mailboxes
+  async function fetchMailboxes(accessToken) {
+    const response = await fetch(`${HELPSCOUT_API_URL}/mailboxes`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch mailboxes: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data._embedded.mailboxes;
+  }
+
 // Upsert daily metrics into database
 async function upsertMetrics(userId, metricDate, metrics) {
   const current = metrics.current; // Data is in the 'current' object
