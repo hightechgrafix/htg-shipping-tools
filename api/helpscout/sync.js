@@ -1,7 +1,7 @@
 // HelpScout Data Sync Function
 // Runs daily to pull sales team metrics from HelpScout API
 
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
 
 // Initialize Supabase client with service key (bypasses RLS)
 const supabase = createClient(
@@ -198,7 +198,7 @@ async function logSync(status, usersSynced = 0, errorMessage = null) {
 }
 
 // Main handler
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   console.log('Starting HelpScout sync...');
   
   let syncLogId;
