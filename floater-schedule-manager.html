@@ -534,6 +534,7 @@
       
       for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
+        date.setHours(0, 0, 0, 0);
         const dateStr = date.toISOString().split('T')[0];
         const isPast = date < today;
         const isSelected = selectedDates.includes(dateStr);
@@ -566,10 +567,12 @@
 
     // Toggle date selection
     window.toggleDate = function(dateStr, event) {
-      // Check if date is in the past
+      // Allow selecting today and future dates
       const date = new Date(dateStr);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      date.setHours(0, 0, 0, 0);
+      // Skip if date is in the past (but allow today)
       if (date < today) return;
       
       // Check for shift key (range selection)
