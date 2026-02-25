@@ -91,14 +91,14 @@
         // PRICING ENGINE - Embedded directly in HTML
         // ==================================================================
         
-        let supabase;
+        let supabaseClient;
         
         function initSupabase(supabaseUrl, supabaseKey) {
-            supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+            supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
         }
         
         async function lookupScreenPrintPrice(colors, quantity) {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClientClient
                 .from('pricing_calc_screen_print_pricing')
                 .select('price')
                 .eq('colors', colors)
@@ -137,7 +137,7 @@
         }
         
         async function calculateShipping(totalQuantity, itemWeight, numLocations = 1) {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('pricing_calc_shipping_pricing')
                 .select('*')
                 .lte('weight_min', itemWeight)
