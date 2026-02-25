@@ -258,6 +258,98 @@
       padding: 40px;
       color: #6b7280;
     }
+
+    /* Inline Calendar Picker */
+    .calendar-picker {
+      display: grid;
+      gap: 10px;
+    }
+
+    .calendar-picker-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .calendar-picker-nav {
+      background: #6b7280;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .calendar-picker-nav:hover {
+      background: #4b5563;
+    }
+
+    .calendar-picker-month {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .calendar-picker-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+    }
+
+    .calendar-picker-day-header {
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6b7280;
+      padding: 5px;
+    }
+
+    .calendar-picker-day {
+      aspect-ratio: 1;
+      border: 2px solid #e5e7eb;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.9rem;
+      background: white;
+      transition: all 0.2s;
+    }
+
+    .calendar-picker-day:hover {
+      border-color: #b6282c;
+      background: #fee2e2;
+    }
+
+    .calendar-picker-day.selected {
+      background: #b6282c;
+      color: white;
+      border-color: #b6282c;
+      font-weight: 600;
+    }
+
+    .calendar-picker-day.other-month {
+      color: #d1d5db;
+      cursor: default;
+    }
+
+    .calendar-picker-day.other-month:hover {
+      border-color: #e5e7eb;
+      background: white;
+    }
+
+    .calendar-picker-day.past {
+      color: #9ca3af;
+      background: #f3f4f6;
+      cursor: not-allowed;
+    }
+
+    .calendar-picker-day.past:hover {
+      border-color: #e5e7eb;
+      background: #f3f4f6;
+    }
   </style>
 </head>
 <body>
@@ -315,25 +407,16 @@
         </div>
 
         <div class="form-group">
-          <label for="assignment-date">Date *</label>
-          <input type="date" id="assignment-date" required />
-        </div>
-
-        <div class="form-group">
-          <label for="repeat-option">Repeat Assignment</label>
-          <select id="repeat-option">
-            <option value="none">Single day only</option>
-            <option value="daily">Daily for next 7 days</option>
-            <option value="weekdays">Weekdays only (Mon-Fri) for next 2 weeks</option>
-            <option value="custom">Custom date range</option>
-          </select>
-        </div>
-
-        <div class="form-group" id="custom-end-date-group" style="display: none;">
-          <label for="end-date">End Date</label>
-          <input type="date" id="end-date" />
-          <p style="font-size: 0.75rem; color: #6b7280; margin-top: 5px;">
-            Will create assignments from start date through end date
+          <label>Select Date(s) *</label>
+          <p style="font-size: 0.8rem; color: #6b7280; margin-bottom: 10px;">
+            Click dates to select/deselect. Hold Shift to select a range.
+          </p>
+          <div id="date-picker-calendar" style="background: #f9fafb; border: 1px solid #d1d5db; border-radius: 8px; padding: 15px;">
+            <!-- Calendar will be generated here -->
+          </div>
+          <input type="hidden" id="selected-dates" required />
+          <p id="selected-dates-display" style="font-size: 0.85rem; color: #374151; margin-top: 10px; font-weight: 600;">
+            No dates selected
           </p>
         </div>
 
@@ -403,6 +486,138 @@
     let employees = [];
     let departments = [];
     let currentEditingAssignment = null;
+    let selectedDates = [];
+    let currentCalendarMonth = new Date();
+    let lastClickedDate = null;
+
+    // Generate inline calendar picker
+    function generateCalendarPicker() {
+      const container = document.getElementById('date-picker-calendar');
+      const year = currentCalendarMonth.getFullYear();
+      const month = currentCalendarMonth.getMonth();
+      
+      // Get first day of month and number of days
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const daysInMonth = lastDay.getDate();
+      const startDayOfWeek = firstDay.getDay();
+      
+      // Month names
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+      
+      let html = `
+        <div class="calendar-picker">
+          <div class="calendar-picker-header">
+            <button type="button" class="calendar-picker-nav" onclick="changeCalendarMonth(-1)">←</button>
+            <div class="calendar-picker-month">${monthNames[month]} ${year}</div>
+            <button type="button" class="calendar-picker-nav" onclick="changeCalendarMonth(1)">→</button>
+          </div>
+          <div class="calendar-picker-grid">
+            <div class="calendar-picker-day-header">Sun</div>
+            <div class="calendar-picker-day-header">Mon</div>
+            <div class="calendar-picker-day-header">Tue</div>
+            <div class="calendar-picker-day-header">Wed</div>
+            <div class="calendar-picker-day-header">Thu</div>
+            <div class="calendar-picker-day-header">Fri</div>
+            <div class="calendar-picker-day-header">Sat</div>
+      `;
+      
+      // Add empty cells for days before month starts
+      for (let i = 0; i < startDayOfWeek; i++) {
+        html += '<div class="calendar-picker-day other-month"></div>';
+      }
+      
+      // Add days of the month
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const dateStr = date.toISOString().split('T')[0];
+        const isPast = date < today;
+        const isSelected = selectedDates.includes(dateStr);
+        
+        let classes = 'calendar-picker-day';
+        if (isPast) classes += ' past';
+        if (isSelected) classes += ' selected';
+        
+        html += `<div class="${classes}" data-date="${dateStr}" onclick="toggleDate('${dateStr}', event)">${day}</div>`;
+      }
+      
+      // Fill remaining cells
+      const totalCells = Math.ceil((startDayOfWeek + daysInMonth) / 7) * 7;
+      const remainingCells = totalCells - (startDayOfWeek + daysInMonth);
+      for (let i = 0; i < remainingCells; i++) {
+        html += '<div class="calendar-picker-day other-month"></div>';
+      }
+      
+      html += '</div></div>';
+      container.innerHTML = html;
+      
+      updateSelectedDatesDisplay();
+    }
+
+    // Change calendar month
+    window.changeCalendarMonth = function(delta) {
+      currentCalendarMonth.setMonth(currentCalendarMonth.getMonth() + delta);
+      generateCalendarPicker();
+    };
+
+    // Toggle date selection
+    window.toggleDate = function(dateStr, event) {
+      // Check if date is in the past
+      const date = new Date(dateStr);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (date < today) return;
+      
+      // Check for shift key (range selection)
+      if (event && event.shiftKey && lastClickedDate) {
+        // Select range between last clicked and current
+        const start = new Date(lastClickedDate);
+        const end = new Date(dateStr);
+        const [earlier, later] = start < end ? [start, end] : [end, start];
+        
+        const current = new Date(earlier);
+        while (current <= later) {
+          const currentStr = current.toISOString().split('T')[0];
+          if (!selectedDates.includes(currentStr)) {
+            selectedDates.push(currentStr);
+          }
+          current.setDate(current.getDate() + 1);
+        }
+      } else {
+        // Toggle single date
+        const index = selectedDates.indexOf(dateStr);
+        if (index > -1) {
+          selectedDates.splice(index, 1);
+        } else {
+          selectedDates.push(dateStr);
+        }
+      }
+      
+      lastClickedDate = dateStr;
+      selectedDates.sort();
+      document.getElementById('selected-dates').value = selectedDates.join(',');
+      generateCalendarPicker();
+    };
+
+    // Update selected dates display
+    function updateSelectedDatesDisplay() {
+      const display = document.getElementById('selected-dates-display');
+      if (selectedDates.length === 0) {
+        display.textContent = 'No dates selected';
+        display.style.color = '#6b7280';
+      } else if (selectedDates.length === 1) {
+        const date = new Date(selectedDates[0]);
+        display.textContent = `1 date selected: ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+        display.style.color = '#b6282c';
+      } else {
+        display.textContent = `${selectedDates.length} dates selected`;
+        display.style.color = '#b6282c';
+      }
+    }
 
     // Check authentication and permissions
     async function checkAuth() {
@@ -559,31 +774,27 @@
       document.getElementById('assignment-form').reset();
       document.getElementById('assignment-id').value = '';
       document.getElementById('delete-btn').style.display = 'none';
-      document.getElementById('custom-end-date-group').style.display = 'none';
       
-      // Show repeat options for new assignments
-      document.getElementById('repeat-option').closest('.form-group').style.display = 'block';
+      // Reset selected dates
+      selectedDates = [];
+      lastClickedDate = null;
+      currentCalendarMonth = new Date();
       
+      // If clicked on a specific date, pre-select it
       if (dateStr) {
-        document.getElementById('assignment-date').value = dateStr;
-      } else {
-        // Default to today
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('assignment-date').value = today;
+        selectedDates = [dateStr];
+        currentCalendarMonth = new Date(dateStr);
+      }
+      
+      // Show calendar picker
+      const calendarContainer = document.getElementById('date-picker-calendar');
+      if (calendarContainer) {
+        calendarContainer.parentElement.style.display = 'block';
+        generateCalendarPicker();
       }
       
       document.getElementById('assignment-modal').classList.add('active');
     };
-
-    // Show/hide custom end date based on repeat option
-    document.getElementById('repeat-option').addEventListener('change', function() {
-      const customGroup = document.getElementById('custom-end-date-group');
-      if (this.value === 'custom') {
-        customGroup.style.display = 'block';
-      } else {
-        customGroup.style.display = 'none';
-      }
-    });
 
     // Edit assignment
     function editAssignment(event) {
@@ -592,14 +803,18 @@
       document.getElementById('assignment-id').value = event.id;
       document.getElementById('employee-select').value = event.extendedProps.employeeId;
       document.getElementById('department-select').value = event.extendedProps.departmentId;
-      document.getElementById('assignment-date').value = event.startStr;
       document.getElementById('assignment-notes').value = event.extendedProps.notes || '';
       document.getElementById('delete-btn').style.display = 'block';
       
-      // Hide repeat options when editing (only for new assignments)
-      document.getElementById('repeat-option').value = 'none';
-      document.getElementById('repeat-option').closest('.form-group').style.display = 'none';
-      document.getElementById('custom-end-date-group').style.display = 'none';
+      // Hide calendar picker when editing (only edit one assignment at a time)
+      const calendarContainer = document.getElementById('date-picker-calendar');
+      if (calendarContainer) {
+        calendarContainer.parentElement.style.display = 'none';
+      }
+      
+      // Pre-select the assignment date for display only
+      selectedDates = [event.startStr];
+      updateSelectedDatesDisplay();
       
       document.getElementById('assignment-modal').classList.add('active');
     }
@@ -617,10 +832,7 @@
       const assignmentId = document.getElementById('assignment-id').value;
       const employeeId = document.getElementById('employee-select').value;
       const departmentId = document.getElementById('department-select').value;
-      const startDate = document.getElementById('assignment-date').value;
       const notes = document.getElementById('assignment-notes').value;
-      const repeatOption = document.getElementById('repeat-option').value;
-      const endDate = document.getElementById('end-date').value;
 
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -632,7 +844,7 @@
             .update({
               employee_id: employeeId,
               department_id: departmentId,
-              assignment_date: startDate,
+              assignment_date: selectedDates[0],
               notes: notes,
               updated_by: user.id,
               updated_at: new Date().toISOString()
@@ -642,42 +854,14 @@
           if (error) throw error;
           showStatus('Assignment updated successfully!', 'success');
         } else {
-          // Insert new - handle repeat options
-          const datesToCreate = [];
-          const start = new Date(startDate);
-          
-          if (repeatOption === 'none') {
-            // Single day
-            datesToCreate.push(startDate);
-          } else if (repeatOption === 'daily') {
-            // Daily for next 7 days
-            for (let i = 0; i < 7; i++) {
-              const date = new Date(start);
-              date.setDate(date.getDate() + i);
-              datesToCreate.push(date.toISOString().split('T')[0]);
-            }
-          } else if (repeatOption === 'weekdays') {
-            // Weekdays only for next 2 weeks
-            for (let i = 0; i < 14; i++) {
-              const date = new Date(start);
-              date.setDate(date.getDate() + i);
-              const dayOfWeek = date.getDay();
-              if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Not Sunday or Saturday
-                datesToCreate.push(date.toISOString().split('T')[0]);
-              }
-            }
-          } else if (repeatOption === 'custom' && endDate) {
-            // Custom date range
-            const end = new Date(endDate);
-            const current = new Date(start);
-            while (current <= end) {
-              datesToCreate.push(current.toISOString().split('T')[0]);
-              current.setDate(current.getDate() + 1);
-            }
+          // Insert new - use selected dates from calendar
+          if (selectedDates.length === 0) {
+            showStatus('Please select at least one date', 'error');
+            return;
           }
 
           // Create all assignments
-          const assignments = datesToCreate.map(date => ({
+          const assignments = selectedDates.map(date => ({
             employee_id: employeeId,
             department_id: departmentId,
             assignment_date: date,
