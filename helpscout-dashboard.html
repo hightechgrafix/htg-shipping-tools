@@ -390,6 +390,7 @@
       </select>
 
       <button class="refresh-btn" id="refresh-btn">🔄 Refresh Data</button>
+      <button class="refresh-btn" id="refresh-live-btn">⚡ Refresh Live Counts</button>
     </div>
 
     <div class="stats-grid">
@@ -769,6 +770,9 @@
     // Event listeners
     document.getElementById('date-range').addEventListener('change', loadData);
     document.getElementById('refresh-btn').addEventListener('click', loadData);
+    document.getElementById('refresh-live-btn').addEventListener('click', () => {
+        loadLiveCounts();
+        });
 
     document.querySelectorAll('th.sortable').forEach(th => {
       th.addEventListener('click', () => {
