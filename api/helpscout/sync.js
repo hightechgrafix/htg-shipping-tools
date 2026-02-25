@@ -108,21 +108,42 @@ async function upsertUser(user) {
   return data;
 }
 
-  // Fetch all mailboxes
-  async function fetchMailboxes(accessToken) {
-    const response = await fetch(`${HELPSCOUT_API_URL}/mailboxes`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
+// Upsert mailbox into database
+async function upsertMailbox(mailbox) {
+  const { data, error } = await supabase
+    .from('helpscout_mailboxes')
+    .upsert({
+      mailbox_id: mailbox.id,
+      name: mailbox.name,
+      email: mailbox.email,
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'mailbox_id',
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch mailboxes: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data._embedded.mailboxes;
+  if (error) {
+    console.error(`Error upserting mailbox ${mailbox.id}:`, error);
+    throw error;
   }
+
+  return data;
+}
+
+// Fetch all mailboxes
+async function fetchMailboxes(accessToken) {
+  const response = await fetch(`${HELPSCOUT_API_URL}/mailboxes`, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch mailboxes: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data._embedded.mailboxes;
+}
 
 // Upsert daily metrics into database
 async function upsertMetrics(userId, metricDate, metrics) {
@@ -190,6 +211,23 @@ export default async function handler(req, res) {
     // Get access token
     const accessToken = await getAccessToken();
     console.log('✓ Got access token');
+
+    // Get access token
+    const accessToken = await getAccessToken();
+    console.log('✓ Got access token');
+
+    // Fetch and store mailboxes
+    const mailboxes = await fetchMailboxes(accessToken);
+    console.log(`✓ Found ${mailboxes.length} mailboxes`);
+
+    for (const mailbox of mailboxes) {
+      await upsertMailbox(mailbox);
+      console.log(`✓ Synced mailbox: ${mailbox.name}`);
+    }
+
+// Fetch all users
+const users = await fetchHelpScoutUsers(accessToken);
+console.log(`✓ Found ${users.length} users`);
 
     // Fetch all users
     const users = await fetchHelpScoutUsers(accessToken);
