@@ -419,6 +419,9 @@
         document.getElementById('loading').style.display = 'none';
         return;
       }
+    console.log('Query params:', { startDate, endDate });
+    console.log('Metrics returned:', metrics);
+    console.log('Number of rows:', metrics?.length);
 
       // Aggregate by user
       const userMap = {};
