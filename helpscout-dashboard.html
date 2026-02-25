@@ -464,7 +464,7 @@
     let currentData = [];
     let currentSort = { column: 'first_response', direction: 'asc' };
 
-    // Check auth and admin access
+    // Check auth (removed admin-only restriction)
     async function checkAuth() {
       const { data: { session }, error } = await supabase.auth.getSession();
       
@@ -473,18 +473,7 @@
         return false;
       }
 
-      const { data: permissions } = await supabase
-        .from('user_management')
-        .select('is_admin')
-        .eq('user_id', session.user.id)
-        .single();
-
-      if (!permissions || !permissions.is_admin) {
-        showError('Access denied. Admin access required.');
-        setTimeout(() => window.location.href = 'index.html', 2000);
-        return false;
-      }
-
+      // No longer checking for admin - any authenticated user can access
       return true;
     }
 
@@ -561,11 +550,15 @@
         return;
         }
 
-        // Get display settings
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+
+        // Get display settings for THIS user only
         const { data: displaySettings } = await supabase
-        .from('helpscout_user_display')
-        .select('helpscout_user_id, is_displayed')
-        .eq('is_displayed', true);
+          .from('helpscout_user_display')
+          .select('helpscout_user_id, is_displayed')
+          .eq('user_id', user.id)
+          .eq('is_displayed', true);
 
         const displayedUserIds = new Set(displaySettings?.map(d => d.helpscout_user_id) || []);
 
@@ -719,10 +712,14 @@
         return;
     }
 
-    // Get display settings
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Get display settings for THIS user only
     const { data: displaySettings } = await supabase
-        .from('helpscout_user_display')
-        .select('helpscout_user_id, is_displayed');
+      .from('helpscout_user_display')
+      .select('helpscout_user_id, is_displayed')
+      .eq('user_id', user.id);
 
     const displayMap = {};
     displaySettings?.forEach(d => {
@@ -750,6 +747,9 @@
     async function saveUserSelection() {
       const checkboxes = document.querySelectorAll('#user-list input[type="checkbox"]');
       
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
       for (const checkbox of checkboxes) {
         const userId = parseInt(checkbox.dataset.userId);
         const isDisplayed = checkbox.checked;
@@ -757,11 +757,12 @@
         await supabase
           .from('helpscout_user_display')
           .upsert({
+            user_id: user.id,
             helpscout_user_id: userId,
             is_displayed: isDisplayed,
             updated_at: new Date().toISOString(),
           }, {
-            onConflict: 'helpscout_user_id',
+            onConflict: 'user_id,helpscout_user_id',
           });
       }
 
