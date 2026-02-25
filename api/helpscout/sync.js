@@ -54,7 +54,13 @@ async function fetchHelpScoutUsers(accessToken) {
 
 // Fetch user metrics for a specific date range
 async function fetchUserMetrics(accessToken, userId, startDate, endDate) {
-  const url = `${HELPSCOUT_API_URL}/reports/user?user=${userId}&start=${startDate}&end=${endDate}`;
+  // Try different date format - HelpScout might want YYYY-MM-DDTHH:MM:SSZ
+  const start = `${startDate}T00:00:00Z`;
+  const end = `${endDate}T23:59:59Z`;
+  
+  const url = `${HELPSCOUT_API_URL}/reports/user?user=${userId}&start=${start}&end=${end}`;
+  
+  console.log(`Fetching metrics for user ${userId}: ${url}`);
   
   const response = await fetch(url, {
     headers: {
@@ -62,12 +68,16 @@ async function fetchUserMetrics(accessToken, userId, startDate, endDate) {
     },
   });
 
+  const responseText = await response.text();
+  
   if (!response.ok) {
-    console.error(`Failed to fetch metrics for user ${userId}: ${response.statusText}`);
+    console.error(`Failed to fetch metrics for user ${userId}:`);
+    console.error(`Status: ${response.status}`);
+    console.error(`Response: ${responseText}`);
     return null;
   }
 
-  const data = await response.json();
+  const data = JSON.parse(responseText);
   return data;
 }
 
