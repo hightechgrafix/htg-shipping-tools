@@ -694,44 +694,48 @@
       document.getElementById('leaderboard-table').style.display = 'table';
     }
 
-    // User Management Modal
     async function loadUserList() {
-      const userList = document.getElementById('user-list');
-      userList.innerHTML = '<div class="loading">Loading users...</div>';
+    const userList = document.getElementById('user-list');
+    userList.innerHTML = '<div class="loading">Loading users...</div>';
 
-      const { data: users, error } = await supabase
+    // Get all active users
+    const { data: users, error } = await supabase
         .from('helpscout_users')
-        .select(`
-          helpscout_user_id,
-          name,
-          email,
-          is_active,
-          helpscout_user_display(is_displayed)
-        `)
+        .select('helpscout_user_id, name, email, is_active')
         .eq('is_active', true)
         .order('name');
 
-      if (error) {
+    if (error) {
         userList.innerHTML = '<div class="error">Error loading users</div>';
         return;
-      }
+    }
 
-      userList.innerHTML = '';
-      users.forEach(user => {
-        const isDisplayed = user.helpscout_user_display?.is_displayed !== false;
+    // Get display settings
+    const { data: displaySettings } = await supabase
+        .from('helpscout_user_display')
+        .select('helpscout_user_id, is_displayed');
+
+    const displayMap = {};
+    displaySettings?.forEach(d => {
+        displayMap[d.helpscout_user_id] = d.is_displayed;
+    });
+
+    userList.innerHTML = '';
+    users.forEach(user => {
+        const isDisplayed = displayMap[user.helpscout_user_id] !== false;
         
         const userItem = document.createElement('div');
         userItem.className = 'user-item';
         userItem.innerHTML = `
-          <label>
+        <label>
             <input type="checkbox" 
-                   data-user-id="${user.helpscout_user_id}" 
-                   ${isDisplayed ? 'checked' : ''}>
+                data-user-id="${user.helpscout_user_id}" 
+                ${isDisplayed ? 'checked' : ''}>
             ${user.name}
-          </label>
+        </label>
         `;
         userList.appendChild(userItem);
-      });
+    });
     }
 
     async function saveUserSelection() {
