@@ -154,18 +154,18 @@ async function upsertMetrics(userId, mailboxId, metricDate, metrics) {
       mailbox_id: mailboxId,
       metric_date: metricDate,
       total_replies: metrics.totalReplies || 0,
-      conversations_created: metrics.conversationsCreated || 0,
-      conversations_resolved: metrics.resolved || 0,
+      conversations_created: 0, // Not available in company report
+      conversations_resolved: 0, // Not available in company report  
       customers_helped: metrics.customersHelped || 0,
-      avg_response_time: metrics.responseTime || null,
-      avg_first_response_time: metrics.averageFirstResponseTime || null,
-      avg_resolution_time: metrics.resolutionTime || null,
+      avg_response_time: null, // Not available in company report
+      avg_first_response_time: null, // Not available in company report
+      avg_resolution_time: null, // Not available in company report
       avg_handle_time: metrics.handleTime || null,
-      resolved_on_first_reply: metrics.resolvedOnFirstReply || 0,
-      percent_resolved_first_reply: metrics.percentResolvedOnFirstReply || null,
-      avg_replies_to_resolve: metrics.repliesToResolve || null,
+      resolved_on_first_reply: 0, // Not available in company report
+      percent_resolved_first_reply: null, // Not available in company report
+      avg_replies_to_resolve: null, // Not available in company report
       happiness_score: metrics.happinessScore || null,
-      replies_per_day: metrics.repliesPerDay || null,
+      replies_per_day: metrics.totalReplies || 0, // Same as total for single day
       synced_at: new Date().toISOString(),
     }, {
       onConflict: 'helpscout_user_id,mailbox_id,metric_date',
@@ -241,7 +241,7 @@ module.exports = async function handler(req, res) {
         
         const report = await fetchCompanyReport(accessToken, mailbox.id, metricDate, metricDate);
         
-        if (!report || !report.users) {
+        if (!report || !report.users || report.users.length === 0) {
           console.log(`No user data in report for mailbox ${mailbox.name}`);
           continue;
         }
@@ -249,12 +249,22 @@ module.exports = async function handler(req, res) {
         // Process each user's metrics in this mailbox
         for (const userMetrics of report.users) {
           try {
-            const userId = userMetrics.user.id;
-            const userName = userMetrics.user.name;
+            const userId = userMetrics.user;  // Just the ID, not nested
+            const userName = userMetrics.name;
             
             // Only insert if there's actual activity
-            if (userMetrics.current.totalReplies > 0 || userMetrics.current.resolved > 0) {
-              await upsertMetrics(userId, mailbox.id, metricDate, userMetrics.current);
+            if (userMetrics.replies > 0 || userMetrics.closed > 0) {
+              // Map the company report format to our database format
+              const mappedMetrics = {
+                totalReplies: userMetrics.replies || 0,
+                customersHelped: userMetrics.customersHelped || 0,
+                handleTime: userMetrics.handleTime || null,
+                happinessScore: userMetrics.happinessScore || null,
+                // Note: Company report doesn't include all the detailed metrics
+                // We'll store what we have and set the rest to null
+              };
+              
+              await upsertMetrics(userId, mailbox.id, metricDate, mappedMetrics);
               console.log(`  ✓ Synced metrics for ${userName} in ${mailbox.name}`);
               metricsInserted++;
             }
