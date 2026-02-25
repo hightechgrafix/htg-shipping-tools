@@ -491,6 +491,7 @@
         adminButtons.push({ label: '🎮 Coupon Management', href: 'warehouse-game/admin.html' });
       }
       if (permissions.is_admin) {
+        adminButtons.push({ label: '📊 HelpScout Reporting', href: 'helpscout-dashboard.html' });
         adminButtons.push({ label: 'User Management', href: 'admin-users.html' });
       }
       const adminSection = createSection('Admin & Management', '👤', adminButtons);

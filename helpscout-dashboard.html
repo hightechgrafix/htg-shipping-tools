@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HelpScout Sales Reporting</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #ffffff;
+      color: #111827;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      background: #111;
+      color: #fff;
+      padding: 20px 30px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      color: #b6282c;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .back-btn {
+      padding: 8px 20px;
+      background: #1a1a1a;
+      color: #fff;
+      border: 1px solid #333;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .back-btn:hover {
+      background: #b6282c;
+      border-color: #b6282c;
+    }
+
+    /* Controls */
+    .controls {
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+      border: 1px solid #e0e0e0;
+    }
+
+    .controls label {
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .controls select {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #9ca3af;
+      background: #fff;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .refresh-btn {
+      padding: 8px 20px;
+      background: #b6282c;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-left: auto;
+    }
+
+    .refresh-btn:hover {
+      background: #9b1f24;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: #111;
+      color: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #333;
+    }
+
+    .stat-card h3 {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      margin-bottom: 8px;
+    }
+
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #b6282c;
+    }
+
+    /* Leaderboard */
+    .leaderboard {
+      background: #f5f5f5;
+      border-radius: 12px;
+      padding: 25px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .leaderboard h2 {
+      color: #111827;
+      margin-bottom: 20px;
+      font-size: 1.3rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    thead {
+      background: #111;
+      color: #fff;
+    }
+
+    th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    th:hover {
+      background: #1a1a1a;
+    }
+
+    th.sortable::after {
+      content: ' ↕';
+      opacity: 0.5;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    tbody tr:hover {
+      background: #f9fafb;
+    }
+
+    td {
+      padding: 12px;
+      font-size: 0.9rem;
+    }
+
+    .rank {
+      font-weight: 700;
+      color: #b6282c;
+    }
+
+    .metric-good {
+      color: #059669;
+      font-weight: 600;
+    }
+
+    .metric-ok {
+      color: #d97706;
+    }
+
+    .metric-poor {
+      color: #dc2626;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #6b7280;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #fecaca;
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .refresh-btn {
+        margin-left: 0;
+      }
+
+      table {
+        font-size: 0.8rem;
+      }
+
+      th, td {
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📊 HelpScout Sales Team Performance</h1>
+      <a href="index.html" class="back-btn">← Back to Menu</a>
+    </div>
+
+    <div id="error-message" class="error" style="display: none;"></div>
+
+    <div class="controls">
+      <label for="date-range">Time Period:</label>
+      <select id="date-range">
+        <option value="today">Today</option>
+        <option value="yesterday" selected>Yesterday</option>
+        <option value="7">Last 7 Days</option>
+        <option value="30">Last 30 Days</option>
+        <option value="90">Last 90 Days</option>
+      </select>
+
+      <button class="refresh-btn" id="refresh-btn">🔄 Refresh Data</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Total Replies</h3>
+        <div class="value" id="stat-replies">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>Conversations Resolved</h3>
+        <div class="value" id="stat-resolved">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>Customers Helped</h3>
+        <div class="value" id="stat-customers">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>Avg Response Time</h3>
+        <div class="value" id="stat-response-time">-</div>
+      </div>
+    </div>
+
+    <div class="leaderboard">
+      <h2>Team Leaderboard</h2>
+      <div id="loading" class="loading">Loading data...</div>
+      <table id="leaderboard-table" style="display: none;">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th class="sortable" data-sort="name">Name</th>
+            <th class="sortable" data-sort="replies">Replies</th>
+            <th class="sortable" data-sort="resolved">Resolved</th>
+            <th class="sortable" data-sort="customers">Customers</th>
+            <th class="sortable" data-sort="response_time">Avg Response</th>
+            <th class="sortable" data-sort="first_reply_pct">First Reply %</th>
+            <th class="sortable" data-sort="happiness">Happiness</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.94.1/+esm";
+
+    const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentData = [];
+    let currentSort = { column: 'replies', direction: 'desc' };
+
+    // Check auth and admin access
+    async function checkAuth() {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error || !session) {
+        window.location.href = 'index.html';
+        return false;
+      }
+
+      // Check if user is admin
+      const { data: permissions } = await supabase
+        .from('user_management')
+        .select('is_admin')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (!permissions || !permissions.is_admin) {
+        showError('Access denied. Admin access required.');
+        setTimeout(() => window.location.href = 'index.html', 2000);
+        return false;
+      }
+
+      return true;
+    }
+
+    function showError(message) {
+      const errorEl = document.getElementById('error-message');
+      errorEl.textContent = message;
+      errorEl.style.display = 'block';
+    }
+
+    function formatTime(seconds) {
+      if (!seconds || seconds === 0) return 'N/A';
+      
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      
+      if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+      }
+      return `${minutes}m`;
+    }
+
+    function getResponseTimeClass(seconds) {
+      if (!seconds || seconds === 0) return '';
+      const minutes = seconds / 60;
+      if (minutes < 15) return 'metric-good';
+      if (minutes < 30) return 'metric-ok';
+      return 'metric-poor';
+    }
+
+    function getHappinessClass(score) {
+      if (!score || score === 0) return '';
+      if (score >= 90) return 'metric-good';
+      if (score >= 80) return 'metric-ok';
+      return 'metric-poor';
+    }
+
+    async function loadData() {
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('leaderboard-table').style.display = 'none';
+
+      const dateRange = document.getElementById('date-range').value;
+      let startDate, endDate;
+
+      const now = new Date();
+      endDate = now.toISOString().split('T')[0];
+
+      if (dateRange === 'today') {
+        startDate = endDate;
+      } else if (dateRange === 'yesterday') {
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        startDate = yesterday.toISOString().split('T')[0];
+        endDate = startDate;
+      } else {
+        const daysAgo = new Date(now);
+        daysAgo.setDate(daysAgo.getDate() - parseInt(dateRange));
+        startDate = daysAgo.toISOString().split('T')[0];
+      }
+
+      // Fetch metrics
+      const { data: metrics, error } = await supabase
+        .from('helpscout_daily_metrics')
+        .select(`
+          *,
+          helpscout_users!inner(name, email, is_active)
+        `)
+        .gte('metric_date', startDate)
+        .lte('metric_date', endDate)
+        .eq('helpscout_users.is_active', true);
+
+      if (error) {
+        showError('Error loading data: ' + error.message);
+        document.getElementById('loading').style.display = 'none';
+        return;
+      }
+
+      // Aggregate by user
+      const userMap = {};
+      metrics.forEach(m => {
+        const userId = m.helpscout_user_id;
+        if (!userMap[userId]) {
+          userMap[userId] = {
+            name: m.helpscout_users.name,
+            email: m.helpscout_users.email,
+            total_replies: 0,
+            conversations_resolved: 0,
+            customers_helped: 0,
+            avg_response_time: [],
+            resolved_first_reply: 0,
+            total_resolved: 0,
+            happiness_scores: []
+          };
+        }
+
+        userMap[userId].total_replies += m.total_replies || 0;
+        userMap[userId].conversations_resolved += m.conversations_resolved || 0;
+        userMap[userId].customers_helped += m.customers_helped || 0;
+        
+        if (m.avg_response_time) {
+          userMap[userId].avg_response_time.push(Number(m.avg_response_time));
+        }
+        
+        userMap[userId].resolved_first_reply += m.resolved_on_first_reply || 0;
+        userMap[userId].total_resolved += m.conversations_resolved || 0;
+        
+        if (m.happiness_score && m.happiness_score > 0) {
+          userMap[userId].happiness_scores.push(Number(m.happiness_score));
+        }
+      });
+
+      // Calculate averages and format
+      currentData = Object.values(userMap).map(user => ({
+        name: user.name,
+        replies: user.total_replies,
+        resolved: user.conversations_resolved,
+        customers: user.customers_helped,
+        response_time: user.avg_response_time.length > 0 
+          ? user.avg_response_time.reduce((a, b) => a + b, 0) / user.avg_response_time.length 
+          : 0,
+        first_reply_pct: user.total_resolved > 0 
+          ? (user.resolved_first_reply / user.total_resolved * 100) 
+          : 0,
+        happiness: user.happiness_scores.length > 0 
+          ? user.happiness_scores.reduce((a, b) => a + b, 0) / user.happiness_scores.length 
+          : 0
+      }));
+
+      // Update stats
+      const totals = currentData.reduce((acc, user) => ({
+        replies: acc.replies + user.replies,
+        resolved: acc.resolved + user.resolved,
+        customers: acc.customers + user.customers,
+        response_times: user.response_time > 0 ? [...acc.response_times, user.response_time] : acc.response_times
+      }), { replies: 0, resolved: 0, customers: 0, response_times: [] });
+
+      document.getElementById('stat-replies').textContent = totals.replies;
+      document.getElementById('stat-resolved').textContent = totals.resolved;
+      document.getElementById('stat-customers').textContent = totals.customers;
+      
+      const avgResponseTime = totals.response_times.length > 0
+        ? totals.response_times.reduce((a, b) => a + b, 0) / totals.response_times.length
+        : 0;
+      document.getElementById('stat-response-time').textContent = formatTime(avgResponseTime);
+
+      renderTable();
+    }
+
+    function sortData(column) {
+      if (currentSort.column === column) {
+        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+      } else {
+        currentSort.column = column;
+        currentSort.direction = 'desc';
+      }
+
+      currentData.sort((a, b) => {
+        let valA = a[column];
+        let valB = b[column];
+
+        if (column === 'name') {
+          return currentSort.direction === 'asc' 
+            ? valA.localeCompare(valB)
+            : valB.localeCompare(valA);
+        }
+
+        return currentSort.direction === 'asc' ? valA - valB : valB - valA;
+      });
+
+      renderTable();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('leaderboard-body');
+      tbody.innerHTML = '';
+
+      currentData.forEach((user, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="rank">${index + 1}</td>
+          <td>${user.name}</td>
+          <td>${user.replies}</td>
+          <td>${user.resolved}</td>
+          <td>${user.customers}</td>
+          <td class="${getResponseTimeClass(user.response_time)}">${formatTime(user.response_time)}</td>
+          <td>${user.first_reply_pct.toFixed(1)}%</td>
+          <td class="${getHappinessClass(user.happiness)}">${user.happiness > 0 ? user.happiness.toFixed(0) + '%' : 'N/A'}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('leaderboard-table').style.display = 'table';
+    }
+
+    // Event listeners
+    document.getElementById('date-range').addEventListener('change', loadData);
+    document.getElementById('refresh-btn').addEventListener('click', loadData);
+
+    document.querySelectorAll('th.sortable').forEach(th => {
+      th.addEventListener('click', () => {
+        sortData(th.dataset.sort);
+      });
+    });
+
+    // Initialize
+    checkAuth().then(isAuthorized => {
+      if (isAuthorized) {
+        loadData();
+      }
+    });
+  </script>
+</body>
+</html>
