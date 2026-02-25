@@ -1,5 +1,6 @@
 // HelpScout Data Sync Function
 // Runs daily to pull sales team metrics from HelpScout API
+// Now syncs per-mailbox for accurate filtering
 
 const { createClient } = require('@supabase/supabase-js');
 
@@ -65,15 +66,17 @@ async function fetchHelpScoutUsers(accessToken) {
   }
 
   const data = await response.json();
-  return data._embedded.users.filter(user => user.type === 'user'); // Only real users, not system users
+  return data._embedded.users.filter(user => user.type === 'user');
 }
 
-// Fetch user metrics for a specific date range
-async function fetchUserMetrics(accessToken, userId, startDate, endDate) {
+// Fetch company report (includes per-user breakdown for a mailbox)
+async function fetchCompanyReport(accessToken, mailboxId, startDate, endDate) {
   const start = `${startDate}T00:00:00Z`;
   const end = `${endDate}T23:59:59Z`;
   
-  const url = `${HELPSCOUT_API_URL}/reports/user?user=${userId}&start=${start}&end=${end}`;
+  const url = `${HELPSCOUT_API_URL}/reports/company?mailboxes=${mailboxId}&start=${start}&end=${end}&viewBy=user`;
+  
+  console.log(`Fetching company report for mailbox ${mailboxId}`);
   
   const response = await fetch(url, {
     headers: {
@@ -84,7 +87,7 @@ async function fetchUserMetrics(accessToken, userId, startDate, endDate) {
   const responseText = await response.text();
   
   if (!response.ok) {
-    console.error(`Failed to fetch metrics for user ${userId}:`);
+    console.error(`Failed to fetch company report for mailbox ${mailboxId}:`);
     console.error(`Status: ${response.status}`);
     console.error(`Response: ${responseText}`);
     return null;
@@ -138,35 +141,34 @@ async function upsertUser(user) {
   return data;
 }
 
-// Upsert daily metrics into database
-async function upsertMetrics(userId, metricDate, metrics) {
-  const current = metrics.current;
-  
+// Upsert daily metrics into database (now with mailbox_id)
+async function upsertMetrics(userId, mailboxId, metricDate, metrics) {
   const { data, error } = await supabase
     .from('helpscout_daily_metrics')
     .upsert({
       helpscout_user_id: userId,
+      mailbox_id: mailboxId,
       metric_date: metricDate,
-      total_replies: current.totalReplies || 0,
-      conversations_created: current.conversationsCreated || 0,
-      conversations_resolved: current.resolved || 0,
-      customers_helped: current.customersHelped || 0,
-      avg_response_time: current.responseTime || null,
-      avg_first_response_time: current.averageFirstResponseTime || null,
-      avg_resolution_time: current.resolutionTime || null,
-      avg_handle_time: current.handleTime || null,
-      resolved_on_first_reply: current.resolvedOnFirstReply || 0,
-      percent_resolved_first_reply: current.percentResolvedOnFirstReply || null,
-      avg_replies_to_resolve: current.repliesToResolve || null,
-      happiness_score: current.happinessScore || null,
-      replies_per_day: current.repliesPerDay || null,
+      total_replies: metrics.totalReplies || 0,
+      conversations_created: metrics.conversationsCreated || 0,
+      conversations_resolved: metrics.resolved || 0,
+      customers_helped: metrics.customersHelped || 0,
+      avg_response_time: metrics.responseTime || null,
+      avg_first_response_time: metrics.averageFirstResponseTime || null,
+      avg_resolution_time: metrics.resolutionTime || null,
+      avg_handle_time: metrics.handleTime || null,
+      resolved_on_first_reply: metrics.resolvedOnFirstReply || 0,
+      percent_resolved_first_reply: metrics.percentResolvedOnFirstReply || null,
+      avg_replies_to_resolve: metrics.repliesToResolve || null,
+      happiness_score: metrics.happinessScore || null,
+      replies_per_day: metrics.repliesPerDay || null,
       synced_at: new Date().toISOString(),
     }, {
-      onConflict: 'helpscout_user_id,metric_date',
+      onConflict: 'helpscout_user_id,mailbox_id,metric_date',
     });
 
   if (error) {
-    console.error(`Error upserting metrics for user ${userId}:`, error);
+    console.error(`Error upserting metrics for user ${userId} in mailbox ${mailboxId}:`, error);
     throw error;
   }
 
@@ -195,7 +197,7 @@ module.exports = async function handler(req, res) {
   console.log('Starting HelpScout sync...');
   
   let syncLogId;
-  let usersSynced = 0;
+  let metricsInserted = 0;
 
   try {
     // Create sync log entry
@@ -214,32 +216,50 @@ module.exports = async function handler(req, res) {
       console.log(`✓ Synced mailbox: ${mailbox.name}`);
     }
 
-    // Fetch all users
+    // Fetch all users (to ensure user table is up to date)
     const users = await fetchHelpScoutUsers(accessToken);
     console.log(`✓ Found ${users.length} users`);
+
+    for (const user of users) {
+      await upsertUser(user);
+      console.log(`✓ Synced user: ${user.firstName} ${user.lastName}`);
+    }
 
     // Get yesterday's date for metrics
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const metricDate = yesterday.toISOString().split('T')[0];
 
-    // Sync each user
-    for (const user of users) {
+    // Sync metrics for each mailbox
+    for (const mailbox of mailboxes) {
       try {
-        // Upsert user info
-        await upsertUser(user);
-        console.log(`✓ Synced user: ${user.firstName} ${user.lastName}`);
-
-        // Fetch and upsert metrics for yesterday
-        const metrics = await fetchUserMetrics(accessToken, user.id, metricDate, metricDate);
+        console.log(`\nFetching metrics for mailbox: ${mailbox.name}`);
         
-        if (metrics) {
-          await upsertMetrics(user.id, metricDate, metrics);
-          console.log(`✓ Synced metrics for ${user.firstName} ${user.lastName}`);
-          usersSynced++;
+        const report = await fetchCompanyReport(accessToken, mailbox.id, metricDate, metricDate);
+        
+        if (!report || !report.users) {
+          console.log(`No user data in report for mailbox ${mailbox.name}`);
+          continue;
         }
-      } catch (userError) {
-        console.error(`Error syncing user ${user.id}:`, userError);
+
+        // Process each user's metrics in this mailbox
+        for (const userMetrics of report.users) {
+          try {
+            const userId = userMetrics.user.id;
+            const userName = userMetrics.user.name;
+            
+            // Only insert if there's actual activity
+            if (userMetrics.current.totalReplies > 0 || userMetrics.current.resolved > 0) {
+              await upsertMetrics(userId, mailbox.id, metricDate, userMetrics.current);
+              console.log(`  ✓ Synced metrics for ${userName} in ${mailbox.name}`);
+              metricsInserted++;
+            }
+          } catch (userError) {
+            console.error(`Error syncing user metrics:`, userError);
+          }
+        }
+      } catch (mailboxError) {
+        console.error(`Error syncing mailbox ${mailbox.name}:`, mailboxError);
       }
     }
 
@@ -249,15 +269,15 @@ module.exports = async function handler(req, res) {
       .update({
         sync_completed_at: new Date().toISOString(),
         status: 'success',
-        users_synced: usersSynced,
+        users_synced: metricsInserted,
       })
       .eq('id', syncLogId);
 
-    console.log(`✓ Sync completed successfully! Synced ${usersSynced} users.`);
+    console.log(`\n✓ Sync completed successfully! Inserted ${metricsInserted} metric records.`);
 
     return res.status(200).json({
       success: true,
-      usersSynced,
+      metricsInserted,
       message: 'Sync completed successfully',
     });
 
@@ -270,7 +290,7 @@ module.exports = async function handler(req, res) {
         .update({
           sync_completed_at: new Date().toISOString(),
           status: 'failed',
-          users_synced: usersSynced,
+          users_synced: metricsInserted,
           error_message: error.message,
         })
         .eq('id', syncLogId);
