@@ -94,7 +94,7 @@ async function upsertUser(user) {
       name: `${user.firstName} ${user.lastName}`,
       email: user.email,
       role: user.role,
-      is_active: user.status === 'active',
+      is_active: true, // Default to true, can manually deactivate in Supabase if needed
       updated_at: new Date().toISOString(),
     }, {
       onConflict: 'helpscout_user_id',
