@@ -539,28 +539,37 @@
         startDate = daysAgo.toISOString().split('T')[0];
       }
 
-      // Fetch metrics WITH display filter
-      const { data: metrics, error } = await supabase
+        // Fetch metrics
+        const { data: metrics, error } = await supabase
         .from('helpscout_daily_metrics')
         .select(`
-          *,
-          helpscout_users!inner(name, email, is_active),
-          helpscout_user_display!inner(is_displayed)
+            *,
+            helpscout_users(name, email, is_active)
         `)
         .gte('metric_date', startDate)
         .lte('metric_date', endDate)
-        .eq('helpscout_users.is_active', true)
-        .eq('helpscout_user_display.is_displayed', true);
+        .eq('helpscout_users.is_active', true);
 
-      if (error) {
+        if (error) {
         showError('Error loading data: ' + error.message);
         document.getElementById('loading').style.display = 'none';
         return;
-      }
+        }
+
+        // Get display settings
+        const { data: displaySettings } = await supabase
+        .from('helpscout_user_display')
+        .select('helpscout_user_id, is_displayed')
+        .eq('is_displayed', true);
+
+        const displayedUserIds = new Set(displaySettings?.map(d => d.helpscout_user_id) || []);
+
+        // Filter metrics to only show displayed users
+        const filteredMetrics = metrics.filter(m => displayedUserIds.has(m.helpscout_user_id));
 
       // Aggregate by user
       const userMap = {};
-      metrics.forEach(m => {
+      filteredMetrics.forEach(m => {
         const userId = m.helpscout_user_id;
         if (!userMap[userId]) {
           userMap[userId] = {
