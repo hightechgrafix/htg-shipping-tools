@@ -1231,7 +1231,8 @@
                 if (rush5DayQty > 0) rushFees += await calculateRushFees(5, decorations.length, rush5DayQty);
                 
                 // Calculate additional fees
-                const additionalFees = await calculateAdditionalFees();
+                const additionalFeesResult = await calculateAdditionalFees();
+                const additionalFees = additionalFeesResult.total;
                 
                 // Calculate subtotal before CC fee
                 const subtotal = decorationsTotal + shipping + rushFees + additionalFees;
@@ -1243,7 +1244,7 @@
                 // Calculate grand total
                 const grandTotal = subtotal + ccFee;
                 
-                console.log('Totals:', { printTotal, setupTotal, decorationsTotal, shipping, totalShipping, totalHandling, rushFees, additionalFees, ccFee, grandTotal });
+                console.log('Totals:', { printTotal, setupTotal, decorationsTotal, shipping, totalShipping, totalHandling, rushFees, additionalFees, additionalFeesBreakdown: additionalFeesResult, ccFee, grandTotal });
                 
                 // Update displays
                 updateSummaryDisplay({
@@ -1255,6 +1256,7 @@
                     handlingOnly: totalHandling,
                     rushFees,
                     additionalFees,
+                    additionalFeesBreakdown: additionalFeesResult,
                     ccFee,
                     grandTotal
                 });
@@ -1874,7 +1876,11 @@
             
             total += finishingTotal;
             
-            return total;
+            return {
+                total,
+                methodCharges: methodCharges.breakdown,
+                finishingTotal
+            };
         }
 
         /**
@@ -1929,6 +1935,17 @@
                     // TODO: Break this down into screens, digitizing, DTF setup separately
                     const setupTotalEl = document.getElementById('detail_screens_total');
                     if (setupTotalEl) setupTotalEl.textContent = `$${totals.setupTotal.toFixed(2)}`;
+                }
+                
+                // Update additional fees breakdown
+                if (totals.additionalFeesBreakdown) {
+                    const detailAdditionalEl = document.getElementById('detail_additional_total');
+                    if (detailAdditionalEl) {
+                        const methodTotal = totals.additionalFeesBreakdown.methodCharges.screenPrint + 
+                                          totals.additionalFeesBreakdown.methodCharges.dtf + 
+                                          totals.additionalFeesBreakdown.methodCharges.embroidery;
+                        detailAdditionalEl.textContent = `$${methodTotal.toFixed(2)}`;
+                    }
                 }
                 
                 console.log('Updated summary display:', totals);
