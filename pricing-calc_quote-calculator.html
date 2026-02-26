@@ -1033,6 +1033,22 @@
                             <span class="price-label">Finishing Total</span>
                             <span class="price-value" id="detail_finishing_total">$0.00</span>
                         </div>
+                        <div class="price-line" style="font-size: 13px;">
+                            <span class="price-label">Misc Fees</span>
+                            <span class="price-value" id="detail_misc_fees">$0.00</span>
+                        </div>
+                        <div class="price-line" style="font-size: 13px;">
+                            <span class="price-label">Other Charges</span>
+                            <span class="price-value" id="detail_other_charges">$0.00</span>
+                        </div>
+                        <div class="price-line" style="font-size: 13px;">
+                            <span class="price-label">Private Label</span>
+                            <span class="price-value" id="detail_private_label">$0.00</span>
+                        </div>
+                        <div class="price-line" style="font-size: 13px;">
+                            <span class="price-label">Spoilage Insurance</span>
+                            <span class="price-value" id="detail_spoilage_insurance">$0.00</span>
+                        </div>
                     </div>
 
                     <!-- Shipping & Fees -->
@@ -1279,6 +1295,7 @@
                     rushFees,
                     additionalFees,
                     additionalFeesBreakdown: additionalFeesResult,
+                    spoilageInsurance,
                     ccFee,
                     grandTotal
                 });
@@ -1860,12 +1877,14 @@
             total += methodCharges.total;
             
             // Add misc fees
+            let miscFeesTotal = 0;
             const miscFees = document.querySelectorAll('[id^="misc-fee-"]');
             miscFees.forEach(row => {
                 const qty = parseInt(row.querySelector('.misc-fee-qty')?.value || 0);
                 const price = parseFloat(row.querySelector('.misc-fee-price')?.value || 0);
-                total += (qty * price);
+                miscFeesTotal += (qty * price);
             });
+            total += miscFeesTotal;
             
             // Add finishing fees (from page 7 of pricing guide)
             const fplTeesQty = parseInt(document.getElementById('finish_fpl_tees')?.value || 0);
@@ -1900,6 +1919,7 @@
             
             // Add Other Charges (from Misc Fees & Other Charges section)
             let otherChargesTotal = 0;
+            let privateLabelTotal = 0;
             
             // Separate orders: $0.30 per item
             const separateOrders = parseInt(document.getElementById('separate_orders')?.value || 0);
@@ -1921,7 +1941,7 @@
             const heatPressPatches = parseInt(document.getElementById('heat_press_patches')?.value || 0);
             otherChargesTotal += heatPressPatches * 1.50;
             
-            // Private label
+            // Private label (tracked separately)
             if (document.getElementById('private_label_enable')?.checked) {
                 const spPieces = parseInt(document.getElementById('private_label_sp_pieces')?.value || 0);
                 const spSizes = parseInt(document.getElementById('private_label_sp_sizes')?.value || 0);
@@ -1932,7 +1952,7 @@
                 if (spPieces > 0 && spSizes > 0) {
                     // Setup: $10 per size, min $20
                     const spSetup = Math.max(20, spSizes * 10);
-                    otherChargesTotal += spSetup;
+                    privateLabelTotal += spSetup;
                     
                     // Print: 1-color screen print price from table, min $125
                     try {
@@ -1946,15 +1966,15 @@
                         
                         if (data) {
                             const printCost = Math.max(125, spPieces * data.price);
-                            otherChargesTotal += printCost;
+                            privateLabelTotal += printCost;
                             console.log('Screen print private label:', { spPieces, spSizes, setup: spSetup, printCost });
                         } else {
                             // Fallback if query fails
-                            otherChargesTotal += 125;
+                            privateLabelTotal += 125;
                         }
                     } catch (error) {
                         console.error('Error calculating SP private label:', error);
-                        otherChargesTotal += 125; // Fallback minimum
+                        privateLabelTotal += 125; // Fallback minimum
                     }
                 }
                 
@@ -1962,23 +1982,26 @@
                 if (dtfPieces > 0 && dtfSizes > 0) {
                     // Setup: $10 per size (no minimum)
                     const dtfSetup = dtfSizes * 10;
-                    otherChargesTotal += dtfSetup;
+                    privateLabelTotal += dtfSetup;
                     
                     // Print: $2 each, min $20
                     const dtfPrintCost = Math.max(20, dtfPieces * 2);
-                    otherChargesTotal += dtfPrintCost;
+                    privateLabelTotal += dtfPrintCost;
                     
                     console.log('DTF private label:', { dtfPieces, dtfSizes, setup: dtfSetup, printCost: dtfPrintCost });
                 }
             }
             
             total += otherChargesTotal;
+            total += privateLabelTotal;
             
             return {
                 total,
                 methodCharges: methodCharges.breakdown,
                 finishingTotal,
-                otherChargesTotal
+                miscFeesTotal,
+                otherChargesTotal,
+                privateLabelTotal
             };
         }
 
@@ -2051,7 +2074,21 @@
                                           totals.additionalFeesBreakdown.methodCharges.embroidery;
                         detailAdditionalEl.textContent = `$${methodTotal.toFixed(2)}`;
                     }
+                    
+                    // Update individual breakdown items
+                    const detailMiscFeesEl = document.getElementById('detail_misc_fees');
+                    if (detailMiscFeesEl) detailMiscFeesEl.textContent = `$${(totals.additionalFeesBreakdown.miscFeesTotal || 0).toFixed(2)}`;
+                    
+                    const detailOtherChargesEl = document.getElementById('detail_other_charges');
+                    if (detailOtherChargesEl) detailOtherChargesEl.textContent = `$${(totals.additionalFeesBreakdown.otherChargesTotal || 0).toFixed(2)}`;
+                    
+                    const detailPrivateLabelEl = document.getElementById('detail_private_label');
+                    if (detailPrivateLabelEl) detailPrivateLabelEl.textContent = `$${(totals.additionalFeesBreakdown.privateLabelTotal || 0).toFixed(2)}`;
                 }
+                
+                // Update spoilage insurance
+                const detailSpoilageEl = document.getElementById('detail_spoilage_insurance');
+                if (detailSpoilageEl) detailSpoilageEl.textContent = `$${(totals.spoilageInsurance || 0).toFixed(2)}`;
                 
                 // Update grand total in detailed breakdown
                 const detailGrandTotalEl = document.getElementById('detail_grand_total');
