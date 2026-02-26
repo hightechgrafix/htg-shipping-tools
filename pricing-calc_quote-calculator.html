@@ -358,7 +358,6 @@
             }
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="container">
@@ -1107,14 +1106,19 @@
                 console.log('=== Starting quote calculation ===');
                 
                 // Get order details (matching the actual HTML IDs)
+                const qtyElement = document.getElementById('totalQuantity');
+                console.log('Quantity element:', qtyElement);
+                console.log('Quantity value (raw):', qtyElement?.value);
+                
                 const itemType = document.getElementById('itemType')?.value || 't-shirt';
                 const totalQty = parseInt(document.getElementById('totalQuantity')?.value || 0);
                 const rushDays = document.getElementById('rushDays')?.value;
                 
-                console.log('Order details:', { itemType, totalQty });
+                console.log('Order details:', { itemType, totalQty, totalQtyRaw: qtyElement?.value });
                 
-                if (!totalQty) {
-                    console.log('No quantity, returning 0');
+                if (!totalQty || totalQty === 0) {
+                    console.log('No quantity, returning 0. totalQty =', totalQty);
+                    // Don't show error on initial load
                     return { grandTotal: 0 };
                 }
 
@@ -1700,6 +1704,12 @@
 
         // Calculate total - wired to pricing engine
         function calculateTotal() {
+            // Only calculate if we have a quantity entered
+            const qty = document.getElementById('totalQuantity')?.value;
+            if (!qty || parseInt(qty) === 0) {
+                console.log('Skipping calculation - no quantity entered yet');
+                return;
+            }
             calculateQuotePrice();
         }
 
