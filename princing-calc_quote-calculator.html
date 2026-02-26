@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTG Quote Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 24px;
+        }
+
+        /* Header */
+        .header {
+            grid-column: 1 / -1;
+            background: white;
+            padding: 24px 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .quote-number {
+            background: #f7fafc;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #4a5568;
+            font-weight: 600;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        input, select {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: white;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Decoration Cards */
+        .decoration-card {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .decoration-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .decoration-number {
+            font-size: 18px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .remove-btn {
+            background: #fc8181;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .remove-btn:hover {
+            background: #f56565;
+        }
+
+        .add-decoration-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 16px;
+        }
+
+        .add-decoration-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Pricing Sidebar */
+        .pricing-sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 20px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+
+        .pricing-header {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .price-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f7fafc;
+        }
+
+        .price-label {
+            color: #4a5568;
+            font-size: 15px;
+        }
+
+        .price-value {
+            font-weight: 600;
+            color: #1a202c;
+            font-size: 15px;
+        }
+
+        .total-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 0;
+            margin-top: 16px;
+            border-top: 3px solid #1a202c;
+        }
+
+        .total-label {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .total-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #e74c3c;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Checkbox styling */
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-item label {
+            cursor: pointer;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        /* Loading state */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-sidebar {
+                position: static;
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <div class="logo">H</div>
+                Quote Calculator
+            </h1>
+            <div class="quote-number">Quote #: <span id="quoteNumber">Loading...</span></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Customer Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Customer Information</h2>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="customerName">Customer Name *</label>
+                        <input type="text" id="customerName" placeholder="John Smith" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customerEmail">Email *</label>
+                        <input type="email" id="customerEmail" placeholder="john@company.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customerCompany">Company</label>
+                        <input type="text" id="customerCompany" placeholder="ACME Corp">
+                    </div>
+                    <div class="form-group">
+                        <label for="salesRep">Sales Rep *</label>
+                        <select id="salesRep" required>
+                            <option value="">Select...</option>
+                            <option value="Jennifer">Jennifer</option>
+                            <option value="Mike">Mike</option>
+                            <option value="Sarah">Sarah</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="helpscoutConvo">Helpscout Convo</label>
+                        <input type="text" id="helpscoutConvo" placeholder="Optional">
+                    </div>
+                    <div class="form-group">
+                        <label for="jobNumber">Job Number</label>
+                        <input type="text" id="jobNumber" placeholder="Optional">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Details -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Order Details</h2>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="totalQuantity">Total Quantity *</label>
+                        <input type="number" id="totalQuantity" placeholder="200" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemType">Item Type</label>
+                        <select id="itemType">
+                            <option value="t-shirt">T-Shirt</option>
+                            <option value="hoodie">Hoodie</option>
+                            <option value="polo">Polo</option>
+                            <option value="jacket">Jacket</option>
+                            <option value="hat">Hat</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemWeight">Item Weight (lbs)</label>
+                        <input type="number" id="itemWeight" placeholder="0.5" step="0.01" value="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label for="rushDays">Rush Production</label>
+                        <select id="rushDays">
+                            <option value="">No Rush</option>
+                            <option value="2">2 Days</option>
+                            <option value="3">3 Days</option>
+                            <option value="4">4 Days</option>
+                            <option value="5">5 Days</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Decorations -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Decorations</h2>
+                </div>
+                <div id="decorationsContainer">
+                    <!-- Decorations will be added here dynamically -->
+                </div>
+                <button class="add-decoration-btn" onclick="addDecoration()">
+                    + Add Decoration
+                </button>
+            </div>
+        </div>
+
+        <!-- Pricing Sidebar -->
+        <div class="pricing-sidebar">
+            <div class="pricing-header">Quote Summary</div>
+            
+            <div id="pricingBreakdown">
+                <div class="price-line">
+                    <span class="price-label">Decorations</span>
+                    <span class="price-value" id="decorationsTotal">$0.00</span>
+                </div>
+                <div class="price-line">
+                    <span class="price-label">Shipping</span>
+                    <span class="price-value" id="shippingTotal">$0.00</span>
+                </div>
+                <div class="price-line">
+                    <span class="price-label">Rush Fees</span>
+                    <span class="price-value" id="rushFeesTotal">$0.00</span>
+                </div>
+                <div class="price-line">
+                    <span class="price-label">CC Processing (3%)</span>
+                    <span class="price-value" id="ccFeeTotal">$0.00</span>
+                </div>
+            </div>
+
+            <div class="total-line">
+                <span class="total-label">Total</span>
+                <span class="total-value" id="grandTotal">$0.00</span>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-primary" onclick="saveQuote()">Save Quote</button>
+                <button class="btn-secondary" onclick="generatePDF()">Generate PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        // Initialize Supabase
+        const SUPABASE_URL = "https://sbfslzwnkztmodnlsigq.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Generate random quote number
+        function generateQuoteNumber() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 10; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        // Set quote number on load
+        document.getElementById('quoteNumber').textContent = generateQuoteNumber();
+
+        // Decoration counter
+        let decorationCount = 0;
+
+        // Add decoration function
+        function addDecoration() {
+            decorationCount++;
+            const container = document.getElementById('decorationsContainer');
+            
+            const decorationHTML = `
+                <div class="decoration-card" id="decoration-${decorationCount}">
+                    <div class="decoration-header">
+                        <span class="decoration-number">Decoration ${decorationCount}</span>
+                        <button class="remove-btn" onclick="removeDecoration(${decorationCount})">Remove</button>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Decoration Method *</label>
+                            <select class="decoration-method" data-decoration="${decorationCount}" onchange="updateDecorationFields(${decorationCount})">
+                                <option value="">Select...</option>
+                                <option value="screen_print">Screen Print</option>
+                                <option value="dtf">DTF</option>
+                                <option value="embroidery">Embroidery</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Location *</label>
+                            <select class="decoration-location" data-decoration="${decorationCount}">
+                                <option value="">Select...</option>
+                                <option value="front">Front</option>
+                                <option value="back">Back</option>
+                                <option value="left_chest">Left Chest</option>
+                                <option value="right_chest">Right Chest</option>
+                                <option value="left_sleeve">Left Sleeve</option>
+                                <option value="right_sleeve">Right Sleeve</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Quantity *</label>
+                            <input type="number" class="decoration-quantity" data-decoration="${decorationCount}" min="1" placeholder="200">
+                        </div>
+                    </div>
+                    
+                    <div id="method-specific-${decorationCount}" style="margin-top: 20px;">
+                        <!-- Method-specific fields will appear here -->
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', decorationHTML);
+        }
+
+        // Remove decoration
+        function removeDecoration(id) {
+            const element = document.getElementById(`decoration-${id}`);
+            element.remove();
+            calculateTotal();
+        }
+
+        // Update fields based on decoration method
+        function updateDecorationFields(id) {
+            const method = document.querySelector(`select.decoration-method[data-decoration="${id}"]`).value;
+            const container = document.getElementById(`method-specific-${id}`);
+            
+            if (method === 'screen_print') {
+                container.innerHTML = `
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label># of Colors</label>
+                            <input type="number" class="screen-colors" data-decoration="${id}" min="1" max="8" placeholder="4">
+                        </div>
+                        <div class="form-group">
+                            <label># of Screens</label>
+                            <input type="number" class="screen-screens" data-decoration="${id}" min="1" placeholder="4">
+                        </div>
+                    </div>
+                `;
+            } else if (method === 'dtf') {
+                container.innerHTML = `
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Size (sq inches)</label>
+                            <input type="number" class="dtf-size" data-decoration="${id}" min="1" max="285" placeholder="100">
+                        </div>
+                    </div>
+                `;
+            } else if (method === 'embroidery') {
+                container.innerHTML = `
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Stitch Count</label>
+                            <input type="number" class="emb-stitches" data-decoration="${id}" min="1" placeholder="5000">
+                        </div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = '';
+            }
+        }
+
+        // Calculate total (placeholder)
+        function calculateTotal() {
+            // TODO: Implement actual pricing calculation
+            console.log('Calculating total...');
+        }
+
+        // Save quote
+        async function saveQuote() {
+            alert('Save functionality coming soon!');
+        }
+
+        // Generate PDF
+        function generatePDF() {
+            alert('PDF generation coming soon!');
+        }
+
+        // Add first decoration by default
+        window.addEventListener('DOMContentLoaded', () => {
+            addDecoration();
+        });
+    </script>
+</body>
+</html>
