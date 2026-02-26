@@ -1928,16 +1928,47 @@
                 const dtfPieces = parseInt(document.getElementById('private_label_dtf_pieces')?.value || 0);
                 const dtfSizes = parseInt(document.getElementById('private_label_dtf_sizes')?.value || 0);
                 
-                // Screen print: $10 setup per size + min $20 / 1-color print cost $125
+                // Screen print private label
                 if (spPieces > 0 && spSizes > 0) {
-                    otherChargesTotal += Math.max(20, spSizes * 10); // Setup
-                    otherChargesTotal += 125; // Min print cost
+                    // Setup: $10 per size, min $20
+                    const spSetup = Math.max(20, spSizes * 10);
+                    otherChargesTotal += spSetup;
+                    
+                    // Print: 1-color screen print price from table, min $125
+                    try {
+                        const { data, error } = await supabaseClient
+                            .from('pricing_calc_screen_print_pricing')
+                            .select('price')
+                            .eq('colors', 1)
+                            .lte('quantity_min', spPieces)
+                            .or(`quantity_max.gte.${spPieces},quantity_max.is.null`)
+                            .single();
+                        
+                        if (data) {
+                            const printCost = Math.max(125, spPieces * data.price);
+                            otherChargesTotal += printCost;
+                            console.log('Screen print private label:', { spPieces, spSizes, setup: spSetup, printCost });
+                        } else {
+                            // Fallback if query fails
+                            otherChargesTotal += 125;
+                        }
+                    } catch (error) {
+                        console.error('Error calculating SP private label:', error);
+                        otherChargesTotal += 125; // Fallback minimum
+                    }
                 }
                 
-                // DTF: $10 setup per size + $2 each / min $20
+                // DTF private label
                 if (dtfPieces > 0 && dtfSizes > 0) {
-                    otherChargesTotal += Math.max(20, dtfSizes * 10); // Setup
-                    otherChargesTotal += Math.max(20, dtfPieces * 2); // Print cost
+                    // Setup: $10 per size (no minimum)
+                    const dtfSetup = dtfSizes * 10;
+                    otherChargesTotal += dtfSetup;
+                    
+                    // Print: $2 each, min $20
+                    const dtfPrintCost = Math.max(20, dtfPieces * 2);
+                    otherChargesTotal += dtfPrintCost;
+                    
+                    console.log('DTF private label:', { dtfPieces, dtfSizes, setup: dtfSetup, printCost: dtfPrintCost });
                 }
             }
             
