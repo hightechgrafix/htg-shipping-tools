@@ -2386,8 +2386,35 @@
                 const totals = await calculateQuotePrice();
                 
                 // Use the quote number already displayed in the UI
-                const quoteNumber = document.getElementById('quoteNumber')?.textContent || generateQuoteNumber();
+                let quoteNumber = document.getElementById('quoteNumber')?.textContent || generateQuoteNumber();
                 const now = new Date();
+                
+                // Check if this quote number already exists in database
+                const { data: existingQuote } = await supabaseClient
+                    .from('pricing_calc_quotes')
+                    .select('id, quote_number')
+                    .eq('quote_number', quoteNumber)
+                    .maybeSingle();
+                
+                let saveMode = 'new'; // 'new', 'update', or 'save-as-new'
+                
+                // If quote exists, ask what to do
+                if (existingQuote) {
+                    const choice = confirm(
+                        `Quote ${quoteNumber} already exists in the database.\n\n` +
+                        `Click OK to UPDATE the existing quote.\n` +
+                        `Click Cancel to SAVE AS NEW with a different quote number.`
+                    );
+                    
+                    if (choice) {
+                        saveMode = 'update';
+                    } else {
+                        saveMode = 'save-as-new';
+                        // Generate new quote number
+                        quoteNumber = generateQuoteNumber();
+                        document.getElementById('quoteNumber').textContent = quoteNumber;
+                    }
+                }
                 
                 // Collect customer info
                 const customerName = document.getElementById('customerName')?.value || '';
@@ -2482,19 +2509,45 @@
                 };
                 
                 // Save to Supabase
-                const { data, error } = await supabaseClient
-                    .from('pricing_calc_quotes')
-                    .insert([{
-                        quote_number: quoteNumber,
-                        customer_name: customerName,
-                        customer_email: customerEmail,
-                        customer_company: customerCompany,
-                        sales_rep: salesRep,
-                        quote_data: quoteData,
-                        total_amount: totals.grandTotal,
-                        status: 'draft'
-                    }])
-                    .select();
+                let data, error;
+                
+                if (saveMode === 'update') {
+                    // Update existing quote
+                    const result = await supabaseClient
+                        .from('pricing_calc_quotes')
+                        .update({
+                            customer_name: customerName,
+                            customer_email: customerEmail,
+                            customer_company: customerCompany,
+                            sales_rep: salesRep,
+                            quote_data: quoteData,
+                            total_amount: totals.grandTotal,
+                            updated_at: now.toISOString()
+                        })
+                        .eq('quote_number', quoteNumber)
+                        .select();
+                    
+                    data = result.data;
+                    error = result.error;
+                } else {
+                    // Insert new quote
+                    const result = await supabaseClient
+                        .from('pricing_calc_quotes')
+                        .insert([{
+                            quote_number: quoteNumber,
+                            customer_name: customerName,
+                            customer_email: customerEmail,
+                            customer_company: customerCompany,
+                            sales_rep: salesRep,
+                            quote_data: quoteData,
+                            total_amount: totals.grandTotal,
+                            status: 'draft'
+                        }])
+                        .select();
+                    
+                    data = result.data;
+                    error = result.error;
+                }
                 
                 if (error) {
                     console.error('Error saving quote:', error);
@@ -2503,7 +2556,12 @@
                 }
                 
                 console.log('Quote saved:', data);
-                alert(`Quote saved successfully!\n\nQuote Number: ${quoteNumber}\n\nYou can now generate a PDF or continue editing.`);
+                
+                if (saveMode === 'update') {
+                    alert(`Quote ${quoteNumber} updated successfully!`);
+                } else {
+                    alert(`Quote saved successfully!\n\nQuote Number: ${quoteNumber}\n\nYou can now generate a PDF or continue editing.`);
+                }
                 
             } catch (error) {
                 console.error('Error in saveQuote:', error);
