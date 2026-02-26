@@ -2390,10 +2390,12 @@
                 const quoteNumber = `Q-${year}-${randomNum}`;
                 
                 // Collect customer info
-                const customerName = document.getElementById('customer_name')?.value || '';
-                const customerEmail = document.getElementById('customer_email')?.value || '';
-                const customerCompany = document.getElementById('customer_company')?.value || '';
-                const salesRep = document.getElementById('sales_rep')?.value || '';
+                const customerName = document.getElementById('customerName')?.value || '';
+                const customerEmail = document.getElementById('customerEmail')?.value || '';
+                const customerCompany = document.getElementById('customerCompany')?.value || '';
+                const salesRep = document.getElementById('salesRep')?.value || '';
+                const helpscoutConvo = document.getElementById('helpscoutConvo')?.value || '';
+                const jobNumber = document.getElementById('jobNumber')?.value || '';
                 
                 // Collect all decorations
                 const decorations = [];
@@ -2427,6 +2429,8 @@
                         company: customerCompany
                     },
                     sales_rep: salesRep,
+                    helpscout_convo: helpscoutConvo,
+                    job_number: jobNumber,
                     decorations: decorations,
                     totals: totals,
                     // Store all the additional data
@@ -2457,6 +2461,7 @@
                         quote_number: quoteNumber,
                         customer_name: customerName,
                         customer_email: customerEmail,
+                        customer_company: customerCompany,
                         sales_rep: salesRep,
                         quote_data: quoteData,
                         total_amount: totals.grandTotal,
