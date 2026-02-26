@@ -2433,6 +2433,11 @@
                     job_number: jobNumber,
                     decorations: decorations,
                     totals: totals,
+                    // Order details
+                    order: {
+                        item_type: document.getElementById('itemType')?.value || '',
+                        item_weight: document.getElementById('itemWeight')?.value || ''
+                    },
                     // Store all the additional data
                     shipping_levels: {
                         level_1: parseInt(document.getElementById('level_1_qty')?.value || 0),
@@ -2446,6 +2451,28 @@
                         rush_3_day: parseInt(document.getElementById('rush_3_day')?.value || 0),
                         rush_4_day: parseInt(document.getElementById('rush_4_day')?.value || 0),
                         rush_5_day: parseInt(document.getElementById('rush_5_day')?.value || 0)
+                    },
+                    finishing: {
+                        fpl_tees: parseInt(document.getElementById('finish_fpl_tees')?.value || 0),
+                        fpl_other: parseInt(document.getElementById('finish_fpl_other')?.value || 0),
+                        fold_tees: parseInt(document.getElementById('finish_fold_tees')?.value || 0),
+                        fold_other: parseInt(document.getElementById('finish_fold_other')?.value || 0),
+                        labels_customer: parseInt(document.getElementById('finish_labels_customer')?.value || 0),
+                        labels_htg: parseInt(document.getElementById('finish_labels_htg')?.value || 0)
+                    },
+                    other_charges: {
+                        separate_orders: parseInt(document.getElementById('separate_orders')?.value || 0),
+                        tag_removal_cut: parseInt(document.getElementById('tag_removal_cut')?.value || 0),
+                        tag_removal_tear: parseInt(document.getElementById('tag_removal_tear')?.value || 0),
+                        style_changes: parseInt(document.getElementById('style_changes')?.value || 0),
+                        heat_press_patches: parseInt(document.getElementById('heat_press_patches')?.value || 0)
+                    },
+                    private_label: {
+                        enabled: document.getElementById('private_label_enable')?.checked || false,
+                        sp_pieces: parseInt(document.getElementById('private_label_sp_pieces')?.value || 0),
+                        sp_sizes: parseInt(document.getElementById('private_label_sp_sizes')?.value || 0),
+                        dtf_pieces: parseInt(document.getElementById('private_label_dtf_pieces')?.value || 0),
+                        dtf_sizes: parseInt(document.getElementById('private_label_dtf_sizes')?.value || 0)
                     },
                     programs: {
                         spoilage_insurance: document.getElementById('spoilage_insurance')?.checked || false,
@@ -2527,6 +2554,14 @@
                 const quoteNumberEl = document.getElementById('quoteNumber');
                 if (quoteNumberEl) quoteNumberEl.textContent = quoteNumber;
                 
+                // Populate order details
+                if (quoteData.order) {
+                    const itemType = document.getElementById('itemType');
+                    const itemWeight = document.getElementById('itemWeight');
+                    if (itemType) itemType.value = quoteData.order.item_type || '';
+                    if (itemWeight) itemWeight.value = quoteData.order.item_weight || '';
+                }
+                
                 // Clear existing decorations
                 const decorationList = document.getElementById('decorationsContainer');
                 decorationList.innerHTML = '';
@@ -2553,19 +2588,26 @@
                         
                         // Set method-specific specs
                         if (decoration.method === 'screen_print' && decoration.specs) {
-                            const colorsInput = card.querySelector(`#sp_colors_${decorationId}`);
-                            const screensInput = card.querySelector(`#sp_screens_${decorationId}`);
+                            const colorsInput = card.querySelector(`.screen-colors[data-decoration="${decorationId}"]`);
+                            const screensInput = card.querySelector(`.screen-screens[data-decoration="${decorationId}"]`);
+                            const repeatSelect = card.querySelector(`.screen-repeat[data-decoration="${decorationId}"]`);
+                            const colorChangesInput = card.querySelector(`.screen-color-changes[data-decoration="${decorationId}"]`);
                             
                             if (colorsInput && decoration.specs.colors) colorsInput.value = decoration.specs.colors;
                             if (screensInput && decoration.specs.screens) screensInput.value = decoration.specs.screens;
+                            if (repeatSelect && decoration.specs.repeat) repeatSelect.value = decoration.specs.repeat;
+                            if (colorChangesInput && decoration.specs.colorChanges) colorChangesInput.value = decoration.specs.colorChanges;
                         }
                         else if (decoration.method === 'dtf' && decoration.specs) {
-                            const sizeInput = card.querySelector(`#dtf_size_${decorationId}`);
-                            if (sizeInput && decoration.specs.size_sq_inches) sizeInput.value = decoration.specs.size_sq_inches;
+                            const sizeSelect = card.querySelector(`.dtf-size[data-decoration="${decorationId}"]`);
+                            if (sizeSelect && decoration.specs.size) sizeSelect.value = decoration.specs.size;
                         }
                         else if (decoration.method === 'embroidery' && decoration.specs) {
-                            const stitchesInput = card.querySelector(`#emb_stitches_${decorationId}`);
+                            const stitchesInput = card.querySelector(`.emb-stitches[data-decoration="${decorationId}"]`);
+                            const digitizingSelect = card.querySelector(`.emb-digitizing[data-decoration="${decorationId}"]`);
+                            
                             if (stitchesInput && decoration.specs.stitches) stitchesInput.value = decoration.specs.stitches;
+                            if (digitizingSelect && decoration.specs.digitizing) digitizingSelect.value = decoration.specs.digitizing;
                         }
                     }
                 }
@@ -2607,6 +2649,56 @@
                     if (spoilage) spoilage.checked = quoteData.programs.spoilage_insurance || false;
                     if (printback) printback.checked = quoteData.programs.printback_program || false;
                     if (ccFee) ccFee.checked = quoteData.programs.cc_fee_enabled || false;
+                }
+                
+                // Populate finishing fees
+                if (quoteData.finishing) {
+                    const fplTees = document.getElementById('finish_fpl_tees');
+                    const fplOther = document.getElementById('finish_fpl_other');
+                    const foldTees = document.getElementById('finish_fold_tees');
+                    const foldOther = document.getElementById('finish_fold_other');
+                    const labelsCustomer = document.getElementById('finish_labels_customer');
+                    const labelsHTG = document.getElementById('finish_labels_htg');
+                    
+                    if (fplTees) fplTees.value = quoteData.finishing.fpl_tees || 0;
+                    if (fplOther) fplOther.value = quoteData.finishing.fpl_other || 0;
+                    if (foldTees) foldTees.value = quoteData.finishing.fold_tees || 0;
+                    if (foldOther) foldOther.value = quoteData.finishing.fold_other || 0;
+                    if (labelsCustomer) labelsCustomer.value = quoteData.finishing.labels_customer || 0;
+                    if (labelsHTG) labelsHTG.value = quoteData.finishing.labels_htg || 0;
+                }
+                
+                // Populate other charges
+                if (quoteData.other_charges) {
+                    const sepOrders = document.getElementById('separate_orders');
+                    const tagCut = document.getElementById('tag_removal_cut');
+                    const tagTear = document.getElementById('tag_removal_tear');
+                    const styleChanges = document.getElementById('style_changes');
+                    const heatPress = document.getElementById('heat_press_patches');
+                    
+                    if (sepOrders) sepOrders.value = quoteData.other_charges.separate_orders || 0;
+                    if (tagCut) tagCut.value = quoteData.other_charges.tag_removal_cut || 0;
+                    if (tagTear) tagTear.value = quoteData.other_charges.tag_removal_tear || 0;
+                    if (styleChanges) styleChanges.value = quoteData.other_charges.style_changes || 0;
+                    if (heatPress) heatPress.value = quoteData.other_charges.heat_press_patches || 0;
+                }
+                
+                // Populate private label
+                if (quoteData.private_label) {
+                    const plEnable = document.getElementById('private_label_enable');
+                    const spPieces = document.getElementById('private_label_sp_pieces');
+                    const spSizes = document.getElementById('private_label_sp_sizes');
+                    const dtfPieces = document.getElementById('private_label_dtf_pieces');
+                    const dtfSizes = document.getElementById('private_label_dtf_sizes');
+                    
+                    if (plEnable) {
+                        plEnable.checked = quoteData.private_label.enabled || false;
+                        if (plEnable.checked) togglePrivateLabel(); // Show fields if enabled
+                    }
+                    if (spPieces) spPieces.value = quoteData.private_label.sp_pieces || 0;
+                    if (spSizes) spSizes.value = quoteData.private_label.sp_sizes || 0;
+                    if (dtfPieces) dtfPieces.value = quoteData.private_label.dtf_pieces || 0;
+                    if (dtfSizes) dtfSizes.value = quoteData.private_label.dtf_sizes || 0;
                 }
                 
                 // Recalculate totals - force full calculation
