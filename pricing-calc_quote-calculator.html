@@ -890,6 +890,93 @@
                 <span class="total-value" id="grandTotal">$0.00</span>
             </div>
 
+            <!-- Detailed Breakdown (Collapsible) -->
+            <div style="margin-top: 20px; border-top: 2px solid #e2e8f0; padding-top: 16px;">
+                <div style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f7fafc; border-radius: 6px;" onclick="toggleSection('detailedBreakdown')">
+                    <span style="font-weight: 600; font-size: 14px; color: #4a5568;">View Detailed Breakdown</span>
+                    <span class="toggle-icon" id="detailedBreakdown-icon" style="font-size: 12px;">▼</span>
+                </div>
+                <div id="detailedBreakdown" style="display: none; margin-top: 12px; font-size: 14px;">
+                    <!-- Decoration Method Totals -->
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-weight: 600; color: #4a5568; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #e2e8f0;">Decoration Costs</div>
+                        <div class="price-line" style="font-size: 13px;">
+                            <span class="price-label">Print Total</span>
+                            <span class="price-value" id="detail_print_total">$0.00</span>
+                        </div>
+                        <div class="price-line" style="font-size: 13px;">
+                            <span class="price-label">Screens Total</span>
+                            <span class="price-value" id="detail_screens_total">$0.00</span>
+                        </div>
+                        <div class="price-line" style="font-size: 13px;">
+                            <span class="price-label">Digitizing Total</span>
+                            <span class="price-value" id="detail_digitizing_total">$0.00</span>
+                        </div>
+                        <div class="price-line" style="font-size: 13px;">
+                            <span class="price-label">DTF Setup Total</span>
+                            <span class="price-value" id="detail_dtf_setup_total">$0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Additional Fees -->
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-weight: 600; color: #4a5568; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #e2e8f0;">Additional Fees</div>
+                        <div class="price-line" style="font-size: 13px;">
+                            <span class="price-label">Additional Total</span>
+                            <span class="price-value" id="detail_additional_total">$0.00</span>
+                        </div>
+                        <div class="price-line" style="font-size: 13px;">
+                            <span class="price-label">Finishing Total</span>
+                            <span class="price-value" id="detail_finishing_total">$0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Shipping & Fees -->
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-weight: 600; color: #4a5568; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #e2e8f0;">Shipping & Fees</div>
+                        <div class="price-line" style="font-size: 13px;">
+                            <span class="price-label">Drop Ship Fee</span>
+                            <span class="price-value" id="detail_dropship_fee">$0.00</span>
+                        </div>
+                        <div class="price-line" style="font-size: 13px;">
+                            <span class="price-label">Rush Fees</span>
+                            <span class="price-value" id="detail_rush_fees">$0.00</span>
+                        </div>
+                        <div class="price-line" style="font-size: 13px;">
+                            <span class="price-label">Shipping</span>
+                            <span class="price-value" id="detail_shipping">$0.00</span>
+                        </div>
+                        <div class="price-line" style="font-size: 13px;">
+                            <span class="price-label">Handling</span>
+                            <span class="price-value" id="detail_handling">$0.00</span>
+                        </div>
+                        <div class="price-line" style="font-size: 13px;">
+                            <span class="price-label">CC Fee</span>
+                            <span class="price-value" id="detail_cc_fee">$0.00</span>
+                        </div>
+                        <div class="price-line" style="font-size: 13px;">
+                            <span class="price-label">CC Proc. Fee</span>
+                            <span class="price-value" id="detail_cc_proc_fee">$0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Misc Notes -->
+                    <div style="margin-top: 16px;">
+                        <label style="font-weight: 600; font-size: 13px; color: #4a5568; display: block; margin-bottom: 8px;">Misc Notes:</label>
+                        <textarea id="misc_notes" rows="3" style="width: 100%; padding: 8px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 13px; font-family: inherit;" placeholder="Add any notes here..."></textarea>
+                    </div>
+
+                    <!-- Grand Total in Breakdown -->
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 2px solid #1a202c;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 16px; font-weight: 700; color: #1a202c;">Grand Total</span>
+                            <span style="font-size: 20px; font-weight: 700; color: #e74c3c;" id="detail_grand_total">$0.00</span>
+                        </div>
+                        <div style="font-size: 12px; color: #718096; margin-top: 4px;">With CC Fee</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="action-buttons">
                 <button class="btn-primary" onclick="saveQuote()">Save Quote</button>
                 <button class="btn-secondary" onclick="generatePDF()">Generate PDF</button>
