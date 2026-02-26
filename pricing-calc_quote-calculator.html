@@ -968,7 +968,7 @@
                     <span class="price-value" id="decorationsTotal">$0.00</span>
                 </div>
                 <div class="price-line">
-                    <span class="price-label">Shipping</span>
+                    <span class="price-label">Shipping & Handling</span>
                     <span class="price-value" id="shippingTotal">$0.00</span>
                 </div>
                 <div class="price-line">
@@ -1155,26 +1155,56 @@
                     const result = await calculateShippingForLevel(1, level1Qty, decorationsSubtotalForFreeShip);
                     totalShipping += result.shipping;
                     totalHandling += result.handling;
+                    // Update Level 1 display
+                    document.getElementById('level_1_shipping').textContent = '$' + result.shipping.toFixed(2);
+                    document.getElementById('level_1_handling').textContent = '$' + result.handling.toFixed(2);
+                } else {
+                    document.getElementById('level_1_shipping').textContent = '$0.00';
+                    document.getElementById('level_1_handling').textContent = '$0.00';
                 }
+                
                 if (level2Qty > 0) {
                     const result = await calculateShippingForLevel(2, level2Qty, decorationsSubtotalForFreeShip);
                     totalShipping += result.shipping;
                     totalHandling += result.handling;
+                    document.getElementById('level_2_shipping').textContent = '$' + result.shipping.toFixed(2);
+                    document.getElementById('level_2_handling').textContent = '$' + result.handling.toFixed(2);
+                } else {
+                    document.getElementById('level_2_shipping').textContent = '$0.00';
+                    document.getElementById('level_2_handling').textContent = '$0.00';
                 }
+                
                 if (level3Qty > 0) {
                     const result = await calculateShippingForLevel(3, level3Qty, decorationsSubtotalForFreeShip);
                     totalShipping += result.shipping;
                     totalHandling += result.handling;
+                    document.getElementById('level_3_shipping').textContent = '$' + result.shipping.toFixed(2);
+                    document.getElementById('level_3_handling').textContent = '$' + result.handling.toFixed(2);
+                } else {
+                    document.getElementById('level_3_shipping').textContent = '$0.00';
+                    document.getElementById('level_3_handling').textContent = '$0.00';
                 }
+                
                 if (level4Qty > 0) {
                     const result = await calculateShippingForLevel(4, level4Qty, decorationsSubtotalForFreeShip);
                     totalShipping += result.shipping;
                     totalHandling += result.handling;
+                    document.getElementById('level_4_shipping').textContent = '$' + result.shipping.toFixed(2);
+                    document.getElementById('level_4_handling').textContent = '$' + result.handling.toFixed(2);
+                } else {
+                    document.getElementById('level_4_shipping').textContent = '$0.00';
+                    document.getElementById('level_4_handling').textContent = '$0.00';
                 }
+                
                 if (level5Qty > 0) {
                     const result = await calculateShippingForLevel(5, level5Qty, decorationsSubtotalForFreeShip);
                     totalShipping += result.shipping;
                     totalHandling += result.handling;
+                    document.getElementById('level_5_shipping').textContent = '$' + result.shipping.toFixed(2);
+                    document.getElementById('level_5_handling').textContent = '$' + result.handling.toFixed(2);
+                } else {
+                    document.getElementById('level_5_shipping').textContent = '$0.00';
+                    document.getElementById('level_5_handling').textContent = '$0.00';
                 }
                 
                 const shipping = totalShipping + totalHandling;
@@ -1195,9 +1225,8 @@
                 // Calculate additional fees
                 const additionalFees = calculateAdditionalFees();
                 
-                // Calculate subtotal before CC fee (use shipping.cost not shipping object!)
-                const shippingCost = typeof shipping === 'object' ? shipping.cost : shipping;
-                const subtotal = decorationsTotal + shippingCost + rushFees + additionalFees;
+                // Calculate subtotal before CC fee
+                const subtotal = decorationsTotal + shipping + rushFees + additionalFees;
                 
                 // Calculate CC fee (3% if enabled)
                 const ccFeeEnabled = document.getElementById('cc_fee_toggle')?.checked;
@@ -1206,12 +1235,14 @@
                 // Calculate grand total
                 const grandTotal = subtotal + ccFee;
                 
-                console.log('Totals:', { decorationsTotal, shippingCost, rushFees, additionalFees, ccFee, grandTotal });
+                console.log('Totals:', { decorationsTotal, shipping, totalShipping, totalHandling, rushFees, additionalFees, ccFee, grandTotal });
                 
                 // Update displays
                 updateSummaryDisplay({
                     decorationsTotal,
-                    shipping: shippingCost,
+                    shipping: shipping,
+                    shippingOnly: totalShipping,
+                    handlingOnly: totalHandling,
                     rushFees,
                     additionalFees,
                     ccFee,
@@ -1220,7 +1251,9 @@
                 
                 return {
                     decorationsTotal,
-                    shipping: shippingCost,
+                    shipping: shipping,
+                    shippingOnly: totalShipping,
+                    handlingOnly: totalHandling,
                     rushFees,
                     additionalFees,
                     ccFee,
@@ -1591,6 +1624,14 @@
                 if (rushFeesEl) rushFeesEl.textContent = `$${totals.rushFees.toFixed(2)}`;
                 if (ccFeeEl && totals.ccFee !== undefined) ccFeeEl.textContent = `$${totals.ccFee.toFixed(2)}`;
                 if (grandTotalEl) grandTotalEl.textContent = `$${totals.grandTotal.toFixed(2)}`;
+                
+                // Update detailed breakdown if provided
+                if (totals.shippingOnly !== undefined) {
+                    const detailShippingEl = document.getElementById('detail_shipping');
+                    const detailHandlingEl = document.getElementById('detail_handling');
+                    if (detailShippingEl) detailShippingEl.textContent = `$${totals.shippingOnly.toFixed(2)}`;
+                    if (detailHandlingEl) detailHandlingEl.textContent = `$${totals.handlingOnly.toFixed(2)}`;
+                }
                 
                 console.log('Updated summary display:', totals);
             } catch (error) {
