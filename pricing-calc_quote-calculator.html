@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -101,6 +101,16 @@
             font-size: 20px;
             font-weight: 700;
             color: #1a202c;
+        }
+
+        .toggle-icon {
+            font-size: 14px;
+            color: #667eea;
+            transition: transform 0.3s;
+        }
+
+        .toggle-icon.open {
+            transform: rotate(180deg);
         }
 
         .form-grid {
@@ -449,6 +459,243 @@
                     + Add Decoration
                 </button>
             </div>
+
+            <!-- Screen Print Additional Fees -->
+            <div class="card" id="screenPrintExtras" style="display: none;">
+                <div class="card-header" style="cursor: pointer;" onclick="toggleSection('screenPrintContent')">
+                    <h2 class="card-title">Screen Print Additional Fees</h2>
+                    <span class="toggle-icon" id="screenPrintContent-icon">▼</span>
+                </div>
+                <div id="screenPrintContent" style="display: none;">
+                    <h3 style="font-size: 16px; font-weight: 600; color: #4a5568; margin-bottom: 16px;">Item Modifiers</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Pocket Prints (on or above)</label>
+                            <input type="number" id="sp_pocket_prints" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Hoodies/Sweatshirts</label>
+                            <input type="number" id="sp_hoodies" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Sleeve & Leg</label>
+                            <input type="number" id="sp_sleeve_leg" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Mesh</label>
+                            <input type="number" id="sp_mesh" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Aprons</label>
+                            <input type="number" id="sp_aprons" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Unique Locations</label>
+                            <input type="number" id="sp_unique_locations" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Blankets & Towels</label>
+                            <input type="number" id="sp_blankets_towels" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Bandanas</label>
+                            <input type="number" id="sp_bandanas" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Bags & Bulky Jackets</label>
+                            <input type="number" id="sp_bags_jackets" min="0" placeholder="Quantity" value="0">
+                        </div>
+                    </div>
+
+                    <h3 style="font-size: 16px; font-weight: 600; color: #4a5568; margin: 24px 0 16px;">Misc Charges</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>PMS Matching (# of colors)</label>
+                            <input type="number" id="sp_pms_colors" min="0" placeholder="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Metallic (# locations)</label>
+                            <input type="number" id="sp_metallic" min="0" placeholder="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Reflective Ink (# locations)</label>
+                            <input type="number" id="sp_reflective" min="0" placeholder="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Glitter (# locations)</label>
+                            <input type="number" id="sp_glitter" min="0" placeholder="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Simulated Process</label>
+                            <input type="number" id="sp_simulated" min="0" placeholder="# of designs" value="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DTF Additional Fees -->
+            <div class="card" id="dtfExtras" style="display: none;">
+                <div class="card-header" style="cursor: pointer;" onclick="toggleSection('dtfContent')">
+                    <h2 class="card-title">DTF Additional Fees</h2>
+                    <span class="toggle-icon" id="dtfContent-icon">▼</span>
+                </div>
+                <div id="dtfContent" style="display: none;">
+                    <h3 style="font-size: 16px; font-weight: 600; color: #4a5568; margin-bottom: 16px;">Item Modifiers</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Heavy Jackets/Bulky Items</label>
+                            <input type="number" id="dtf_heavy_jackets" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Backpacks/Zippered Items</label>
+                            <input type="number" id="dtf_backpacks" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Sleeve/Leg</label>
+                            <input type="number" id="dtf_sleeve_leg" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>On or Above Pocket</label>
+                            <input type="number" id="dtf_pocket" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Bags</label>
+                            <input type="number" id="dtf_bags" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Hoodies/Sweatshirts</label>
+                            <input type="number" id="dtf_hoodies" min="0" placeholder="Quantity" value="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Embroidery Additional Fees -->
+            <div class="card" id="embroideryExtras" style="display: none;">
+                <div class="card-header" style="cursor: pointer;" onclick="toggleSection('embroideryContent')">
+                    <h2 class="card-title">Embroidery Additional Fees</h2>
+                    <span class="toggle-icon" id="embroideryContent-icon">▼</span>
+                </div>
+                <div id="embroideryContent" style="display: none;">
+                    <h3 style="font-size: 16px; font-weight: 600; color: #4a5568; margin-bottom: 16px;">Item Modifiers</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Sleeve/Leg</label>
+                            <input type="number" id="emb_sleeve_leg" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Above Pocket</label>
+                            <input type="number" id="emb_above_pocket" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Hoodies/Sweatshirts</label>
+                            <input type="number" id="emb_hoodies" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Heavy Jackets/Bulky Items</label>
+                            <input type="number" id="emb_heavy_jackets" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Backpacks/Blankets/Towels/Aprons</label>
+                            <input type="number" id="emb_backpacks_etc" min="0" placeholder="Quantity" value="0">
+                        </div>
+                    </div>
+
+                    <h3 style="font-size: 16px; font-weight: 600; color: #4a5568; margin: 24px 0 16px;">Misc Charges</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Thread Color Changes</label>
+                            <input type="number" id="emb_thread_changes" min="0" placeholder="# of changes" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Metallic Thread (# locations)</label>
+                            <input type="number" id="emb_metallic_thread" min="0" placeholder="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Sew Outs</label>
+                            <input type="number" id="emb_sew_outs" min="0" placeholder="0" value="0">
+                        </div>
+                    </div>
+
+                    <h3 style="font-size: 16px; font-weight: 600; color: #4a5568; margin: 24px 0 16px;">Personalization</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Personalization Quantity</label>
+                            <input type="number" id="emb_personalization_qty" min="0" placeholder="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Personalization Type</label>
+                            <select id="emb_personalization_type">
+                                <option value="">None</option>
+                                <option value="name">Name Only</option>
+                                <option value="number">Number Only</option>
+                                <option value="combo">Name & Number Combo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shipping -->
+            <div class="card">
+                <div class="card-header" style="cursor: pointer;" onclick="toggleSection('shippingContent')">
+                    <h2 class="card-title">Shipping & Handling</h2>
+                    <span class="toggle-icon" id="shippingContent-icon">▼</span>
+                </div>
+                <div id="shippingContent" style="display: none;">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label># of Shipping Locations</label>
+                            <input type="number" id="shipping_locations" min="1" value="1" placeholder="1">
+                        </div>
+                    </div>
+                    <p style="margin-top: 16px; font-size: 14px; color: #4a5568;">
+                        <strong>Note:</strong> Shipping is calculated automatically based on item weight and quantity. 
+                        Level 1 items (under 0.56 lbs) qualify for free shipping on orders over $100 (up to $200 value).
+                    </p>
+                </div>
+            </div>
+
+            <!-- Rush Fees -->
+            <div class="card">
+                <div class="card-header" style="cursor: pointer;" onclick="toggleSection('rushContent')">
+                    <h2 class="card-title">Rush Production</h2>
+                    <span class="toggle-icon" id="rushContent-icon">▼</span>
+                </div>
+                <div id="rushContent" style="display: none;">
+                    <p style="margin-bottom: 16px; font-size: 14px; color: #4a5568;">
+                        Rush production is already selected in Order Details above. Rush fees are calculated automatically.
+                    </p>
+                    <p style="font-size: 14px; color: #718096;">
+                        <strong>Note:</strong> Rush fees start after proof approval & payment, not order entry date. 
+                        Not all orders can be rushed - confirm capacity with your sales rep.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Programs -->
+            <div class="card">
+                <div class="card-header" style="cursor: pointer;" onclick="toggleSection('programsContent')">
+                    <h2 class="card-title">Additional Programs</h2>
+                    <span class="toggle-icon" id="programsContent-icon">▼</span>
+                </div>
+                <div id="programsContent" style="display: none;">
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="spoilage_insurance">
+                            <label for="spoilage_insurance">Spoilage Insurance ($25 per 1,000 items - Screen Print only)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="printback_program">
+                            <label for="printback_program">HTG Printback Program (Screen Print only)</label>
+                        </div>
+                    </div>
+                    <p style="margin-top: 16px; font-size: 14px; color: #4a5568;">
+                        <strong>Spoilage Insurance:</strong> Optional coverage for print and setup costs only (not blanks). 
+                        Non-refundable even if no spoilage occurs.
+                    </p>
+                </div>
+            </div>
         </div>
 
         <!-- Pricing Sidebar -->
@@ -510,6 +757,42 @@
 
         // Decoration counter
         let decorationCount = 0;
+        let activeMethods = new Set();
+
+        // Toggle collapsible sections
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId);
+            const icon = document.getElementById(sectionId + '-icon');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.classList.add('open');
+            } else {
+                content.style.display = 'none';
+                icon.classList.remove('open');
+            }
+        }
+
+        // Update visible additional fee sections based on decoration methods
+        function updateAdditionalFeeSections() {
+            // Check which methods are in use
+            const methods = document.querySelectorAll('.decoration-method');
+            activeMethods.clear();
+            
+            methods.forEach(select => {
+                if (select.value) {
+                    activeMethods.add(select.value);
+                }
+            });
+
+            // Show/hide sections
+            document.getElementById('screenPrintExtras').style.display = 
+                activeMethods.has('screen_print') ? 'block' : 'none';
+            document.getElementById('dtfExtras').style.display = 
+                activeMethods.has('dtf') ? 'block' : 'none';
+            document.getElementById('embroideryExtras').style.display = 
+                activeMethods.has('embroidery') ? 'block' : 'none';
+        }
 
         // Add decoration function
         function addDecoration() {
@@ -606,6 +889,9 @@
             } else {
                 container.innerHTML = '';
             }
+
+            // Update which additional fee sections should be visible
+            updateAdditionalFeeSections();
         }
 
         // Calculate total (placeholder)
