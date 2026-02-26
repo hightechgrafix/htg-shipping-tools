@@ -1677,7 +1677,8 @@
                 screenPrint: 0,
                 dtf: 0,
                 embroidery: 0,
-                details: []
+                details: [],
+                lineItems: [] // For PDF generation
             };
             
             // Check which methods are active
@@ -1721,6 +1722,12 @@
                             total += cost;
                             breakdown.screenPrint += cost;
                             breakdown.details.push({ type: data.description || chargeType, cost, qty });
+                            breakdown.lineItems.push({
+                                description: data.description || chargeType,
+                                quantity: qty,
+                                priceEach: data.price,
+                                total: cost
+                            });
                         } else if (error) {
                             console.error('Error fetching charge:', chargeType, error);
                         }
@@ -2001,7 +2008,34 @@
                 finishingTotal,
                 miscFeesTotal,
                 otherChargesTotal,
-                privateLabelTotal
+                privateLabelTotal,
+                // Store details for PDF generation
+                lineItemsData: {
+                    methodCharges: methodCharges.breakdown.lineItems || [],
+                    finishing: {
+                        fplTees: { qty: parseInt(document.getElementById('finish_fpl_tees')?.value || 0), price: 0.50 },
+                        fplOther: { qty: parseInt(document.getElementById('finish_fpl_other')?.value || 0), price: 0.60 },
+                        foldTees: { qty: parseInt(document.getElementById('finish_fold_tees')?.value || 0), price: 0.30 },
+                        foldOther: { qty: parseInt(document.getElementById('finish_fold_other')?.value || 0), price: 0.40 },
+                        labelsCustomer: { qty: parseInt(document.getElementById('finish_labels_customer')?.value || 0), price: 0.15 },
+                        labelsHTG: { qty: parseInt(document.getElementById('finish_labels_htg')?.value || 0), price: 0.25 }
+                    },
+                    otherCharges: {
+                        separateOrders: { qty: parseInt(document.getElementById('separate_orders')?.value || 0), price: 0.30 },
+                        tagCut: { qty: parseInt(document.getElementById('tag_removal_cut')?.value || 0), price: 0.35 },
+                        tagTear: { qty: parseInt(document.getElementById('tag_removal_tear')?.value || 0), price: 0.15 },
+                        styleChanges: { qty: parseInt(document.getElementById('style_changes')?.value || 0), price: 1.50 },
+                        heatPress: { qty: parseInt(document.getElementById('heat_press_patches')?.value || 0), price: 1.50 }
+                    },
+                    privateLabel: {
+                        spEnabled: document.getElementById('private_label_enable')?.checked && parseInt(document.getElementById('private_label_sp_pieces')?.value || 0) > 0,
+                        spPieces: parseInt(document.getElementById('private_label_sp_pieces')?.value || 0),
+                        spSizes: parseInt(document.getElementById('private_label_sp_sizes')?.value || 0),
+                        dtfEnabled: document.getElementById('private_label_enable')?.checked && parseInt(document.getElementById('private_label_dtf_pieces')?.value || 0) > 0,
+                        dtfPieces: parseInt(document.getElementById('private_label_dtf_pieces')?.value || 0),
+                        dtfSizes: parseInt(document.getElementById('private_label_dtf_sizes')?.value || 0)
+                    }
+                }
             };
         }
 
