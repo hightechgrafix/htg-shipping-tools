@@ -1154,11 +1154,48 @@
                     updateDecorationPricing(decorationId, pricing);
                 }
 
-                console.log('Decorations total:', decorationsTotal);
-
-                // Calculate shipping
-                const shipping = await calculateShipping(totalQty, itemType);
+                // Calculate shipping from manual level inputs
+                let totalShipping = 0;
+                let totalHandling = 0;
+                const decorationsSubtotalForFreeShip = decorationsTotal; // Used for free shipping check
                 
+                // Get quantities for each level
+                const level1Qty = parseInt(document.getElementById('level_1_qty')?.value || 0);
+                const level2Qty = parseInt(document.getElementById('level_2_qty')?.value || 0);
+                const level3Qty = parseInt(document.getElementById('level_3_qty')?.value || 0);
+                const level4Qty = parseInt(document.getElementById('level_4_qty')?.value || 0);
+                const level5Qty = parseInt(document.getElementById('level_5_qty')?.value || 0);
+                
+                // Calculate shipping for each level that has quantity
+                if (level1Qty > 0) {
+                    const result = await calculateShippingForLevel(1, level1Qty, decorationsSubtotalForFreeShip);
+                    totalShipping += result.shipping;
+                    totalHandling += result.handling;
+                }
+                if (level2Qty > 0) {
+                    const result = await calculateShippingForLevel(2, level2Qty, decorationsSubtotalForFreeShip);
+                    totalShipping += result.shipping;
+                    totalHandling += result.handling;
+                }
+                if (level3Qty > 0) {
+                    const result = await calculateShippingForLevel(3, level3Qty, decorationsSubtotalForFreeShip);
+                    totalShipping += result.shipping;
+                    totalHandling += result.handling;
+                }
+                if (level4Qty > 0) {
+                    const result = await calculateShippingForLevel(4, level4Qty, decorationsSubtotalForFreeShip);
+                    totalShipping += result.shipping;
+                    totalHandling += result.handling;
+                }
+                if (level5Qty > 0) {
+                    const result = await calculateShippingForLevel(5, level5Qty, decorationsSubtotalForFreeShip);
+                    totalShipping += result.shipping;
+                    totalHandling += result.handling;
+                }
+                
+                const shipping = totalShipping + totalHandling;
+                
+                console.log('Shipping calculation:', { totalShipping, totalHandling, shipping });
                 // Calculate rush fees - check all rush day fields
                 let rushFees = 0;
                 const rush2DayQty = parseInt(document.getElementById('rush_2_day')?.value || 0);
@@ -1174,8 +1211,9 @@
                 // Calculate additional fees
                 const additionalFees = calculateAdditionalFees();
                 
-                // Calculate subtotal before CC fee
-                const subtotal = decorationsTotal + shipping + rushFees + additionalFees;
+                // Calculate subtotal before CC fee (use shipping.cost not shipping object!)
+                const shippingCost = typeof shipping === 'object' ? shipping.cost : shipping;
+                const subtotal = decorationsTotal + shippingCost + rushFees + additionalFees;
                 
                 // Calculate CC fee (3% if enabled)
                 const ccFeeEnabled = document.getElementById('cc_fee_toggle')?.checked;
@@ -1184,12 +1222,12 @@
                 // Calculate grand total
                 const grandTotal = subtotal + ccFee;
                 
-                console.log('Totals:', { decorationsTotal, shipping, rushFees, additionalFees, ccFee, grandTotal });
+                console.log('Totals:', { decorationsTotal, shippingCost, rushFees, additionalFees, ccFee, grandTotal });
                 
                 // Update displays
                 updateSummaryDisplay({
                     decorationsTotal,
-                    shipping,
+                    shipping: shippingCost,
                     rushFees,
                     additionalFees,
                     ccFee,
@@ -1198,7 +1236,7 @@
                 
                 return {
                     decorationsTotal,
-                    shipping,
+                    shipping: shippingCost,
                     rushFees,
                     additionalFees,
                     ccFee,
@@ -1344,6 +1382,45 @@
         /**
          * Calculate shipping based on quantity and item type
          */
+        /**
+         * Calculate shipping cost for a specific level
+         */
+        async function calculateShippingForLevel(level, quantity, decorationsTotal) {
+            try {
+                // Get shipping rates from database for this level
+                const { data, error } = await supabaseClient
+                    .from('pricing_calc_shipping_pricing')
+                    .select('*')
+                    .eq('level', level)
+                    .single();
+                
+                if (error) {
+                    console.error('Shipping lookup error:', error);
+                    return { shipping: 0, handling: 0 };
+                }
+                
+                let shippingCost = data.shipping_min + (data.shipping_per_item * quantity);
+                const handlingCost = data.handling_min + (data.handling_per_item * quantity);
+                
+                // Free shipping for Level 1, orders over $100 (up to $200 discount)
+                let freeShippingApplied = false;
+                if (level === 1 && decorationsTotal >= 100) {
+                    const discount = Math.min(200, shippingCost);
+                    shippingCost -= discount;
+                    freeShippingApplied = true;
+                }
+                
+                return {
+                    shipping: shippingCost,
+                    handling: handlingCost,
+                    freeShippingApplied: freeShippingApplied
+                };
+            } catch (error) {
+                console.error('Error calculating shipping:', error);
+                return { shipping: 0, handling: 0 };
+            }
+        }
+
         async function calculateShipping(quantity, itemType) {
             try {
                 // Get item weight (simplified - you may need a lookup table)
@@ -1489,20 +1566,33 @@
          * Update summary display with totals
          */
         function updateSummaryDisplay(totals) {
-            // Update main summary (camelCase IDs)
-            const decorationsEl = document.getElementById('decorationsTotal');
-            const shippingEl = document.getElementById('shippingTotal');
-            const rushFeesEl = document.getElementById('rushFeesTotal');
-            const ccFeeEl = document.getElementById('ccFeeTotal');
-            const grandTotalEl = document.getElementById('grandTotal');
-            
-            if (decorationsEl) decorationsEl.textContent = `$${totals.decorationsTotal.toFixed(2)}`;
-            if (shippingEl) shippingEl.textContent = `$${totals.shipping.toFixed(2)}`;
-            if (rushFeesEl) rushFeesEl.textContent = `$${totals.rushFees.toFixed(2)}`;
-            if (ccFeeEl) ccFeeEl.textContent = `$${totals.ccFee.toFixed(2)}`;
-            if (grandTotalEl) grandTotalEl.textContent = `$${totals.grandTotal.toFixed(2)}`;
-            
-            console.log('Updated summary display:', totals);
+            try {
+                // Update main summary (camelCase IDs)
+                const decorationsEl = document.getElementById('decorationsTotal');
+                const shippingEl = document.getElementById('shippingTotal');
+                const rushFeesEl = document.getElementById('rushFeesTotal');
+                const ccFeeEl = document.getElementById('ccFeeTotal');
+                const grandTotalEl = document.getElementById('grandTotal');
+                
+                console.log('Element check:', {
+                    decorationsEl: decorationsEl ? 'found' : 'NULL',
+                    shippingEl: shippingEl ? 'found' : 'NULL',
+                    rushFeesEl: rushFeesEl ? 'found' : 'NULL',
+                    ccFeeEl: ccFeeEl ? 'found' : 'NULL',
+                    grandTotalEl: grandTotalEl ? 'found' : 'NULL'
+                });
+                
+                if (decorationsEl) decorationsEl.textContent = `$${totals.decorationsTotal.toFixed(2)}`;
+                if (shippingEl) shippingEl.textContent = `$${totals.shipping.toFixed(2)}`;
+                if (rushFeesEl) rushFeesEl.textContent = `$${totals.rushFees.toFixed(2)}`;
+                if (ccFeeEl && totals.ccFee !== undefined) ccFeeEl.textContent = `$${totals.ccFee.toFixed(2)}`;
+                if (grandTotalEl) grandTotalEl.textContent = `$${totals.grandTotal.toFixed(2)}`;
+                
+                console.log('Updated summary display:', totals);
+            } catch (error) {
+                console.error('Error in updateSummaryDisplay:', error);
+                console.error('Totals object:', totals);
+            }
         }
 
         /**
@@ -1730,6 +1820,27 @@
                 console.log('Skipping calculation - no quantity entered yet');
                 return;
             }
+            
+            // Check if we have at least one decoration with all required fields
+            const decorations = document.querySelectorAll('.decoration-card');
+            let hasValidDecoration = false;
+            
+            for (const decoration of decorations) {
+                const method = decoration.querySelector('.decoration-method')?.value;
+                const location = decoration.querySelector('.decoration-location')?.value;
+                const quantity = decoration.querySelector('.decoration-quantity')?.value;
+                
+                if (method && location && quantity && parseInt(quantity) > 0) {
+                    hasValidDecoration = true;
+                    break;
+                }
+            }
+            
+            if (!hasValidDecoration) {
+                console.log('Skipping calculation - no complete decorations yet');
+                return;
+            }
+            
             calculateQuotePrice();
         }
 
