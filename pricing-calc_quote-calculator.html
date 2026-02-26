@@ -1102,6 +1102,7 @@
 
             <div class="action-buttons">
                 <button class="btn-primary" onclick="saveQuote()">Save Quote</button>
+                <button class="btn-secondary" onclick="loadQuote()">Load Quote</button>
                 <button class="btn-secondary" onclick="generatePDF()">Generate PDF</button>
             </div>
         </div>
@@ -2480,6 +2481,114 @@
             } catch (error) {
                 console.error('Error in saveQuote:', error);
                 alert('Error saving quote: ' + error.message);
+            }
+        }
+
+        // Load quote from database
+        async function loadQuote() {
+            try {
+                // Prompt for quote number
+                const quoteNumber = prompt('Enter Quote Number:');
+                if (!quoteNumber) return;
+                
+                // Fetch from Supabase
+                const { data, error } = await supabaseClient
+                    .from('pricing_calc_quotes')
+                    .select('*')
+                    .eq('quote_number', quoteNumber.trim())
+                    .single();
+                
+                if (error || !data) {
+                    alert('Quote not found: ' + (error?.message || 'No matching quote'));
+                    return;
+                }
+                
+                console.log('Loaded quote:', data);
+                
+                // Parse the quote data
+                const quoteData = data.quote_data;
+                
+                // Populate customer info
+                document.getElementById('customerName').value = quoteData.customer?.name || '';
+                document.getElementById('customerEmail').value = quoteData.customer?.email || '';
+                document.getElementById('customerCompany').value = quoteData.customer?.company || '';
+                document.getElementById('salesRep').value = quoteData.sales_rep || '';
+                document.getElementById('helpscoutConvo').value = quoteData.helpscout_convo || '';
+                document.getElementById('jobNumber').value = quoteData.job_number || '';
+                
+                // Set quote number display
+                document.getElementById('quoteNumber').textContent = quoteNumber;
+                
+                // Clear existing decorations
+                const decorationList = document.getElementById('decorationList');
+                decorationList.innerHTML = '';
+                decorationCount = 0;
+                
+                // Rebuild decorations
+                if (quoteData.decorations && quoteData.decorations.length > 0) {
+                    for (const decoration of quoteData.decorations) {
+                        addDecoration();
+                        
+                        const decorationId = decorationCount;
+                        const card = document.getElementById(`decoration-${decorationId}`);
+                        
+                        // Set basic fields
+                        card.querySelector('.decoration-method').value = decoration.method;
+                        card.querySelector('.decoration-location').value = decoration.location;
+                        card.querySelector('.decoration-quantity').value = decoration.quantity;
+                        
+                        // Trigger method change to show correct spec fields
+                        updateDecorationFields(decorationId);
+                        
+                        // Wait for fields to render
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        
+                        // Set method-specific specs
+                        if (decoration.method === 'screen_print' && decoration.specs) {
+                            if (decoration.specs.colors) card.querySelector(`#sp_colors_${decorationId}`).value = decoration.specs.colors;
+                            if (decoration.specs.screens) card.querySelector(`#sp_screens_${decorationId}`).value = decoration.specs.screens;
+                        }
+                        else if (decoration.method === 'dtf' && decoration.specs) {
+                            if (decoration.specs.size_sq_inches) card.querySelector(`#dtf_size_${decorationId}`).value = decoration.specs.size_sq_inches;
+                        }
+                        else if (decoration.method === 'embroidery' && decoration.specs) {
+                            if (decoration.specs.stitches) card.querySelector(`#emb_stitches_${decorationId}`).value = decoration.specs.stitches;
+                        }
+                    }
+                }
+                
+                // Populate shipping levels
+                if (quoteData.shipping_levels) {
+                    document.getElementById('level_1_qty').value = quoteData.shipping_levels.level_1 || 0;
+                    document.getElementById('level_2_qty').value = quoteData.shipping_levels.level_2 || 0;
+                    document.getElementById('level_3_qty').value = quoteData.shipping_levels.level_3 || 0;
+                    document.getElementById('level_4_qty').value = quoteData.shipping_levels.level_4 || 0;
+                    document.getElementById('level_5_qty').value = quoteData.shipping_levels.level_5 || 0;
+                }
+                
+                // Populate rush
+                if (quoteData.rush) {
+                    document.getElementById('rush_2_day').value = quoteData.rush.rush_2_day || 0;
+                    document.getElementById('rush_3_day').value = quoteData.rush.rush_3_day || 0;
+                    document.getElementById('rush_4_day').value = quoteData.rush.rush_4_day || 0;
+                    document.getElementById('rush_5_day').value = quoteData.rush.rush_5_day || 0;
+                }
+                
+                // Populate programs
+                if (quoteData.programs) {
+                    document.getElementById('spoilage_insurance').checked = quoteData.programs.spoilage_insurance || false;
+                    document.getElementById('printback_program').checked = quoteData.programs.printback_program || false;
+                    document.getElementById('cc_fee_toggle').checked = quoteData.programs.cc_fee_enabled || false;
+                }
+                
+                // Recalculate totals
+                await calculateTotal();
+                
+                alert(`Quote ${quoteNumber} loaded successfully!`);
+                
+            } catch (error) {
+                console.error('Error loading quote:', error);
+                alert('Error loading quote: ' + error.message);
             }
         }
 
