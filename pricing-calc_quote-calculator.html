@@ -1652,7 +1652,7 @@
                 // Item modifiers (per location per piece)
                 const sp_charges = {
                     'pocket_print': parseInt(document.getElementById('sp_pocket_prints')?.value || 0),
-                    'hoodie': parseInt(document.getElementById('sp_hoodies')?.value || 0),
+                    'hoodies': parseInt(document.getElementById('sp_hoodies')?.value || 0),
                     'sleeve': parseInt(document.getElementById('sp_sleeve_leg')?.value || 0),
                     'mesh': parseInt(document.getElementById('sp_mesh')?.value || 0),
                     'aprons': parseInt(document.getElementById('sp_aprons')?.value || 0),
@@ -1664,19 +1664,24 @@
                 
                 for (const [chargeType, qty] of Object.entries(sp_charges)) {
                     if (qty > 0) {
+                        console.log('Looking for charge_type:', chargeType, 'qty:', qty);
                         const { data, error } = await supabaseClient
                             .from('pricing_calc_additional_charges')
-                            .select('price, description')
+                            .select('price, description, charge_type')
                             .eq('charge_type', chargeType)
                             .or('decoration_method.eq.screen_print,decoration_method.is.null')
                             .eq('active', true)
                             .maybeSingle();
+                        
+                        console.log('Query result:', { data, error });
                         
                         if (data) {
                             const cost = data.price * qty;
                             total += cost;
                             breakdown.screenPrint += cost;
                             breakdown.details.push({ type: data.description || chargeType, cost, qty });
+                        } else if (error) {
+                            console.error('Error fetching charge:', chargeType, error);
                         }
                     }
                 }
