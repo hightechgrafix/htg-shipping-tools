@@ -1290,6 +1290,12 @@
          */
         async function getScreenPrintPrice(quantity, colors) {
             try {
+                // Validate inputs
+                if (!colors || !quantity) {
+                    console.log('Missing colors or quantity for screen print pricing');
+                    return 0;
+                }
+                
                 const { data, error } = await supabaseClient
                     .from('pricing_calc_screen_print_pricing')
                     .select('price')
@@ -1301,7 +1307,7 @@
                 if (error) throw error;
                 return parseFloat(data?.price || 0);
             } catch (error) {
-                console.error('Error fetching screen print price:', error);
+                console.error('Error fetching screen print price:', error, {quantity, colors});
                 return 0;
             }
         }
@@ -1399,15 +1405,29 @@
                     return { shipping: 0, handling: 0 };
                 }
                 
-                let shippingCost = data.shipping_min + (data.shipping_per_item * quantity);
-                const handlingCost = data.handling_min + (data.handling_per_item * quantity);
+                // Shipping & Handling use MAX(minimum, quantity × per_item)
+                // NOT minimum + (quantity × per_item)
+                const shippingPerItemTotal = parseFloat(data.shipping_per_item) * quantity;
+                let shippingCost = Math.max(parseFloat(data.shipping_min), shippingPerItemTotal);
                 
-                // Free shipping for Level 1, orders over $100 (up to $200 discount)
+                const handlingPerItemTotal = parseFloat(data.handling_per_item) * quantity;
+                const handlingCost = Math.max(parseFloat(data.handling_min), handlingPerItemTotal);
+                
+                // Free shipping ONLY for Level 1, orders over $100
+                // Deduct up to $200 from shipping cost (not handling)
                 let freeShippingApplied = false;
                 if (level === 1 && decorationsTotal >= 100) {
                     const discount = Math.min(200, shippingCost);
                     shippingCost -= discount;
                     freeShippingApplied = true;
+                    
+                    console.log('Level 1 free shipping applied:', {
+                        originalShipping: shippingCost + discount,
+                        discount: discount,
+                        finalShipping: shippingCost,
+                        handling: handlingCost,
+                        decorationsTotal: decorationsTotal
+                    });
                 }
                 
                 return {
