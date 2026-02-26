@@ -636,6 +636,88 @@
                 </div>
             </div>
 
+            <!-- Finishing Fees -->
+            <div class="card">
+                <div class="card-header" style="cursor: pointer;" onclick="toggleSection('finishingContent')">
+                    <h2 class="card-title">Finishing Fees</h2>
+                    <span class="toggle-icon" id="finishingContent-icon">▼</span>
+                </div>
+                <div id="finishingContent" style="display: none;">
+                    <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px;">
+                        <!-- Folding/Poly/Labels - Short Sleeve Tees -->
+                        <div>
+                            <div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">Folding / Poly / Labels</div>
+                            <div style="font-size: 12px; color: #718096; margin-bottom: 8px;">Short Sleeve Tees</div>
+                            <input type="number" id="finish_fpl_tees" min="0" placeholder="0" value="0" 
+                                   style="width: 100%; padding: 8px; font-size: 14px;" onchange="calculateFinishingTotals()">
+                            <div style="margin-top: 8px; font-size: 14px; color: #4a5568; font-weight: 600;">
+                                <span id="finish_fpl_tees_total">$0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Folding/Poly/Labels - Other Apparel -->
+                        <div>
+                            <div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">Folding / Poly / Labels</div>
+                            <div style="font-size: 12px; color: #718096; margin-bottom: 8px;">Other Apparel Items</div>
+                            <input type="number" id="finish_fpl_other" min="0" placeholder="0" value="0" 
+                                   style="width: 100%; padding: 8px; font-size: 14px;" onchange="calculateFinishingTotals()">
+                            <div style="margin-top: 8px; font-size: 14px; color: #4a5568; font-weight: 600;">
+                                <span id="finish_fpl_other_total">$0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Folding Only - Short Sleeve Tees -->
+                        <div>
+                            <div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">Folding Only</div>
+                            <div style="font-size: 12px; color: #718096; margin-bottom: 8px;">Short Sleeve Tees</div>
+                            <input type="number" id="finish_fold_tees" min="0" placeholder="0" value="0" 
+                                   style="width: 100%; padding: 8px; font-size: 14px;" onchange="calculateFinishingTotals()">
+                            <div style="margin-top: 8px; font-size: 14px; color: #4a5568; font-weight: 600;">
+                                <span id="finish_fold_tees_total">$0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Folding Only - Other Apparel -->
+                        <div>
+                            <div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">Folding Only</div>
+                            <div style="font-size: 12px; color: #718096; margin-bottom: 8px;">Other Apparel Items</div>
+                            <input type="number" id="finish_fold_other" min="0" placeholder="0" value="0" 
+                                   style="width: 100%; padding: 8px; font-size: 14px;" onchange="calculateFinishingTotals()">
+                            <div style="margin-top: 8px; font-size: 14px; color: #4a5568; font-weight: 600;">
+                                <span id="finish_fold_other_total">$0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Labels - Customer Supplied -->
+                        <div>
+                            <div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">Labels</div>
+                            <div style="font-size: 12px; color: #718096; margin-bottom: 8px;">Customer Supplied</div>
+                            <input type="number" id="finish_labels_customer" min="0" placeholder="0" value="0" 
+                                   style="width: 100%; padding: 8px; font-size: 14px;" onchange="calculateFinishingTotals()">
+                            <div style="margin-top: 8px; font-size: 14px; color: #4a5568; font-weight: 600;">
+                                <span id="finish_labels_customer_total">$0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Labels - HTG Supplied -->
+                        <div>
+                            <div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">Labels</div>
+                            <div style="font-size: 12px; color: #718096; margin-bottom: 8px;">HTG Supplied</div>
+                            <input type="number" id="finish_labels_htg" min="0" placeholder="0" value="0" 
+                                   style="width: 100%; padding: 8px; font-size: 14px;" onchange="calculateFinishingTotals()">
+                            <div style="margin-top: 8px; font-size: 14px; color: #4a5568; font-weight: 600;">
+                                <span id="finish_labels_htg_total">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p style="margin-top: 16px; font-size: 13px; color: #718096;">
+                        <strong>Note:</strong> Embroidery folds every item individually at no extra charge. 
+                        Finishing adds up to 3 business days depending on order size.
+                    </p>
+                </div>
+            </div>
+
             <!-- Shipping & Handling -->
             <div class="card">
                 <div class="card-header" style="cursor: pointer;" onclick="toggleSection('shippingContent')">
@@ -887,6 +969,12 @@
             // TODO: Wire up to actual pricing engine
             // For now, just shows $0.00
             console.log('Calculating shipping totals...');
+        }
+
+        // Calculate finishing totals (placeholder for now)
+        function calculateFinishingTotals() {
+            // TODO: Wire up to actual pricing engine
+            console.log('Calculating finishing totals...');
         }
 
         // Add decoration function
