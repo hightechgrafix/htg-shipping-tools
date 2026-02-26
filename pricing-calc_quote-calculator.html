@@ -908,7 +908,7 @@
                         </div>
                     </div>
                     <div id="privateLabelFields" style="display: none;">
-                        <div class="form-grid">
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
                             <div class="form-group">
                                 <label>Screen Print - Pieces Total</label>
                                 <input type="number" id="private_label_sp_pieces" min="0" placeholder="0" value="0">
@@ -1161,10 +1161,10 @@
                             <label>Location *</label>
                             <select class="decoration-location" data-decoration="${decorationCount}">
                                 <option value="">Select...</option>
-                                <option value="full_front">Full Front</option>
-                                <option value="full_back">Full Back</option>
                                 <option value="left_chest">Left Chest</option>
                                 <option value="right_chest">Right Chest</option>
+                                <option value="full_front">Full Front</option>
+                                <option value="full_back">Full Back</option>
                                 <option value="left_sleeve">Left Sleeve</option>
                                 <option value="right_sleeve">Right Sleeve</option>
                                 <option value="left_hip">Left Hip</option>
