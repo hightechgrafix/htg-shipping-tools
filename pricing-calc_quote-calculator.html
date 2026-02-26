@@ -954,12 +954,23 @@
                 container.innerHTML = `
                     <div class="form-grid">
                         <div class="form-group">
-                            <label># of Colors</label>
+                            <label># Colors</label>
                             <input type="number" class="screen-colors" data-decoration="${id}" min="1" max="8" placeholder="4">
                         </div>
                         <div class="form-group">
-                            <label># of Screens</label>
+                            <label># Screens (Adlt / Yth)</label>
                             <input type="number" class="screen-screens" data-decoration="${id}" min="1" placeholder="4">
+                        </div>
+                        <div class="form-group">
+                            <label>Repeat Design?</label>
+                            <select class="screen-repeat" data-decoration="${id}">
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Color Changes</label>
+                            <input type="number" class="screen-color-changes" data-decoration="${id}" min="0" placeholder="0" value="0">
                         </div>
                     </div>
                 `;
@@ -967,8 +978,12 @@
                 container.innerHTML = `
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Size (sq inches)</label>
-                            <input type="number" class="dtf-size" data-decoration="${id}" min="1" max="285" placeholder="100">
+                            <label>Size of Print</label>
+                            <select class="dtf-size" data-decoration="${id}">
+                                <option value="sm">Small <36 sq in</option>
+                                <option value="md">Medium <150 sq in</option>
+                                <option value="lg">Large <285 sq in</option>
+                            </select>
                         </div>
                     </div>
                 `;
@@ -976,8 +991,15 @@
                 container.innerHTML = `
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Stitch Count</label>
+                            <label># Stitches</label>
                             <input type="number" class="emb-stitches" data-decoration="${id}" min="1" placeholder="5000">
+                        </div>
+                        <div class="form-group">
+                            <label>Are we Digitizing?</label>
+                            <select class="emb-digitizing" data-decoration="${id}">
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                            </select>
                         </div>
                     </div>
                 `;
