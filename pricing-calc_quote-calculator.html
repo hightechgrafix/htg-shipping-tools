@@ -2509,15 +2509,23 @@
                 const quoteData = data.quote_data;
                 
                 // Populate customer info
-                document.getElementById('customerName').value = quoteData.customer?.name || '';
-                document.getElementById('customerEmail').value = quoteData.customer?.email || '';
-                document.getElementById('customerCompany').value = quoteData.customer?.company || '';
-                document.getElementById('salesRep').value = quoteData.sales_rep || '';
-                document.getElementById('helpscoutConvo').value = quoteData.helpscout_convo || '';
-                document.getElementById('jobNumber').value = quoteData.job_number || '';
+                const customerName = document.getElementById('customerName');
+                const customerEmail = document.getElementById('customerEmail');
+                const customerCompany = document.getElementById('customerCompany');
+                const salesRep = document.getElementById('salesRep');
+                const helpscoutConvo = document.getElementById('helpscoutConvo');
+                const jobNumber = document.getElementById('jobNumber');
+                
+                if (customerName) customerName.value = quoteData.customer?.name || '';
+                if (customerEmail) customerEmail.value = quoteData.customer?.email || '';
+                if (customerCompany) customerCompany.value = quoteData.customer?.company || '';
+                if (salesRep) salesRep.value = quoteData.sales_rep || '';
+                if (helpscoutConvo) helpscoutConvo.value = quoteData.helpscout_convo || '';
+                if (jobNumber) jobNumber.value = quoteData.job_number || '';
                 
                 // Set quote number display
-                document.getElementById('quoteNumber').textContent = quoteNumber;
+                const quoteNumberEl = document.getElementById('quoteNumber');
+                if (quoteNumberEl) quoteNumberEl.textContent = quoteNumber;
                 
                 // Clear existing decorations
                 const decorationList = document.getElementById('decorationsContainer');
@@ -2545,40 +2553,60 @@
                         
                         // Set method-specific specs
                         if (decoration.method === 'screen_print' && decoration.specs) {
-                            if (decoration.specs.colors) card.querySelector(`#sp_colors_${decorationId}`).value = decoration.specs.colors;
-                            if (decoration.specs.screens) card.querySelector(`#sp_screens_${decorationId}`).value = decoration.specs.screens;
+                            const colorsInput = card.querySelector(`#sp_colors_${decorationId}`);
+                            const screensInput = card.querySelector(`#sp_screens_${decorationId}`);
+                            
+                            if (colorsInput && decoration.specs.colors) colorsInput.value = decoration.specs.colors;
+                            if (screensInput && decoration.specs.screens) screensInput.value = decoration.specs.screens;
                         }
                         else if (decoration.method === 'dtf' && decoration.specs) {
-                            if (decoration.specs.size_sq_inches) card.querySelector(`#dtf_size_${decorationId}`).value = decoration.specs.size_sq_inches;
+                            const sizeInput = card.querySelector(`#dtf_size_${decorationId}`);
+                            if (sizeInput && decoration.specs.size_sq_inches) sizeInput.value = decoration.specs.size_sq_inches;
                         }
                         else if (decoration.method === 'embroidery' && decoration.specs) {
-                            if (decoration.specs.stitches) card.querySelector(`#emb_stitches_${decorationId}`).value = decoration.specs.stitches;
+                            const stitchesInput = card.querySelector(`#emb_stitches_${decorationId}`);
+                            if (stitchesInput && decoration.specs.stitches) stitchesInput.value = decoration.specs.stitches;
                         }
                     }
                 }
                 
                 // Populate shipping levels
                 if (quoteData.shipping_levels) {
-                    document.getElementById('level_1_qty').value = quoteData.shipping_levels.level_1 || 0;
-                    document.getElementById('level_2_qty').value = quoteData.shipping_levels.level_2 || 0;
-                    document.getElementById('level_3_qty').value = quoteData.shipping_levels.level_3 || 0;
-                    document.getElementById('level_4_qty').value = quoteData.shipping_levels.level_4 || 0;
-                    document.getElementById('level_5_qty').value = quoteData.shipping_levels.level_5 || 0;
+                    const level1 = document.getElementById('level_1_qty');
+                    const level2 = document.getElementById('level_2_qty');
+                    const level3 = document.getElementById('level_3_qty');
+                    const level4 = document.getElementById('level_4_qty');
+                    const level5 = document.getElementById('level_5_qty');
+                    
+                    if (level1) level1.value = quoteData.shipping_levels.level_1 || 0;
+                    if (level2) level2.value = quoteData.shipping_levels.level_2 || 0;
+                    if (level3) level3.value = quoteData.shipping_levels.level_3 || 0;
+                    if (level4) level4.value = quoteData.shipping_levels.level_4 || 0;
+                    if (level5) level5.value = quoteData.shipping_levels.level_5 || 0;
                 }
                 
                 // Populate rush
                 if (quoteData.rush) {
-                    document.getElementById('rush_2_day').value = quoteData.rush.rush_2_day || 0;
-                    document.getElementById('rush_3_day').value = quoteData.rush.rush_3_day || 0;
-                    document.getElementById('rush_4_day').value = quoteData.rush.rush_4_day || 0;
-                    document.getElementById('rush_5_day').value = quoteData.rush.rush_5_day || 0;
+                    const rush2 = document.getElementById('rush_2_day');
+                    const rush3 = document.getElementById('rush_3_day');
+                    const rush4 = document.getElementById('rush_4_day');
+                    const rush5 = document.getElementById('rush_5_day');
+                    
+                    if (rush2) rush2.value = quoteData.rush.rush_2_day || 0;
+                    if (rush3) rush3.value = quoteData.rush.rush_3_day || 0;
+                    if (rush4) rush4.value = quoteData.rush.rush_4_day || 0;
+                    if (rush5) rush5.value = quoteData.rush.rush_5_day || 0;
                 }
                 
                 // Populate programs
                 if (quoteData.programs) {
-                    document.getElementById('spoilage_insurance').checked = quoteData.programs.spoilage_insurance || false;
-                    document.getElementById('printback_program').checked = quoteData.programs.printback_program || false;
-                    document.getElementById('cc_fee_toggle').checked = quoteData.programs.cc_fee_enabled || false;
+                    const spoilage = document.getElementById('spoilage_insurance');
+                    const printback = document.getElementById('printback_program');
+                    const ccFee = document.getElementById('cc_fee_toggle');
+                    
+                    if (spoilage) spoilage.checked = quoteData.programs.spoilage_insurance || false;
+                    if (printback) printback.checked = quoteData.programs.printback_program || false;
+                    if (ccFee) ccFee.checked = quoteData.programs.cc_fee_enabled || false;
                 }
                 
                 // Recalculate totals
