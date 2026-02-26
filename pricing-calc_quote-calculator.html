@@ -1231,7 +1231,7 @@
                 if (rush5DayQty > 0) rushFees += await calculateRushFees(5, decorations.length, rush5DayQty);
                 
                 // Calculate additional fees
-                const additionalFees = calculateAdditionalFees();
+                const additionalFees = await calculateAdditionalFees();
                 
                 // Calculate subtotal before CC fee
                 const subtotal = decorationsTotal + shipping + rushFees + additionalFees;
@@ -1290,17 +1290,17 @@
             switch(method) {
                 case 'screen_print':
                     basePricePerPiece = await getScreenPrintPrice(quantity, specs.colors);
-                    setupFees = calculateScreenPrintSetup(specs);
+                    setupFees = await calculateScreenPrintSetup(specs);
                     break;
                     
                 case 'dtf':
                     basePricePerPiece = await getDTFPrice(quantity, specs.size);
-                    setupFees = 10.00; // DTF setup fee
+                    setupFees = await getDTFSetupFee();
                     break;
                     
                 case 'embroidery':
                     basePricePerPiece = await getEmbroideryPrice(quantity, specs.stitches);
-                    setupFees = calculateEmbroiderySetup(quantity, specs.stitches, specs.digitizing);
+                    setupFees = await calculateEmbroiderySetup(quantity, specs.stitches, specs.digitizing);
                     break;
             }
             
@@ -1344,15 +1344,44 @@
         /**
          * Calculate screen print setup fees
          */
-        function calculateScreenPrintSetup(specs) {
-            const isRepeat = specs.repeat === 'yes';
-            const screenCost = isRepeat ? 10.00 : 20.00;
-            const setupFee = (specs.screens || specs.colors) * screenCost;
-            
-            // Add color change fees
-            const colorChangeFee = (specs.colorChanges || 0) * 20.00;
-            
-            return setupFee + colorChangeFee;
+        async function calculateScreenPrintSetup(specs) {
+            try {
+                const isRepeat = specs.repeat === 'yes';
+                
+                // Get screen charge from database
+                const feeType = isRepeat ? 'exact_reprint_screen_charge' : 'screen_charge';
+                const { data: screenData, error: screenError } = await supabaseClient
+                    .from('pricing_calc_setup_fees')
+                    .select('base_fee')
+                    .eq('decoration_method', 'screen_print')
+                    .eq('fee_type', feeType)
+                    .maybeSingle();
+                
+                const screenCost = screenData?.base_fee || (isRepeat ? 10.00 : 20.00);
+                const setupFee = (specs.screens || specs.colors) * screenCost;
+                
+                // Get color change fee from database
+                const { data: colorChangeData, error: colorChangeError } = await supabaseClient
+                    .from('pricing_calc_misc_charges')
+                    .select('price')
+                    .eq('charge_type', 'per_color_change')
+                    .eq('decoration_method', 'screen_print')
+                    .eq('active', true)
+                    .maybeSingle();
+                
+                const colorChangeCost = colorChangeData?.price || 20.00;
+                const colorChangeFee = (specs.colorChanges || 0) * colorChangeCost;
+                
+                return setupFee + colorChangeFee;
+            } catch (error) {
+                console.error('Error calculating screen print setup:', error);
+                // Fallback to hardcoded if query fails
+                const isRepeat = specs.repeat === 'yes';
+                const screenCost = isRepeat ? 10.00 : 20.00;
+                const setupFee = (specs.screens || specs.colors) * screenCost;
+                const colorChangeFee = (specs.colorChanges || 0) * 20.00;
+                return setupFee + colorChangeFee;
+            }
         }
 
         /**
@@ -1373,6 +1402,25 @@
             } catch (error) {
                 console.error('Error fetching DTF price:', error);
                 return 0;
+            }
+        }
+
+        /**
+         * Get DTF setup fee from database
+         */
+        async function getDTFSetupFee() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('pricing_calc_setup_fees')
+                    .select('base_fee')
+                    .eq('decoration_method', 'dtf')
+                    .eq('fee_type', 'dtf_setup')
+                    .maybeSingle();
+                
+                return data?.base_fee || 10.00;
+            } catch (error) {
+                console.error('Error getting DTF setup fee:', error);
+                return 10.00; // Fallback
             }
         }
 
@@ -1403,13 +1451,37 @@
         /**
          * Calculate embroidery setup fees
          */
-        function calculateEmbroiderySetup(quantity, stitches, needsDigitizing) {
+        async function calculateEmbroiderySetup(quantity, stitches, needsDigitizing) {
             if (!needsDigitizing || needsDigitizing === 'no') return 0;
             
-            // Free digitizing on 144+ pieces
-            if (quantity >= 144) return 0;
+            try {
+                // Get digitizing rules from database
+                const { data, error } = await supabaseClient
+                    .from('pricing_calc_setup_fees')
+                    .select('base_fee, conditions')
+                    .eq('decoration_method', 'embroidery')
+                    .eq('fee_type', 'digitizing')
+                    .maybeSingle();
+                
+                if (data) {
+                    // Check if free digitizing based on conditions
+                    if (data.conditions && data.conditions.min_quantity) {
+                        if (quantity >= data.conditions.min_quantity) return 0;
+                    } else if (quantity >= 144) {
+                        return 0; // Fallback to hardcoded rule
+                    }
+                    
+                    // Calculate digitizing fee
+                    // base_fee is per 1K stitches
+                    const digitizingFee = Math.max(25, Math.min(75, Math.ceil(stitches / 1000) * data.base_fee));
+                    return digitizingFee;
+                }
+            } catch (error) {
+                console.error('Error calculating embroidery setup:', error);
+            }
             
-            // $5 per 1K stitches, min 5K ($25), max $75
+            // Fallback to hardcoded if query fails
+            if (quantity >= 144) return 0;
             const digitizingFee = Math.max(25, Math.min(75, Math.ceil(stitches / 1000) * 5));
             return digitizingFee;
         }
