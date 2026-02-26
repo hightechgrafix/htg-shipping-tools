@@ -2301,11 +2301,11 @@
                     </div>
                     <div class="form-group">
                         <label>Qty</label>
-                        <input type="number" class="misc-fee-qty" data-misc="${miscFeeCount}" min="0" placeholder="0" value="0">
+                        <input type="number" class="misc-fee-qty" data-misc="${miscFeeCount}" min="0" placeholder="0" value="0" onchange="calculateTotal()">
                     </div>
                     <div class="form-group">
                         <label>Price Ea.</label>
-                        <input type="number" class="misc-fee-price" data-misc="${miscFeeCount}" min="0" step="0.01" placeholder="0.00" value="0">
+                        <input type="number" class="misc-fee-price" data-misc="${miscFeeCount}" min="0" step="0.01" placeholder="0.00" value="0" onchange="calculateTotal()">
                     </div>
                     <div class="form-group" style="display: flex; align-items: flex-end;">
                         <button class="remove-btn" onclick="removeMiscFeeRow(${miscFeeCount})" style="width: 100%;">Remove</button>
