@@ -950,9 +950,11 @@
                             <span class="price-label">Handling</span>
                             <span class="price-value" id="detail_handling">$0.00</span>
                         </div>
-                        <div class="price-line" style="font-size: 13px;">
-                            <span class="price-label">CC Fee</span>
-                            <span class="price-value" id="detail_cc_fee">$0.00</span>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f7fafc;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="cc_fee_toggle" checked onchange="calculateTotal()" style="width: 18px; height: 18px; cursor: pointer;">
+                                <label for="cc_fee_toggle" style="font-size: 13px; color: #4a5568; cursor: pointer; margin: 0;">CC Fee (3%)</label>
+                            </div>
                         </div>
                         <div class="price-line" style="font-size: 13px;">
                             <span class="price-label">CC Proc. Fee</span>
