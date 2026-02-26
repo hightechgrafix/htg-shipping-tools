@@ -2383,11 +2383,9 @@
                 // First, make sure we have a calculated quote
                 const totals = await calculateQuotePrice();
                 
-                // Generate quote number (Q-YYYY-NNNNNN)
+                // Use the quote number already displayed in the UI
+                const quoteNumber = document.getElementById('quoteNumber')?.textContent || generateQuoteNumber();
                 const now = new Date();
-                const year = now.getFullYear();
-                const randomNum = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
-                const quoteNumber = `Q-${year}-${randomNum}`;
                 
                 // Collect customer info
                 const customerName = document.getElementById('customerName')?.value || '';
