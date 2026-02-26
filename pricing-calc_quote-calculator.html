@@ -964,8 +964,16 @@
             
             <div id="pricingBreakdown">
                 <div class="price-line">
-                    <span class="price-label">Decorations</span>
-                    <span class="price-value" id="decorationsTotal">$0.00</span>
+                    <span class="price-label">Print</span>
+                    <span class="price-value" id="printTotal">$0.00</span>
+                </div>
+                <div class="price-line">
+                    <span class="price-label">Setup</span>
+                    <span class="price-value" id="setupTotal">$0.00</span>
+                </div>
+                <div class="price-line">
+                    <span class="price-label">Additional Fees</span>
+                    <span class="price-value" id="additionalFeesTotal">$0.00</span>
                 </div>
                 <div class="price-line">
                     <span class="price-label">Shipping & Handling</span>
@@ -1896,22 +1904,28 @@
          */
         function updateSummaryDisplay(totals) {
             try {
-                // Update main summary (camelCase IDs)
-                const decorationsEl = document.getElementById('decorationsTotal');
+                // Update main summary
+                const printTotalEl = document.getElementById('printTotal');
+                const setupTotalEl = document.getElementById('setupTotal');
+                const additionalFeesEl = document.getElementById('additionalFeesTotal');
                 const shippingEl = document.getElementById('shippingTotal');
                 const rushFeesEl = document.getElementById('rushFeesTotal');
                 const ccFeeEl = document.getElementById('ccFeeTotal');
                 const grandTotalEl = document.getElementById('grandTotal');
                 
                 console.log('Element check:', {
-                    decorationsEl: decorationsEl ? 'found' : 'NULL',
+                    printTotalEl: printTotalEl ? 'found' : 'NULL',
+                    setupTotalEl: setupTotalEl ? 'found' : 'NULL',
+                    additionalFeesEl: additionalFeesEl ? 'found' : 'NULL',
                     shippingEl: shippingEl ? 'found' : 'NULL',
                     rushFeesEl: rushFeesEl ? 'found' : 'NULL',
                     ccFeeEl: ccFeeEl ? 'found' : 'NULL',
                     grandTotalEl: grandTotalEl ? 'found' : 'NULL'
                 });
                 
-                if (decorationsEl) decorationsEl.textContent = `$${totals.decorationsTotal.toFixed(2)}`;
+                if (printTotalEl) printTotalEl.textContent = `$${(totals.printTotal || 0).toFixed(2)}`;
+                if (setupTotalEl) setupTotalEl.textContent = `$${(totals.setupTotal || 0).toFixed(2)}`;
+                if (additionalFeesEl) additionalFeesEl.textContent = `$${(totals.additionalFees || 0).toFixed(2)}`;
                 if (shippingEl) shippingEl.textContent = `$${totals.shipping.toFixed(2)}`;
                 if (rushFeesEl) rushFeesEl.textContent = `$${totals.rushFees.toFixed(2)}`;
                 if (ccFeeEl && totals.ccFee !== undefined) ccFeeEl.textContent = `$${totals.ccFee.toFixed(2)}`;
