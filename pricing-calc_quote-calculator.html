@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HTG Quote Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -2483,8 +2484,259 @@
         }
 
         // Generate PDF
-        function generatePDF() {
-            alert('PDF generation coming soon!');
+        async function generatePDF() {
+            try {
+                // Make sure we have current calculations
+                const totals = await calculateQuotePrice();
+                
+                // Get quote number
+                const quoteNumber = document.getElementById('quoteNumber')?.textContent || 'DRAFT';
+                
+                // Get customer info
+                const customerName = document.getElementById('customerName')?.value || '';
+                const customerEmail = document.getElementById('customerEmail')?.value || '';
+                const customerCompany = document.getElementById('customerCompany')?.value || '';
+                const salesRep = document.getElementById('salesRep')?.value || '';
+                const jobNumber = document.getElementById('jobNumber')?.value || '';
+                const quoteDate = document.getElementById('quoteDate')?.value || new Date().toLocaleDateString();
+                
+                // Create PDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // HTG Logo and Company Info (Top Left)
+                doc.setFontSize(20);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Hightech Grafix', 20, 20);
+                
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.text('1001 Commercial Blvd N', 20, 28);
+                doc.text('Arlington, TX 76001', 20, 33);
+                
+                // Customer Info (Top Right)
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                const rightX = 140;
+                let currentY = 20;
+                
+                if (customerCompany) {
+                    doc.text('Company:', rightX, currentY);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(customerCompany, rightX + 25, currentY);
+                    currentY += 5;
+                }
+                
+                doc.setFont('helvetica', 'bold');
+                doc.text('Email:', rightX, currentY);
+                doc.setFont('helvetica', 'normal');
+                doc.text(customerEmail || 'N/A', rightX + 25, currentY);
+                currentY += 5;
+                
+                doc.setFont('helvetica', 'bold');
+                doc.text('Sales Person:', rightX, currentY);
+                doc.setFont('helvetica', 'normal');
+                doc.text(salesRep || 'N/A', rightX + 25, currentY);
+                currentY += 5;
+                
+                doc.setFont('helvetica', 'bold');
+                doc.text('Date:', rightX, currentY);
+                doc.setFont('helvetica', 'normal');
+                doc.text(quoteDate, rightX + 25, currentY);
+                currentY += 5;
+                
+                doc.setFont('helvetica', 'bold');
+                doc.text('Quote:', rightX, currentY);
+                doc.setFont('helvetica', 'normal');
+                doc.text(quoteNumber, rightX + 25, currentY);
+                currentY += 5;
+                
+                if (jobNumber) {
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Job Number:', rightX, currentY);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(jobNumber, rightX + 25, currentY);
+                }
+                
+                // Line items table
+                let tableY = 50;
+                
+                // Table header
+                doc.setFillColor(240, 240, 240);
+                doc.rect(20, tableY, 170, 8, 'F');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(10);
+                doc.text('Item', 22, tableY + 5);
+                doc.text('Qty', 140, tableY + 5, { align: 'right' });
+                doc.text('ea.', 160, tableY + 5, { align: 'right' });
+                doc.text('Total', 185, tableY + 5, { align: 'right' });
+                
+                tableY += 10;
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9);
+                
+                // Collect all line items
+                const lineItems = [];
+                
+                // Decorations
+                const decorations = document.querySelectorAll('.decoration-card');
+                for (const card of decorations) {
+                    const method = card.querySelector('.decoration-method')?.value;
+                    const location = card.querySelector('.decoration-location')?.value;
+                    const quantity = parseInt(card.querySelector('.decoration-quantity')?.value || 0);
+                    
+                    if (method && location && quantity > 0) {
+                        const decorationId = card.id.replace('decoration-', '');
+                        const specs = getDecorationSpecs(decorationId, method);
+                        
+                        let methodName = method === 'screen_print' ? 'Screen Print' : 
+                                       method === 'dtf' ? 'DTF' : 'Embroidery';
+                        let description = `${methodName} - ${location}`;
+                        
+                        if (method === 'screen_print') {
+                            description += ` - ${specs.colors} Color${specs.colors > 1 ? 's' : ''}`;
+                        } else if (method === 'embroidery') {
+                            description += ` - ${specs.stitches} stitches`;
+                        }
+                        
+                        const pricing = await calculateDecoration(method, quantity, specs, document.getElementById('itemType')?.value);
+                        
+                        lineItems.push({
+                            description: description,
+                            qty: quantity,
+                            priceEach: pricing.basePricePerPiece,
+                            total: pricing.basePricePerPiece * quantity
+                        });
+                    }
+                }
+                
+                // Additional charges from the breakdown
+                if (totals.additionalFeesBreakdown?.methodCharges?.lineItems) {
+                    totals.additionalFeesBreakdown.methodCharges.lineItems.forEach(item => {
+                        lineItems.push({
+                            description: item.description,
+                            qty: item.quantity,
+                            priceEach: item.priceEach,
+                            total: item.total
+                        });
+                    });
+                }
+                
+                // Setup fees
+                if (totals.setupTotal > 0) {
+                    // Screen print setup
+                    const spDecorations = Array.from(decorations).filter(card => 
+                        card.querySelector('.decoration-method')?.value === 'screen_print'
+                    );
+                    if (spDecorations.length > 0) {
+                        let totalScreens = 0;
+                        spDecorations.forEach(card => {
+                            const decorationId = card.id.replace('decoration-', '');
+                            const specs = getDecorationSpecs(decorationId, 'screen_print');
+                            totalScreens += specs.screens || specs.colors;
+                        });
+                        if (totalScreens > 0) {
+                            lineItems.push({
+                                description: 'New Screens Total',
+                                qty: totalScreens,
+                                priceEach: 20.00,
+                                total: totalScreens * 20.00
+                            });
+                        }
+                    }
+                    
+                    // DTF setup
+                    const dtfDecorations = Array.from(decorations).filter(card => 
+                        card.querySelector('.decoration-method')?.value === 'dtf'
+                    );
+                    if (dtfDecorations.length > 0) {
+                        lineItems.push({
+                            description: 'DTF Setup Total',
+                            qty: dtfDecorations.length,
+                            priceEach: 10.00,
+                            total: dtfDecorations.length * 10.00
+                        });
+                    }
+                }
+                
+                // Shipping & Handling
+                const level1Qty = parseInt(document.getElementById('level_1_qty')?.value || 0);
+                if (level1Qty > 0) {
+                    lineItems.push({
+                        description: 'Handling Fees - Level 1',
+                        qty: level1Qty,
+                        priceEach: totals.handlingOnly / level1Qty,
+                        total: totals.handlingOnly
+                    });
+                    
+                    if (totals.shippingOnly > 0) {
+                        lineItems.push({
+                            description: 'Shipping Fees - Level 1',
+                            qty: level1Qty,
+                            priceEach: totals.shippingOnly / level1Qty,
+                            total: totals.shippingOnly
+                        });
+                    } else {
+                        lineItems.push({
+                            description: 'Shipping Fees - Level 1 - Under $200 FREE Shipping',
+                            qty: '...',
+                            priceEach: '-',
+                            total: 0
+                        });
+                    }
+                }
+                
+                // CC Processing
+                if (totals.ccFee > 0) {
+                    lineItems.push({
+                        description: 'Credit Card Processing Fee - 3%',
+                        qty: '-',
+                        priceEach: '-',
+                        total: totals.ccFee
+                    });
+                }
+                
+                // Render line items
+                lineItems.forEach(item => {
+                    doc.text(item.description, 22, tableY);
+                    doc.text(String(item.qty), 140, tableY, { align: 'right' });
+                    doc.text(typeof item.priceEach === 'number' ? `$${item.priceEach.toFixed(2)}` : item.priceEach, 160, tableY, { align: 'right' });
+                    doc.text(`$${item.total.toFixed(2)}`, 185, tableY, { align: 'right' });
+                    tableY += 5;
+                });
+                
+                // Grand Total
+                tableY += 3;
+                doc.setDrawColor(200, 200, 200);
+                doc.line(20, tableY, 190, tableY);
+                tableY += 6;
+                
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(12);
+                doc.text('Grand Total', 22, tableY);
+                doc.text(`$${totals.grandTotal.toFixed(2)}`, 185, tableY, { align: 'right' });
+                
+                // Footer disclaimer
+                tableY += 10;
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(10);
+                doc.text('Quotes are good for 30 days.', 20, tableY);
+                
+                tableY += 5;
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7);
+                const disclaimer = '*This quote is wholesale pricing. You must be registered as a wholesale dealer to receive this pricing. This does not include the apparel and is valid for only 30 days. You can supply the apparel, or we can provide it for you at 20% above the vendor\'s cost. We are also a part of the PSST program with Sanmar, The Impact program at Broder and receive free inbound shipping from S&S. Our standard production time is 7 business days after the proof approval and payment but can vary based on number of departments. All invoices paid via debit/credit card are subject to a 3% card fee';
+                
+                const splitDisclaimer = doc.splitTextToSize(disclaimer, 170);
+                doc.text(splitDisclaimer, 20, tableY);
+                
+                // Save PDF
+                doc.save(`Quote-${quoteNumber}.pdf`);
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Error generating PDF: ' + error.message);
+            }
         }
 
         // Misc fee row counter
