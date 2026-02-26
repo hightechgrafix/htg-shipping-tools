@@ -425,11 +425,11 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="totalQuantity">Total Quantity *</label>
-                        <input type="number" id="totalQuantity" placeholder="200" min="1" required>
+                        <input type="number" id="totalQuantity" placeholder="200" min="1" required onchange="calculateTotal()">
                     </div>
                     <div class="form-group">
                         <label for="itemType">Item Type</label>
-                        <select id="itemType">
+                        <select id="itemType" onchange="calculateTotal()">
                             <option value="t-shirt">T-Shirt</option>
                             <option value="hoodie">Hoodie</option>
                             <option value="polo">Polo</option>
@@ -439,7 +439,7 @@
                     </div>
                     <div class="form-group">
                         <label for="itemWeight">Item Weight (lbs)</label>
-                        <input type="number" id="itemWeight" placeholder="0.5" step="0.01" value="0.5">
+                        <input type="number" id="itemWeight" placeholder="0.5" step="0.01" value="0.5" onchange="calculateTotal()">
                     </div>
                 </div>
             </div>
@@ -1104,16 +1104,25 @@
          */
         async function calculateQuotePrice() {
             try {
-                // Get order details
-                const itemType = document.getElementById('item_type')?.value || 't-shirt';
-                const totalQty = parseInt(document.getElementById('total_qty')?.value || 0);
-                const rushDays = document.getElementById('rush_days')?.value;
+                console.log('=== Starting quote calculation ===');
                 
-                if (!totalQty) return { grandTotal: 0 };
+                // Get order details (matching the actual HTML IDs)
+                const itemType = document.getElementById('itemType')?.value || 't-shirt';
+                const totalQty = parseInt(document.getElementById('totalQuantity')?.value || 0);
+                const rushDays = document.getElementById('rushDays')?.value;
+                
+                console.log('Order details:', { itemType, totalQty });
+                
+                if (!totalQty) {
+                    console.log('No quantity, returning 0');
+                    return { grandTotal: 0 };
+                }
 
                 // Calculate each decoration
                 let decorationsTotal = 0;
                 const decorations = document.querySelectorAll('.decoration-card');
+                
+                console.log('Found decorations:', decorations.length);
                 
                 for (const decoration of decorations) {
                     const decorationId = decoration.id.replace('decoration-', '');
@@ -1121,24 +1130,42 @@
                     const location = decoration.querySelector('.decoration-location')?.value;
                     const quantity = parseInt(decoration.querySelector('.decoration-quantity')?.value || 0);
                     
-                    if (!method || !location || !quantity) continue;
+                    console.log('Decoration:', { decorationId, method, location, quantity });
+                    
+                    if (!method || !location || !quantity) {
+                        console.log('Skipping incomplete decoration');
+                        continue;
+                    }
                     
                     // Get method-specific specs
                     const specs = getDecorationSpecs(decorationId, method);
+                    console.log('Specs:', specs);
                     
                     // Calculate this decoration
                     const pricing = await calculateDecoration(method, quantity, specs, itemType);
+                    console.log('Pricing:', pricing);
                     decorationsTotal += pricing.subtotal;
                     
                     // Update decoration display
                     updateDecorationPricing(decorationId, pricing);
                 }
 
+                console.log('Decorations total:', decorationsTotal);
+
                 // Calculate shipping
                 const shipping = await calculateShipping(totalQty, itemType);
                 
-                // Calculate rush fees
-                const rushFees = rushDays ? await calculateRushFees(rushDays, decorations.length, totalQty) : 0;
+                // Calculate rush fees - check all rush day fields
+                let rushFees = 0;
+                const rush2DayQty = parseInt(document.getElementById('rush_2_day')?.value || 0);
+                const rush3DayQty = parseInt(document.getElementById('rush_3_day')?.value || 0);
+                const rush4DayQty = parseInt(document.getElementById('rush_4_day')?.value || 0);
+                const rush5DayQty = parseInt(document.getElementById('rush_5_day')?.value || 0);
+                
+                if (rush2DayQty > 0) rushFees += await calculateRushFees(2, decorations.length, rush2DayQty);
+                if (rush3DayQty > 0) rushFees += await calculateRushFees(3, decorations.length, rush3DayQty);
+                if (rush4DayQty > 0) rushFees += await calculateRushFees(4, decorations.length, rush4DayQty);
+                if (rush5DayQty > 0) rushFees += await calculateRushFees(5, decorations.length, rush5DayQty);
                 
                 // Calculate additional fees
                 const additionalFees = calculateAdditionalFees();
