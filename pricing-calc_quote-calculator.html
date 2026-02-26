@@ -1174,8 +1174,17 @@
                 // Calculate additional fees
                 const additionalFees = calculateAdditionalFees();
                 
+                // Calculate subtotal before CC fee
+                const subtotal = decorationsTotal + shipping + rushFees + additionalFees;
+                
+                // Calculate CC fee (3% if enabled)
+                const ccFeeEnabled = document.getElementById('cc_fee_toggle')?.checked;
+                const ccFee = ccFeeEnabled ? subtotal * 0.03 : 0;
+                
                 // Calculate grand total
-                const grandTotal = decorationsTotal + shipping + rushFees + additionalFees;
+                const grandTotal = subtotal + ccFee;
+                
+                console.log('Totals:', { decorationsTotal, shipping, rushFees, additionalFees, ccFee, grandTotal });
                 
                 // Update displays
                 updateSummaryDisplay({
@@ -1183,6 +1192,7 @@
                     shipping,
                     rushFees,
                     additionalFees,
+                    ccFee,
                     grandTotal
                 });
                 
@@ -1191,6 +1201,7 @@
                     shipping,
                     rushFees,
                     additionalFees,
+                    ccFee,
                     grandTotal
                 };
                 
@@ -1478,11 +1489,20 @@
          * Update summary display with totals
          */
         function updateSummaryDisplay(totals) {
-            document.getElementById('decorations_total').textContent = `$${totals.decorationsTotal.toFixed(2)}`;
-            document.getElementById('shipping_total').textContent = `$${totals.shipping.toFixed(2)}`;
-            document.getElementById('rush_total').textContent = `$${totals.rushFees.toFixed(2)}`;
-            document.getElementById('add_fees_total').textContent = `$${totals.additionalFees.toFixed(2)}`;
-            document.getElementById('grand_total').textContent = `$${totals.grandTotal.toFixed(2)}`;
+            // Update main summary (camelCase IDs)
+            const decorationsEl = document.getElementById('decorationsTotal');
+            const shippingEl = document.getElementById('shippingTotal');
+            const rushFeesEl = document.getElementById('rushFeesTotal');
+            const ccFeeEl = document.getElementById('ccFeeTotal');
+            const grandTotalEl = document.getElementById('grandTotal');
+            
+            if (decorationsEl) decorationsEl.textContent = `$${totals.decorationsTotal.toFixed(2)}`;
+            if (shippingEl) shippingEl.textContent = `$${totals.shipping.toFixed(2)}`;
+            if (rushFeesEl) rushFeesEl.textContent = `$${totals.rushFees.toFixed(2)}`;
+            if (ccFeeEl) ccFeeEl.textContent = `$${totals.ccFee.toFixed(2)}`;
+            if (grandTotalEl) grandTotalEl.textContent = `$${totals.grandTotal.toFixed(2)}`;
+            
+            console.log('Updated summary display:', totals);
         }
 
         /**
