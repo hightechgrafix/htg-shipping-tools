@@ -636,23 +636,75 @@
                 </div>
             </div>
 
-            <!-- Shipping -->
+            <!-- Shipping & Handling -->
             <div class="card">
                 <div class="card-header" style="cursor: pointer;" onclick="toggleSection('shippingContent')">
                     <h2 class="card-title">Shipping & Handling</h2>
                     <span class="toggle-icon" id="shippingContent-icon">▼</span>
                 </div>
                 <div id="shippingContent" style="display: none;">
+                    <div class="checkbox-item" style="margin-bottom: 20px;">
+                        <input type="checkbox" id="customer_pickup" onchange="toggleShippingInputs()">
+                        <label for="customer_pickup" style="font-weight: 600; font-size: 16px;">Customer Pick Up (No Shipping)</label>
+                    </div>
+
+                    <p style="font-size: 14px; color: #718096; margin-bottom: 16px;">
+                        Enter quantities by shipping level. Each level calculates both handling AND shipping fees based on item weight.
+                    </p>
+
+                    <div style="background: #d4edda; padding: 12px; border-radius: 6px; margin-bottom: 16px; border-left: 4px solid #27ae60;">
+                        <strong style="color: #27ae60;">FREE Level 1 Shipping!</strong>
+                        <p style="font-size: 14px; color: #2d3748; margin-top: 4px;">
+                            Level 1 items (under 0.56 lbs) qualify for free shipping on orders over $100 (up to $200 value). 
+                            First location only. Handling fees still apply.
+                        </p>
+                    </div>
+
                     <div class="form-grid">
                         <div class="form-group">
-                            <label># of Shipping Locations</label>
-                            <input type="number" id="shipping_locations" min="1" value="1" placeholder="1">
+                            <label>Level 1 (0.000 - 0.559 lbs)</label>
+                            <input type="number" id="level_1_qty" min="0" placeholder="Quantity" value="0">
+                            <small style="color: #718096; font-size: 13px;">Qualifies for free shipping!</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Level 2 (0.560 - 0.799 lbs)</label>
+                            <input type="number" id="level_2_qty" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Level 3 (0.800 - 1.309 lbs)</label>
+                            <input type="number" id="level_3_qty" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Level 4 (1.310 - 2.109 lbs)</label>
+                            <input type="number" id="level_4_qty" min="0" placeholder="Quantity" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Level 5 (2.110 - 3.990 lbs)</label>
+                            <input type="number" id="level_5_qty" min="0" placeholder="Quantity" value="0">
                         </div>
                     </div>
-                    <p style="margin-top: 16px; font-size: 14px; color: #4a5568;">
-                        <strong>Note:</strong> Shipping is calculated automatically based on item weight and quantity. 
-                        Level 1 items (under 0.56 lbs) qualify for free shipping on orders over $100 (up to $200 value).
-                    </p>
+
+                    <h3 style="font-size: 16px; font-weight: 600; color: #4a5568; margin: 24px 0 16px;"># of Shipping Locations</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Shipping Locations</label>
+                            <input type="number" id="shipping_locations" min="1" value="1" placeholder="1">
+                            <small style="color: #718096; font-size: 13px;">Free shipping applies to first location only. Handling fees are per location.</small>
+                        </div>
+                    </div>
+
+                    <h3 style="font-size: 16px; font-weight: 600; color: #4a5568; margin: 24px 0 16px;">Drop Ship Fee</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Drop Ship Locations</label>
+                            <input type="number" id="drop_ship_locations" min="0" placeholder="# of locations" value="0">
+                            <small style="color: #718096; font-size: 13px;">$7.00 per location (after first) + handling</small>
+                        </div>
+                    </div>
+                    <div class="checkbox-item" style="margin-top: 12px;">
+                        <input type="checkbox" id="drop_ship_customer_address">
+                        <label for="drop_ship_customer_address">Customer Pick Up at drop ship location</label>
+                    </div>
                 </div>
             </div>
 
@@ -792,6 +844,12 @@
                 activeMethods.has('dtf') ? 'block' : 'none';
             document.getElementById('embroideryExtras').style.display = 
                 activeMethods.has('embroidery') ? 'block' : 'none';
+        }
+
+        // Customer pickup just affects pricing calculation (no UI change needed)
+        function toggleShippingInputs() {
+            // When wired up, this will recalculate to remove shipping but keep handling
+            calculateTotal();
         }
 
         // Add decoration function
