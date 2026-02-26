@@ -873,11 +873,11 @@
                 <div id="programsContent" style="display: none;">
                     <div class="checkbox-group">
                         <div class="checkbox-item">
-                            <input type="checkbox" id="spoilage_insurance">
+                            <input type="checkbox" id="spoilage_insurance" onchange="calculateTotal()">
                             <label for="spoilage_insurance">Spoilage Insurance ($25 per 1,000 items - Screen Print only)</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="printback_program">
+                            <input type="checkbox" id="printback_program" onchange="calculateTotal()">
                             <label for="printback_program">HTG Printback Program (Screen Print only)</label>
                         </div>
                     </div>
@@ -907,23 +907,23 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Separate Orders (Num. of Pieces Total)</label>
-                            <input type="number" id="separate_orders" min="0" placeholder="0" value="0">
+                            <input type="number" id="separate_orders" min="0" placeholder="0" value="0" onchange="calculateTotal()">
                         </div>
                         <div class="form-group">
                             <label>Tag Removal - Cut Away</label>
-                            <input type="number" id="tag_removal_cut" min="0" placeholder="Quantity" value="0">
+                            <input type="number" id="tag_removal_cut" min="0" placeholder="Quantity" value="0" onchange="calculateTotal()">
                         </div>
                         <div class="form-group">
                             <label>Tag Removal - Tear Away</label>
-                            <input type="number" id="tag_removal_tear" min="0" placeholder="Quantity" value="0">
+                            <input type="number" id="tag_removal_tear" min="0" placeholder="Quantity" value="0" onchange="calculateTotal()">
                         </div>
                         <div class="form-group">
                             <label>Style Changes (Beyond 3)</label>
-                            <input type="number" id="style_changes" min="0" placeholder="# of changes" value="0">
+                            <input type="number" id="style_changes" min="0" placeholder="# of changes" value="0" onchange="calculateTotal()">
                         </div>
                         <div class="form-group">
                             <label>Heat Press Patches (Num. Patches)</label>
-                            <input type="number" id="heat_press_patches" min="0" placeholder="0" value="0">
+                            <input type="number" id="heat_press_patches" min="0" placeholder="0" value="0" onchange="calculateTotal()">
                         </div>
                     </div>
 
@@ -938,19 +938,19 @@
                         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
                             <div class="form-group">
                                 <label>Screen Print - Pieces Total</label>
-                                <input type="number" id="private_label_sp_pieces" min="0" placeholder="0" value="0">
+                                <input type="number" id="private_label_sp_pieces" min="0" placeholder="0" value="0" onchange="calculateTotal()">
                             </div>
                             <div class="form-group">
                                 <label>Screen Print - # of Sizes</label>
-                                <input type="number" id="private_label_sp_sizes" min="0" placeholder="0" value="0">
+                                <input type="number" id="private_label_sp_sizes" min="0" placeholder="0" value="0" onchange="calculateTotal()">
                             </div>
                             <div class="form-group">
                                 <label>DTF - Pieces Total</label>
-                                <input type="number" id="private_label_dtf_pieces" min="0" placeholder="0" value="0">
+                                <input type="number" id="private_label_dtf_pieces" min="0" placeholder="0" value="0" onchange="calculateTotal()">
                             </div>
                             <div class="form-group">
                                 <label>DTF - # of Sizes</label>
-                                <input type="number" id="private_label_dtf_sizes" min="0" placeholder="0" value="0">
+                                <input type="number" id="private_label_dtf_sizes" min="0" placeholder="0" value="0" onchange="calculateTotal()">
                             </div>
                         </div>
                     </div>
@@ -1242,8 +1242,22 @@
                 const additionalFeesResult = await calculateAdditionalFees();
                 const additionalFees = additionalFeesResult.total;
                 
+                // Calculate spoilage insurance ($25 per 1000 screen print items)
+                let spoilageInsurance = 0;
+                if (document.getElementById('spoilage_insurance')?.checked) {
+                    // Count total screen print quantity
+                    let screenPrintQty = 0;
+                    for (const decoration of decorations) {
+                        const method = decoration.querySelector('.decoration-method')?.value;
+                        if (method === 'screen_print') {
+                            screenPrintQty += parseInt(decoration.querySelector('.decoration-quantity')?.value || 0);
+                        }
+                    }
+                    spoilageInsurance = Math.ceil(screenPrintQty / 1000) * 25;
+                }
+                
                 // Calculate subtotal before CC fee
-                const subtotal = decorationsTotal + shipping + rushFees + additionalFees;
+                const subtotal = decorationsTotal + shipping + rushFees + additionalFees + spoilageInsurance;
                 
                 // Calculate CC fee (3% if enabled)
                 const ccFeeEnabled = document.getElementById('cc_fee_toggle')?.checked;
@@ -1252,7 +1266,7 @@
                 // Calculate grand total
                 const grandTotal = subtotal + ccFee;
                 
-                console.log('Totals:', { printTotal, setupTotal, decorationsTotal, shipping, totalShipping, totalHandling, rushFees, additionalFees, additionalFeesBreakdown: additionalFeesResult, ccFee, grandTotal });
+                console.log('Totals:', { printTotal, setupTotal, decorationsTotal, shipping, totalShipping, totalHandling, rushFees, additionalFees, additionalFeesBreakdown: additionalFeesResult, spoilageInsurance, ccFee, grandTotal });
                 
                 // Update displays
                 updateSummaryDisplay({
@@ -1884,10 +1898,56 @@
             
             total += finishingTotal;
             
+            // Add Other Charges (from Misc Fees & Other Charges section)
+            let otherChargesTotal = 0;
+            
+            // Separate orders: $0.30 per item
+            const separateOrders = parseInt(document.getElementById('separate_orders')?.value || 0);
+            otherChargesTotal += separateOrders * 0.30;
+            
+            // Tag removal - cut away: $0.35 per item
+            const tagRemovalCut = parseInt(document.getElementById('tag_removal_cut')?.value || 0);
+            otherChargesTotal += tagRemovalCut * 0.35;
+            
+            // Tag removal - tear away: $0.15 per item
+            const tagRemovalTear = parseInt(document.getElementById('tag_removal_tear')?.value || 0);
+            otherChargesTotal += tagRemovalTear * 0.15;
+            
+            // Style changes: $1.50 per style beyond 3
+            const styleChanges = parseInt(document.getElementById('style_changes')?.value || 0);
+            otherChargesTotal += styleChanges * 1.50;
+            
+            // Heat press patches: $1.50 per patch
+            const heatPressPatches = parseInt(document.getElementById('heat_press_patches')?.value || 0);
+            otherChargesTotal += heatPressPatches * 1.50;
+            
+            // Private label
+            if (document.getElementById('private_label_enable')?.checked) {
+                const spPieces = parseInt(document.getElementById('private_label_sp_pieces')?.value || 0);
+                const spSizes = parseInt(document.getElementById('private_label_sp_sizes')?.value || 0);
+                const dtfPieces = parseInt(document.getElementById('private_label_dtf_pieces')?.value || 0);
+                const dtfSizes = parseInt(document.getElementById('private_label_dtf_sizes')?.value || 0);
+                
+                // Screen print: $10 setup per size + min $20 / 1-color print cost $125
+                if (spPieces > 0 && spSizes > 0) {
+                    otherChargesTotal += Math.max(20, spSizes * 10); // Setup
+                    otherChargesTotal += 125; // Min print cost
+                }
+                
+                // DTF: $10 setup per size + $2 each / min $20
+                if (dtfPieces > 0 && dtfSizes > 0) {
+                    otherChargesTotal += Math.max(20, dtfSizes * 10); // Setup
+                    otherChargesTotal += Math.max(20, dtfPieces * 2); // Print cost
+                }
+            }
+            
+            total += otherChargesTotal;
+            
             return {
                 total,
                 methodCharges: methodCharges.breakdown,
-                finishingTotal
+                finishingTotal,
+                otherChargesTotal
             };
         }
 
@@ -1961,6 +2021,10 @@
                         detailAdditionalEl.textContent = `$${methodTotal.toFixed(2)}`;
                     }
                 }
+                
+                // Update grand total in detailed breakdown
+                const detailGrandTotalEl = document.getElementById('detail_grand_total');
+                if (detailGrandTotalEl) detailGrandTotalEl.textContent = `$${totals.grandTotal.toFixed(2)}`;
                 
                 console.log('Updated summary display:', totals);
             } catch (error) {
