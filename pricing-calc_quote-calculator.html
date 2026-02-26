@@ -358,6 +358,7 @@
             }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="container">
@@ -1095,6 +1096,374 @@
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg";
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // ===== PRICING ENGINE =====
+        
+        /**
+         * Main pricing calculation function
+         * Calculates complete quote pricing including decorations, shipping, rush, etc.
+         */
+        async function calculateQuotePrice() {
+            try {
+                // Get order details
+                const itemType = document.getElementById('item_type')?.value || 't-shirt';
+                const totalQty = parseInt(document.getElementById('total_qty')?.value || 0);
+                const rushDays = document.getElementById('rush_days')?.value;
+                
+                if (!totalQty) return { grandTotal: 0 };
+
+                // Calculate each decoration
+                let decorationsTotal = 0;
+                const decorations = document.querySelectorAll('.decoration-card');
+                
+                for (const decoration of decorations) {
+                    const decorationId = decoration.id.replace('decoration-', '');
+                    const method = decoration.querySelector('.decoration-method')?.value;
+                    const location = decoration.querySelector('.decoration-location')?.value;
+                    const quantity = parseInt(decoration.querySelector('.decoration-quantity')?.value || 0);
+                    
+                    if (!method || !location || !quantity) continue;
+                    
+                    // Get method-specific specs
+                    const specs = getDecorationSpecs(decorationId, method);
+                    
+                    // Calculate this decoration
+                    const pricing = await calculateDecoration(method, quantity, specs, itemType);
+                    decorationsTotal += pricing.subtotal;
+                    
+                    // Update decoration display
+                    updateDecorationPricing(decorationId, pricing);
+                }
+
+                // Calculate shipping
+                const shipping = await calculateShipping(totalQty, itemType);
+                
+                // Calculate rush fees
+                const rushFees = rushDays ? await calculateRushFees(rushDays, decorations.length, totalQty) : 0;
+                
+                // Calculate additional fees
+                const additionalFees = calculateAdditionalFees();
+                
+                // Calculate grand total
+                const grandTotal = decorationsTotal + shipping + rushFees + additionalFees;
+                
+                // Update displays
+                updateSummaryDisplay({
+                    decorationsTotal,
+                    shipping,
+                    rushFees,
+                    additionalFees,
+                    grandTotal
+                });
+                
+                return {
+                    decorationsTotal,
+                    shipping,
+                    rushFees,
+                    additionalFees,
+                    grandTotal
+                };
+                
+            } catch (error) {
+                console.error('Error calculating quote price:', error);
+                showError('Error calculating price: ' + error.message);
+                return { grandTotal: 0 };
+            }
+        }
+
+        /**
+         * Calculate pricing for a single decoration
+         */
+        async function calculateDecoration(method, quantity, specs, itemType) {
+            let basePricePerPiece = 0;
+            let setupFees = 0;
+            let additionalCharges = 0;
+            
+            switch(method) {
+                case 'screen_print':
+                    basePricePerPiece = await getScreenPrintPrice(quantity, specs.colors);
+                    setupFees = calculateScreenPrintSetup(specs);
+                    break;
+                    
+                case 'dtf':
+                    basePricePerPiece = await getDTFPrice(quantity, specs.size);
+                    setupFees = 10.00; // DTF setup fee
+                    break;
+                    
+                case 'embroidery':
+                    basePricePerPiece = await getEmbroideryPrice(quantity, specs.stitches);
+                    setupFees = calculateEmbroiderySetup(quantity, specs.stitches, specs.digitizing);
+                    break;
+            }
+            
+            const subtotal = (basePricePerPiece * quantity) + setupFees + additionalCharges;
+            
+            return {
+                basePricePerPiece,
+                setupFees,
+                additionalCharges,
+                subtotal
+            };
+        }
+
+        /**
+         * Get screen print price from database
+         */
+        async function getScreenPrintPrice(quantity, colors) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('pricing_calc_screen_print_pricing')
+                    .select('price')
+                    .eq('colors', colors)
+                    .lte('quantity_min', quantity)
+                    .or(`quantity_max.gte.${quantity},quantity_max.is.null`)
+                    .single();
+                
+                if (error) throw error;
+                return parseFloat(data?.price || 0);
+            } catch (error) {
+                console.error('Error fetching screen print price:', error);
+                return 0;
+            }
+        }
+
+        /**
+         * Calculate screen print setup fees
+         */
+        function calculateScreenPrintSetup(specs) {
+            const isRepeat = specs.repeat === 'yes';
+            const screenCost = isRepeat ? 10.00 : 20.00;
+            const setupFee = (specs.screens || specs.colors) * screenCost;
+            
+            // Add color change fees
+            const colorChangeFee = (specs.colorChanges || 0) * 20.00;
+            
+            return setupFee + colorChangeFee;
+        }
+
+        /**
+         * Get DTF price from database
+         */
+        async function getDTFPrice(quantity, sizeCategory) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('pricing_calc_dtf_pricing')
+                    .select('price')
+                    .eq('size_category', sizeCategory)
+                    .lte('quantity_min', quantity)
+                    .or(`quantity_max.gte.${quantity},quantity_max.is.null`)
+                    .single();
+                
+                if (error) throw error;
+                return parseFloat(data?.price || 0);
+            } catch (error) {
+                console.error('Error fetching DTF price:', error);
+                return 0;
+            }
+        }
+
+        /**
+         * Get embroidery price from database
+         */
+        async function getEmbroideryPrice(quantity, stitches) {
+            try {
+                // Find the appropriate stitch tier
+                const { data, error } = await supabaseClient
+                    .from('pricing_calc_embroidery_pricing')
+                    .select('price')
+                    .gte('stitch_count_max', stitches)
+                    .lte('quantity_min', quantity)
+                    .or(`quantity_max.gte.${quantity},quantity_max.is.null`)
+                    .order('stitch_count_max', { ascending: true })
+                    .limit(1)
+                    .single();
+                
+                if (error) throw error;
+                return parseFloat(data?.price || 0);
+            } catch (error) {
+                console.error('Error fetching embroidery price:', error);
+                return 0;
+            }
+        }
+
+        /**
+         * Calculate embroidery setup fees
+         */
+        function calculateEmbroiderySetup(quantity, stitches, needsDigitizing) {
+            if (!needsDigitizing || needsDigitizing === 'no') return 0;
+            
+            // Free digitizing on 144+ pieces
+            if (quantity >= 144) return 0;
+            
+            // $5 per 1K stitches, min 5K ($25), max $75
+            const digitizingFee = Math.max(25, Math.min(75, Math.ceil(stitches / 1000) * 5));
+            return digitizingFee;
+        }
+
+        /**
+         * Calculate shipping based on quantity and item type
+         */
+        async function calculateShipping(quantity, itemType) {
+            try {
+                // Get item weight (simplified - you may need a lookup table)
+                const itemWeight = getItemWeight(itemType);
+                
+                // Determine shipping level based on weight
+                const { data, error } = await supabaseClient
+                    .from('pricing_calc_shipping_pricing')
+                    .select('*')
+                    .lte('weight_min', itemWeight)
+                    .or(`weight_max.gte.${itemWeight},weight_max.is.null`)
+                    .single();
+                
+                if (error) throw error;
+                
+                const shippingCost = parseFloat(data.shipping_min) + (quantity * parseFloat(data.shipping_per_item));
+                const handlingCost = parseFloat(data.handling_min) + (quantity * parseFloat(data.handling_per_item));
+                
+                return shippingCost + handlingCost;
+            } catch (error) {
+                console.error('Error calculating shipping:', error);
+                return 0;
+            }
+        }
+
+        /**
+         * Get item weight for shipping calculation
+         */
+        function getItemWeight(itemType) {
+            const weights = {
+                't-shirt': 0.35,
+                'hoodie': 1.2,
+                'polo': 0.45,
+                'sweatshirt': 0.9,
+                'jacket': 1.8,
+                'hat': 0.25,
+                'bag': 0.6
+            };
+            return weights[itemType] || 0.35;
+        }
+
+        /**
+         * Calculate rush fees
+         */
+        async function calculateRushFees(days, locationCount, totalPieces) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('pricing_calc_rush_fees')
+                    .select('*')
+                    .eq('days', parseInt(days))
+                    .single();
+                
+                if (error) throw error;
+                
+                const baseFee = parseFloat(data.base_fee);
+                const perPieceLocationFee = parseFloat(data.per_piece_per_location_fee);
+                
+                return baseFee + (totalPieces * locationCount * perPieceLocationFee);
+            } catch (error) {
+                console.error('Error calculating rush fees:', error);
+                return 0;
+            }
+        }
+
+        /**
+         * Get decoration specs from form fields
+         */
+        function getDecorationSpecs(decorationId, method) {
+            const specs = {};
+            
+            if (method === 'screen_print') {
+                specs.colors = parseInt(document.querySelector(`.screen-colors[data-decoration="${decorationId}"]`)?.value || 0);
+                specs.screens = parseInt(document.querySelector(`.screen-screens[data-decoration="${decorationId}"]`)?.value || 0);
+                specs.repeat = document.querySelector(`.screen-repeat[data-decoration="${decorationId}"]`)?.value || 'no';
+                specs.colorChanges = parseInt(document.querySelector(`.screen-color-changes[data-decoration="${decorationId}"]`)?.value || 0);
+            } else if (method === 'dtf') {
+                specs.size = document.querySelector(`.dtf-size[data-decoration="${decorationId}"]`)?.value || 'sm';
+            } else if (method === 'embroidery') {
+                specs.stitches = parseInt(document.querySelector(`.emb-stitches[data-decoration="${decorationId}"]`)?.value || 0);
+                specs.digitizing = document.querySelector(`.emb-digitizing[data-decoration="${decorationId}"]`)?.value || 'no';
+            }
+            
+            return specs;
+        }
+
+        /**
+         * Calculate additional fees from form
+         */
+        function calculateAdditionalFees() {
+            let total = 0;
+            
+            // Add misc fees
+            const miscFees = document.querySelectorAll('[id^="misc-fee-"]');
+            miscFees.forEach(row => {
+                const qty = parseInt(row.querySelector('.misc-fee-qty')?.value || 0);
+                const price = parseFloat(row.querySelector('.misc-fee-price')?.value || 0);
+                total += (qty * price);
+            });
+            
+            // Add finishing fees (from page 7 of pricing guide)
+            const fplTeesQty = parseInt(document.getElementById('finish_fpl_tees')?.value || 0);
+            const fplOtherQty = parseInt(document.getElementById('finish_fpl_other')?.value || 0);
+            const foldTeesQty = parseInt(document.getElementById('finish_fold_tees')?.value || 0);
+            const foldOtherQty = parseInt(document.getElementById('finish_fold_other')?.value || 0);
+            const labelsCustomerQty = parseInt(document.getElementById('finish_labels_customer')?.value || 0);
+            const labelsHTGQty = parseInt(document.getElementById('finish_labels_htg')?.value || 0);
+            
+            const fplTeesTotal = fplTeesQty * 0.50;
+            const fplOtherTotal = fplOtherQty * 0.60;
+            const foldTeesTotal = foldTeesQty * 0.30;
+            const foldOtherTotal = foldOtherQty * 0.40;
+            const labelsCustomerTotal = labelsCustomerQty * 0.15;
+            const labelsHTGTotal = labelsHTGQty * 0.25;
+            
+            // Update individual finishing displays
+            document.getElementById('finish_fpl_tees_total').textContent = '$' + fplTeesTotal.toFixed(2);
+            document.getElementById('finish_fpl_other_total').textContent = '$' + fplOtherTotal.toFixed(2);
+            document.getElementById('finish_fold_tees_total').textContent = '$' + foldTeesTotal.toFixed(2);
+            document.getElementById('finish_fold_other_total').textContent = '$' + foldOtherTotal.toFixed(2);
+            document.getElementById('finish_labels_customer_total').textContent = '$' + labelsCustomerTotal.toFixed(2);
+            document.getElementById('finish_labels_htg_total').textContent = '$' + labelsHTGTotal.toFixed(2);
+            
+            const finishingTotal = fplTeesTotal + fplOtherTotal + foldTeesTotal + 
+                                 foldOtherTotal + labelsCustomerTotal + labelsHTGTotal;
+            
+            // Update finishing total display
+            document.getElementById('detail_finishing_total').textContent = '$' + finishingTotal.toFixed(2);
+            
+            total += finishingTotal;
+            
+            return total;
+        }
+
+        /**
+         * Update decoration pricing display
+         */
+        function updateDecorationPricing(decorationId, pricing) {
+            // You can add pricing display within each decoration card if desired
+            console.log(`Decoration ${decorationId} pricing:`, pricing);
+        }
+
+        /**
+         * Update summary display with totals
+         */
+        function updateSummaryDisplay(totals) {
+            document.getElementById('decorations_total').textContent = `$${totals.decorationsTotal.toFixed(2)}`;
+            document.getElementById('shipping_total').textContent = `$${totals.shipping.toFixed(2)}`;
+            document.getElementById('rush_total').textContent = `$${totals.rushFees.toFixed(2)}`;
+            document.getElementById('add_fees_total').textContent = `$${totals.additionalFees.toFixed(2)}`;
+            document.getElementById('grand_total').textContent = `$${totals.grandTotal.toFixed(2)}`;
+        }
+
+        /**
+         * Show error message
+         */
+        function showError(message) {
+            console.error(message);
+            alert(message);
+        }
+
+        // ===== END PRICING ENGINE =====
+
         // Generate random quote number
         function generateQuoteNumber() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -1157,17 +1526,14 @@
             calculateTotal();
         }
 
-        // Calculate shipping totals (placeholder for now)
+        // Calculate shipping totals - wired to pricing engine
         function calculateShippingTotals() {
-            // TODO: Wire up to actual pricing engine
-            // For now, just shows $0.00
-            console.log('Calculating shipping totals...');
+            calculateQuotePrice(); // Recalculates everything including shipping
         }
 
-        // Calculate finishing totals (placeholder for now)
+        // Calculate finishing totals - wired to pricing engine
         function calculateFinishingTotals() {
-            // TODO: Wire up to actual pricing engine
-            console.log('Calculating finishing totals...');
+            calculateQuotePrice(); // Recalculates everything
         }
 
         // Add decoration function
@@ -1194,7 +1560,7 @@
                         </div>
                         <div class="form-group">
                             <label>Location *</label>
-                            <select class="decoration-location" data-decoration="${decorationCount}">
+                            <select class="decoration-location" data-decoration="${decorationCount}" onchange="calculateTotal()">
                                 <option value="">Select...</option>
                                 <option value="left_chest">Left Chest</option>
                                 <option value="right_chest">Right Chest</option>
@@ -1219,7 +1585,7 @@
                         </div>
                         <div class="form-group">
                             <label>Quantity *</label>
-                            <input type="number" class="decoration-quantity" data-decoration="${decorationCount}" min="1" placeholder="200">
+                            <input type="number" class="decoration-quantity" data-decoration="${decorationCount}" min="1" placeholder="200" onchange="calculateTotal()">
                         </div>
                     </div>
                     
@@ -1249,22 +1615,22 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label># Colors</label>
-                            <input type="number" class="screen-colors" data-decoration="${id}" min="1" max="8" placeholder="4">
+                            <input type="number" class="screen-colors" data-decoration="${id}" min="1" max="8" placeholder="4" onchange="calculateTotal()">
                         </div>
                         <div class="form-group">
                             <label># Screens (Adlt / Yth)</label>
-                            <input type="number" class="screen-screens" data-decoration="${id}" min="1" placeholder="4">
+                            <input type="number" class="screen-screens" data-decoration="${id}" min="1" placeholder="4" onchange="calculateTotal()">
                         </div>
                         <div class="form-group">
                             <label>Repeat Design?</label>
-                            <select class="screen-repeat" data-decoration="${id}">
+                            <select class="screen-repeat" data-decoration="${id}" onchange="calculateTotal()">
                                 <option value="no">No</option>
                                 <option value="yes">Yes</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label>Color Changes</label>
-                            <input type="number" class="screen-color-changes" data-decoration="${id}" min="0" placeholder="0" value="0">
+                            <input type="number" class="screen-color-changes" data-decoration="${id}" min="0" placeholder="0" value="0" onchange="calculateTotal()">
                         </div>
                     </div>
                 `;
@@ -1273,7 +1639,7 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Size of Print</label>
-                            <select class="dtf-size" data-decoration="${id}">
+                            <select class="dtf-size" data-decoration="${id}" onchange="calculateTotal()">
                                 <option value="sm">Small <36 sq in</option>
                                 <option value="md">Medium <150 sq in</option>
                                 <option value="lg">Large <285 sq in</option>
@@ -1286,11 +1652,11 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label># Stitches</label>
-                            <input type="number" class="emb-stitches" data-decoration="${id}" min="1" placeholder="5000">
+                            <input type="number" class="emb-stitches" data-decoration="${id}" min="1" placeholder="5000" onchange="calculateTotal()">
                         </div>
                         <div class="form-group">
                             <label>Are we Digitizing?</label>
-                            <select class="emb-digitizing" data-decoration="${id}">
+                            <select class="emb-digitizing" data-decoration="${id}" onchange="calculateTotal()">
                                 <option value="no">No</option>
                                 <option value="yes">Yes</option>
                             </select>
@@ -1305,10 +1671,9 @@
             updateAdditionalFeeSections();
         }
 
-        // Calculate total (placeholder)
+        // Calculate total - wired to pricing engine
         function calculateTotal() {
-            // TODO: Implement actual pricing calculation
-            console.log('Calculating total...');
+            calculateQuotePrice();
         }
 
         // Save quote
