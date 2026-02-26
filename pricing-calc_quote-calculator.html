@@ -2609,8 +2609,9 @@
                     if (ccFee) ccFee.checked = quoteData.programs.cc_fee_enabled || false;
                 }
                 
-                // Recalculate totals
-                await calculateTotal();
+                // Recalculate totals - force full calculation
+                console.log('Recalculating totals after load...');
+                await calculateQuotePrice();
                 
                 alert(`Quote ${quoteNumber} loaded successfully!`);
                 
