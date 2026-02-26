@@ -2446,6 +2446,19 @@
                     }
                 }
                 
+                // Collect misc fees
+                const miscFees = [];
+                const miscFeeRows = document.querySelectorAll('[id^="misc-fee-"]');
+                miscFeeRows.forEach(row => {
+                    const desc = row.querySelector('.misc-fee-desc')?.value || '';
+                    const qty = parseInt(row.querySelector('.misc-fee-qty')?.value || 0);
+                    const price = parseFloat(row.querySelector('.misc-fee-price')?.value || 0);
+                    
+                    if (desc || qty > 0 || price > 0) {
+                        miscFees.push({ description: desc, quantity: qty, price: price });
+                    }
+                });
+                
                 // Build complete quote data object
                 const quoteData = {
                     quote_number: quoteNumber,
@@ -2459,6 +2472,7 @@
                     helpscout_convo: helpscoutConvo,
                     job_number: jobNumber,
                     decorations: decorations,
+                    misc_fees: miscFees,
                     totals: totals,
                     // Order details
                     order: {
@@ -2757,6 +2771,31 @@
                     if (spSizes) spSizes.value = quoteData.private_label.sp_sizes || 0;
                     if (dtfPieces) dtfPieces.value = quoteData.private_label.dtf_pieces || 0;
                     if (dtfSizes) dtfSizes.value = quoteData.private_label.dtf_sizes || 0;
+                }
+                
+                // Recreate misc fee rows
+                const miscFeesContainer = document.getElementById('miscFeesContainer');
+                if (miscFeesContainer && quoteData.misc_fees && quoteData.misc_fees.length > 0) {
+                    // Clear existing rows
+                    miscFeesContainer.innerHTML = '';
+                    miscFeeCount = 0;
+                    
+                    // Recreate each misc fee row
+                    for (const miscFee of quoteData.misc_fees) {
+                        addMiscFeeRow();
+                        
+                        // Populate the row
+                        const row = document.getElementById(`misc-fee-${miscFeeCount}`);
+                        if (row) {
+                            const descInput = row.querySelector('.misc-fee-desc');
+                            const qtyInput = row.querySelector('.misc-fee-qty');
+                            const priceInput = row.querySelector('.misc-fee-price');
+                            
+                            if (descInput) descInput.value = miscFee.description || '';
+                            if (qtyInput) qtyInput.value = miscFee.quantity || 0;
+                            if (priceInput) priceInput.value = miscFee.price || 0;
+                        }
+                    }
                 }
                 
                 // Recalculate totals - force full calculation
