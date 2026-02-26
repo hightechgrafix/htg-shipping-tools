@@ -367,7 +367,13 @@
                 <div class="logo">H</div>
                 Quote Calculator
             </h1>
-            <div class="quote-number">Quote #: <span id="quoteNumber">Loading...</span></div>
+            <div style="display: flex; gap: 16px; align-items: center;">
+                <div class="quote-number">Quote #: <span id="quoteNumber">Loading...</span></div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <label style="font-size: 14px; font-weight: 600; color: #4a5568;">Date:</label>
+                    <input type="date" id="quoteDate" style="padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
+                </div>
+            </div>
         </div>
 
         <!-- Main Content -->
@@ -1101,6 +1107,10 @@
 
         // Set quote number on load
         document.getElementById('quoteNumber').textContent = generateQuoteNumber();
+
+        // Set default date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('quoteDate').value = today;
 
         // Decoration counter
         let decorationCount = 0;
