@@ -2379,7 +2379,104 @@
 
         // Save quote
         async function saveQuote() {
-            alert('Save functionality coming soon!');
+            try {
+                // First, make sure we have a calculated quote
+                const totals = await calculateQuotePrice();
+                
+                // Generate quote number (Q-YYYY-NNNNNN)
+                const now = new Date();
+                const year = now.getFullYear();
+                const randomNum = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+                const quoteNumber = `Q-${year}-${randomNum}`;
+                
+                // Collect customer info
+                const customerName = document.getElementById('customer_name')?.value || '';
+                const customerEmail = document.getElementById('customer_email')?.value || '';
+                const customerCompany = document.getElementById('customer_company')?.value || '';
+                const salesRep = document.getElementById('sales_rep')?.value || '';
+                
+                // Collect all decorations
+                const decorations = [];
+                const decorationCards = document.querySelectorAll('.decoration-card');
+                
+                for (const card of decorationCards) {
+                    const decorationId = card.id.replace('decoration-', '');
+                    const method = card.querySelector('.decoration-method')?.value;
+                    const location = card.querySelector('.decoration-location')?.value;
+                    const quantity = parseInt(card.querySelector('.decoration-quantity')?.value || 0);
+                    
+                    if (method && location && quantity > 0) {
+                        const specs = getDecorationSpecs(decorationId, method);
+                        
+                        decorations.push({
+                            method,
+                            location,
+                            quantity,
+                            specs
+                        });
+                    }
+                }
+                
+                // Build complete quote data object
+                const quoteData = {
+                    quote_number: quoteNumber,
+                    created_at: now.toISOString(),
+                    customer: {
+                        name: customerName,
+                        email: customerEmail,
+                        company: customerCompany
+                    },
+                    sales_rep: salesRep,
+                    decorations: decorations,
+                    totals: totals,
+                    // Store all the additional data
+                    shipping_levels: {
+                        level_1: parseInt(document.getElementById('level_1_qty')?.value || 0),
+                        level_2: parseInt(document.getElementById('level_2_qty')?.value || 0),
+                        level_3: parseInt(document.getElementById('level_3_qty')?.value || 0),
+                        level_4: parseInt(document.getElementById('level_4_qty')?.value || 0),
+                        level_5: parseInt(document.getElementById('level_5_qty')?.value || 0)
+                    },
+                    rush: {
+                        rush_2_day: parseInt(document.getElementById('rush_2_day')?.value || 0),
+                        rush_3_day: parseInt(document.getElementById('rush_3_day')?.value || 0),
+                        rush_4_day: parseInt(document.getElementById('rush_4_day')?.value || 0),
+                        rush_5_day: parseInt(document.getElementById('rush_5_day')?.value || 0)
+                    },
+                    programs: {
+                        spoilage_insurance: document.getElementById('spoilage_insurance')?.checked || false,
+                        printback_program: document.getElementById('printback_program')?.checked || false,
+                        cc_fee_enabled: document.getElementById('cc_fee_toggle')?.checked || false
+                    }
+                };
+                
+                // Save to Supabase
+                const { data, error } = await supabaseClient
+                    .from('pricing_calc_quotes')
+                    .insert([{
+                        quote_number: quoteNumber,
+                        customer_name: customerName,
+                        customer_email: customerEmail,
+                        sales_rep: salesRep,
+                        quote_data: quoteData,
+                        total_amount: totals.grandTotal,
+                        status: 'draft'
+                    }])
+                    .select();
+                
+                if (error) {
+                    console.error('Error saving quote:', error);
+                    alert('Error saving quote: ' + error.message);
+                    return;
+                }
+                
+                console.log('Quote saved:', data);
+                alert(`Quote saved successfully!\n\nQuote Number: ${quoteNumber}\n\nYou can now generate a PDF or continue editing.`);
+                
+            } catch (error) {
+                console.error('Error in saveQuote:', error);
+                alert('Error saving quote: ' + error.message);
+            }
         }
 
         // Generate PDF
