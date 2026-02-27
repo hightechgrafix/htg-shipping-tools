@@ -427,25 +427,21 @@
 
             <!-- Order Details -->
             <div class="card">
-                <div class="card-header">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <h2 class="card-title">Order Details</h2>
-                </div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="itemType">Item Type</label>
-                        <select id="itemType" onchange="calculateTotal()">
-                            <option value="t-shirt">T-Shirt</option>
-                            <option value="hoodie">Hoodie</option>
-                            <option value="polo">Polo</option>
-                            <option value="jacket">Jacket</option>
-                            <option value="hat">Hat</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="itemWeight">Item Weight (lbs)</label>
-                        <input type="number" id="itemWeight" placeholder="0.5" step="0.01" value="0.5" onchange="calculateTotal()">
+                    <div style="display: flex; gap: 8px;">
+                        <a href="https://www.teamhtg.com/item-lookup.html" target="_blank" style="padding: 6px 12px; background: #4299e1; color: white; border-radius: 4px; text-decoration: none; font-size: 13px; font-weight: 600;">🔍 Item Lookup</a>
+                        <a href="https://www.teamhtg.com/shipping-calc.html" target="_blank" style="padding: 6px 12px; background: #48bb78; color: white; border-radius: 4px; text-decoration: none; font-size: 13px; font-weight: 600;">📦 Shipping Calc</a>
                     </div>
                 </div>
+                
+                <div id="orderItemsContainer">
+                    <!-- Order items will be added here -->
+                </div>
+                
+                <button class="add-decoration-btn" onclick="addOrderItem()" style="margin-top: 12px;">
+                    + Add Item Type
+                </button>
             </div>
 
             <!-- Decorations -->
@@ -2176,6 +2172,8 @@
         // Decoration counter
         let decorationCount = 0;
         let activeMethods = new Set();
+        let miscFeeCount = 0;
+        let orderItemCount = 0;
 
         // Toggle collapsible sections
         function toggleSection(sectionId) {
@@ -2468,6 +2466,19 @@
                     }
                 });
                 
+                // Collect order items
+                const orderItems = [];
+                const orderItemRows = document.querySelectorAll('[id^="order-item-"]');
+                orderItemRows.forEach(row => {
+                    const type = row.querySelector('.order-item-type')?.value || '';
+                    const qty = parseInt(row.querySelector('.order-item-qty')?.value || 0);
+                    const weight = parseFloat(row.querySelector('.order-item-weight')?.value || 0);
+                    
+                    if (type || qty > 0 || weight > 0) {
+                        orderItems.push({ type: type, quantity: qty, weight: weight });
+                    }
+                });
+                
                 // Build complete quote data object
                 const quoteData = {
                     quote_number: quoteNumber,
@@ -2482,6 +2493,7 @@
                     job_number: jobNumber,
                     decorations: decorations,
                     misc_fees: miscFees,
+                    order_items: orderItems,
                     totals: totals,
                     // Order details
                     order: {
@@ -2807,6 +2819,34 @@
                     }
                 }
                 
+                // Recreate order item rows
+                const orderItemsContainer = document.getElementById('orderItemsContainer');
+                if (orderItemsContainer && quoteData.order_items && quoteData.order_items.length > 0) {
+                    // Clear existing rows
+                    orderItemsContainer.innerHTML = '';
+                    orderItemCount = 0;
+                    
+                    // Recreate each order item row
+                    for (const orderItem of quoteData.order_items) {
+                        addOrderItem();
+                        
+                        // Populate the row
+                        const row = document.getElementById(`order-item-${orderItemCount}`);
+                        if (row) {
+                            const typeInput = row.querySelector('.order-item-type');
+                            const qtyInput = row.querySelector('.order-item-qty');
+                            const weightInput = row.querySelector('.order-item-weight');
+                            
+                            if (typeInput) typeInput.value = orderItem.type || '';
+                            if (qtyInput) qtyInput.value = orderItem.quantity || 0;
+                            if (weightInput) weightInput.value = orderItem.weight || 0;
+                        }
+                    }
+                    
+                    // Update shipping levels based on loaded items
+                    updateShippingLevels();
+                }
+                
                 // Recalculate totals - force full calculation
                 console.log('Recalculating totals after load...');
                 await calculateQuotePrice();
@@ -3080,9 +3120,6 @@
             }
         }
 
-        // Misc fee row counter
-        let miscFeeCount = 0;
-
         // Add misc fee row
         function addMiscFeeRow() {
             miscFeeCount++;
@@ -3123,10 +3160,90 @@
             document.getElementById('privateLabelFields').style.display = isEnabled ? 'block' : 'none';
         }
 
+        // Add order item
+        function addOrderItem() {
+            orderItemCount++;
+            const container = document.getElementById('orderItemsContainer');
+            
+            const itemHTML = `
+                <div class="form-grid" id="order-item-${orderItemCount}" style="margin-bottom: 16px; padding: 16px; background: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <div class="form-group">
+                        <label>Item Type</label>
+                        <input type="text" class="order-item-type" data-item="${orderItemCount}" placeholder="T-Shirt, Hoodie, etc." onchange="updateShippingLevels()">
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" class="order-item-qty" data-item="${orderItemCount}" min="0" placeholder="100" value="0" onchange="updateShippingLevels()">
+                    </div>
+                    <div class="form-group">
+                        <label>Weight per Item (lbs)</label>
+                        <input type="number" class="order-item-weight" data-item="${orderItemCount}" min="0" step="0.01" placeholder="0.5" value="0" onchange="updateShippingLevels()">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="remove-btn" onclick="removeOrderItem(${orderItemCount})" style="width: 100%;">Remove</button>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', itemHTML);
+        }
+        
+        // Remove order item
+        function removeOrderItem(id) {
+            const element = document.getElementById(`order-item-${id}`);
+            element.remove();
+            updateShippingLevels();
+        }
+        
+        // Update shipping levels based on order items
+        function updateShippingLevels() {
+            // Reset all shipping level quantities
+            document.getElementById('level_1_qty').value = 0;
+            document.getElementById('level_2_qty').value = 0;
+            document.getElementById('level_3_qty').value = 0;
+            document.getElementById('level_4_qty').value = 0;
+            document.getElementById('level_5_qty').value = 0;
+            
+            // Get all order items
+            const orderItems = document.querySelectorAll('[id^="order-item-"]');
+            
+            orderItems.forEach(item => {
+                const qty = parseInt(item.querySelector('.order-item-qty')?.value || 0);
+                const weight = parseFloat(item.querySelector('.order-item-weight')?.value || 0);
+                
+                if (qty > 0 && weight > 0) {
+                    // Determine shipping level based on weight
+                    let level;
+                    if (weight >= 0 && weight < 0.56) {
+                        level = 1;
+                    } else if (weight >= 0.56 && weight < 0.8) {
+                        level = 2;
+                    } else if (weight >= 0.8 && weight < 1.31) {
+                        level = 3;
+                    } else if (weight >= 1.31 && weight < 2.11) {
+                        level = 4;
+                    } else if (weight >= 2.11 && weight < 3.99) {
+                        level = 5;
+                    }
+                    
+                    // Add to the appropriate level
+                    if (level) {
+                        const levelInput = document.getElementById(`level_${level}_qty`);
+                        const currentQty = parseInt(levelInput.value || 0);
+                        levelInput.value = currentQty + qty;
+                    }
+                }
+            });
+            
+            // Trigger calculation
+            calculateTotal();
+        }
+
         // Add first decoration by default
         window.addEventListener('DOMContentLoaded', () => {
             addDecoration();
             addMiscFeeRow(); // Start with one misc fee row
+            addOrderItem(); // Start with one order item
             
             // Check if quote number in URL parameter
             const urlParams = new URLSearchParams(window.location.search);
