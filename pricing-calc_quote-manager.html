@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quote Manager - HTG</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        h1 {
+            color: #1a202c;
+            font-size: 28px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #c0392b;
+        }
+
+        .btn-secondary {
+            background: #718096;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-bar input,
+        .search-bar select {
+            padding: 10px 15px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 14px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-bar input:focus,
+        .search-bar select:focus {
+            outline: 2px solid #e74c3c;
+            border-color: #e74c3c;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #f7fafc;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 4px solid #e74c3c;
+            flex: 1;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: #1a202c;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        thead {
+            background: #2d3748;
+            color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #e2e8f0;
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #f7fafc;
+        }
+
+        td {
+            padding: 15px;
+            font-size: 14px;
+            color: #4a5568;
+        }
+
+        .quote-number {
+            font-weight: 600;
+            color: #e74c3c;
+            font-family: 'Courier New', monospace;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-draft {
+            background: #edf2f7;
+            color: #4a5568;
+        }
+
+        .status-sent {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+
+        .status-approved {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-expired {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .action-view {
+            background: #4299e1;
+            color: white;
+        }
+
+        .action-view:hover {
+            background: #3182ce;
+        }
+
+        .action-delete {
+            background: #fc8181;
+            color: white;
+        }
+
+        .action-delete:hover {
+            background: #f56565;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-state h3 {
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+
+        .amount {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .stats {
+                flex-direction: column;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 10px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Quote Manager</h1>
+            <div style="display: flex; gap: 10px;">
+                <a href="pricing-calc_quote-calculator.html" class="btn btn-primary">+ New Quote</a>
+                <a href="index.html" class="btn btn-secondary">← Back to Menu</a>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Total Quotes</div>
+                <div class="stat-value" id="totalQuotes">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Value</div>
+                <div class="stat-value" id="totalValue">$0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">This Month</div>
+                <div class="stat-value" id="monthCount">0</div>
+            </div>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="🔍 Search by quote #, customer name, email, or company...">
+            <select id="salesRepFilter">
+                <option value="">All Sales Reps</option>
+            </select>
+            <select id="statusFilter">
+                <option value="">All Status</option>
+                <option value="draft">Draft</option>
+                <option value="sent">Sent</option>
+                <option value="approved">Approved</option>
+                <option value="expired">Expired</option>
+            </select>
+            <button class="btn btn-secondary" onclick="loadQuotes()">Refresh</button>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            Loading quotes...
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <h3>No quotes found</h3>
+            <p>Try adjusting your search filters or create a new quote to get started.</p>
+        </div>
+
+        <table id="quotesTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th>Quote #</th>
+                    <th>Customer</th>
+                    <th>Sales Rep</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="quotesBody">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Initialize Supabase
+        const SUPABASE_URL = 'https://sbfslzwnkztmodnlsigq.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNsendua3p0bW9kbmxzaWdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ5NTgsImV4cCI6MjA3ODM3MDk1OH0.ebZ1IvA5FQN7EhIcluJvw3OqMFU4Czkhin_ffTPx9vg';
+        
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let allQuotes = [];
+
+        async function loadQuotes() {
+            const loading = document.getElementById('loading');
+            const table = document.getElementById('quotesTable');
+            const emptyState = document.getElementById('emptyState');
+
+            loading.style.display = 'block';
+            table.style.display = 'none';
+            emptyState.style.display = 'none';
+
+            try {
+                // Load quotes ordered by most recent
+                const { data, error } = await supabaseClient
+                    .from('pricing_calc_quotes')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(100);
+
+                if (error) throw error;
+
+                allQuotes = data || [];
+                
+                // Update stats
+                updateStats();
+                
+                // Populate sales rep filter
+                populateSalesRepFilter();
+                
+                // Render filtered quotes
+                filterAndRenderQuotes();
+
+                loading.style.display = 'none';
+
+            } catch (error) {
+                console.error('Error loading quotes:', error);
+                loading.innerHTML = `<span style="color: #e74c3c;">Error loading quotes: ${error.message}</span>`;
+            }
+        }
+
+        function updateStats() {
+            const totalQuotes = allQuotes.length;
+            const totalValue = allQuotes.reduce((sum, q) => sum + (parseFloat(q.total_amount) || 0), 0);
+            
+            // Count quotes from this month
+            const now = new Date();
+            const thisMonth = allQuotes.filter(q => {
+                const quoteDate = new Date(q.created_at);
+                return quoteDate.getMonth() === now.getMonth() && 
+                       quoteDate.getFullYear() === now.getFullYear();
+            }).length;
+
+            document.getElementById('totalQuotes').textContent = totalQuotes;
+            document.getElementById('totalValue').textContent = '$' + totalValue.toFixed(2);
+            document.getElementById('monthCount').textContent = thisMonth;
+        }
+
+        function populateSalesRepFilter() {
+            const salesReps = [...new Set(allQuotes.map(q => q.sales_rep).filter(Boolean))];
+            const select = document.getElementById('salesRepFilter');
+            
+            // Clear existing options except first
+            select.innerHTML = '<option value="">All Sales Reps</option>';
+            
+            salesReps.sort().forEach(rep => {
+                const option = document.createElement('option');
+                option.value = rep;
+                option.textContent = rep;
+                select.appendChild(option);
+            });
+        }
+
+        function filterAndRenderQuotes() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const salesRepFilter = document.getElementById('salesRepFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            let filtered = allQuotes;
+
+            // Apply search filter
+            if (searchTerm) {
+                filtered = filtered.filter(q => 
+                    q.quote_number?.toLowerCase().includes(searchTerm) ||
+                    q.customer_name?.toLowerCase().includes(searchTerm) ||
+                    q.customer_email?.toLowerCase().includes(searchTerm) ||
+                    q.customer_company?.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            // Apply sales rep filter
+            if (salesRepFilter) {
+                filtered = filtered.filter(q => q.sales_rep === salesRepFilter);
+            }
+
+            // Apply status filter
+            if (statusFilter) {
+                filtered = filtered.filter(q => q.status === statusFilter);
+            }
+
+            renderQuotes(filtered);
+        }
+
+        function renderQuotes(quotes) {
+            const tbody = document.getElementById('quotesBody');
+            const table = document.getElementById('quotesTable');
+            const emptyState = document.getElementById('emptyState');
+
+            tbody.innerHTML = '';
+
+            if (quotes.length === 0) {
+                table.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            table.style.display = 'table';
+            emptyState.style.display = 'none';
+
+            quotes.forEach(quote => {
+                const row = document.createElement('tr');
+                
+                const customerName = quote.customer_name || 'N/A';
+                const company = quote.customer_company ? ` (${quote.customer_company})` : '';
+                const amount = quote.total_amount ? `$${parseFloat(quote.total_amount).toFixed(2)}` : 'N/A';
+                const status = quote.status || 'draft';
+                const createdDate = new Date(quote.created_at).toLocaleDateString();
+
+                row.innerHTML = `
+                    <td><span class="quote-number">${quote.quote_number}</span></td>
+                    <td>${customerName}${company}</td>
+                    <td>${quote.sales_rep || 'N/A'}</td>
+                    <td class="amount">${amount}</td>
+                    <td><span class="status-badge status-${status}">${status}</span></td>
+                    <td>${createdDate}</td>
+                    <td class="actions">
+                        <button class="action-btn action-view" onclick="loadQuote('${quote.quote_number}')">Load</button>
+                        <button class="action-btn action-delete" onclick="deleteQuote('${quote.quote_number}')">Delete</button>
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        function loadQuote(quoteNumber) {
+            // Redirect to calculator with quote number in URL
+            window.location.href = `pricing-calc_quote-calculator.html?load=${encodeURIComponent(quoteNumber)}`;
+        }
+
+        async function deleteQuote(quoteNumber) {
+            if (!confirm(`Are you sure you want to delete quote ${quoteNumber}? This cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient
+                    .from('pricing_calc_quotes')
+                    .delete()
+                    .eq('quote_number', quoteNumber);
+
+                if (error) throw error;
+
+                alert(`Quote ${quoteNumber} deleted successfully.`);
+                loadQuotes(); // Reload the list
+
+            } catch (error) {
+                console.error('Error deleting quote:', error);
+                alert('Error deleting quote: ' + error.message);
+            }
+        }
+
+        // Add event listeners for real-time filtering
+        document.getElementById('searchInput').addEventListener('input', filterAndRenderQuotes);
+        document.getElementById('salesRepFilter').addEventListener('change', filterAndRenderQuotes);
+        document.getElementById('statusFilter').addEventListener('change', filterAndRenderQuotes);
+
+        // Load quotes on page load
+        loadQuotes();
+    </script>
+</body>
+</html>

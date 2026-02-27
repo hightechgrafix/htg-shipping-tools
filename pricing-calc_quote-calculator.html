@@ -1103,6 +1103,7 @@
             <div class="action-buttons">
                 <button class="btn-primary" onclick="saveQuote()">Save Quote</button>
                 <button class="btn-secondary" onclick="loadQuote()">Load Quote</button>
+                <button class="btn-secondary" onclick="window.location.href='pricing-calc_quote-manager.html'">📋 View All Quotes</button>
                 <button class="btn-secondary" onclick="generatePDF()">Generate PDF</button>
             </div>
         </div>
@@ -3118,7 +3119,109 @@
         window.addEventListener('DOMContentLoaded', () => {
             addDecoration();
             addMiscFeeRow(); // Start with one misc fee row
+            
+            // Check if quote number in URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const loadQuoteNumber = urlParams.get('load');
+            if (loadQuoteNumber) {
+                // Auto-load the quote after a brief delay to ensure page is ready
+                setTimeout(() => {
+                    autoLoadQuote(loadQuoteNumber);
+                }, 500);
+            }
         });
+        
+        // Auto-load quote from URL parameter
+        async function autoLoadQuote(quoteNumber) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('pricing_calc_quotes')
+                    .select('*')
+                    .eq('quote_number', quoteNumber.trim())
+                    .single();
+                
+                if (error || !data) {
+                    console.error('Quote not found:', error);
+                    return;
+                }
+                
+                // Use the existing loadQuote logic but with data already fetched
+                const quoteData = data.quote_data;
+                
+                // Populate all fields (reuse the logic from loadQuote)
+                document.getElementById('customerName').value = quoteData.customer?.name || '';
+                document.getElementById('customerEmail').value = quoteData.customer?.email || '';
+                document.getElementById('customerCompany').value = quoteData.customer?.company || '';
+                document.getElementById('salesRep').value = quoteData.sales_rep || '';
+                document.getElementById('helpscoutConvo').value = quoteData.helpscout_convo || '';
+                document.getElementById('jobNumber').value = quoteData.job_number || '';
+                document.getElementById('quoteNumber').textContent = quoteNumber;
+                
+                if (quoteData.order) {
+                    const itemType = document.getElementById('itemType');
+                    const itemWeight = document.getElementById('itemWeight');
+                    if (itemType) itemType.value = quoteData.order.item_type || '';
+                    if (itemWeight) itemWeight.value = quoteData.order.item_weight || '';
+                }
+                
+                // Clear and rebuild decorations
+                const decorationList = document.getElementById('decorationsContainer');
+                decorationList.innerHTML = '';
+                decorationCount = 0;
+                
+                if (quoteData.decorations && quoteData.decorations.length > 0) {
+                    for (const decoration of quoteData.decorations) {
+                        addDecoration();
+                        const decorationId = decorationCount;
+                        const card = document.getElementById(`decoration-${decorationId}`);
+                        
+                        card.querySelector('.decoration-method').value = decoration.method;
+                        card.querySelector('.decoration-location').value = decoration.location;
+                        card.querySelector('.decoration-quantity').value = decoration.quantity;
+                        
+                        updateDecorationFields(decorationId);
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        
+                        if (decoration.method === 'screen_print' && decoration.specs) {
+                            const colorsInput = card.querySelector(`.screen-colors[data-decoration="${decorationId}"]`);
+                            const screensInput = card.querySelector(`.screen-screens[data-decoration="${decorationId}"]`);
+                            if (colorsInput && decoration.specs.colors) colorsInput.value = decoration.specs.colors;
+                            if (screensInput && decoration.specs.screens) screensInput.value = decoration.specs.screens;
+                        }
+                    }
+                }
+                
+                // Load all other sections (shipping, rush, programs, etc.)
+                if (quoteData.shipping_levels) {
+                    document.getElementById('level_1_qty').value = quoteData.shipping_levels.level_1 || 0;
+                    document.getElementById('level_2_qty').value = quoteData.shipping_levels.level_2 || 0;
+                    document.getElementById('level_3_qty').value = quoteData.shipping_levels.level_3 || 0;
+                    document.getElementById('level_4_qty').value = quoteData.shipping_levels.level_4 || 0;
+                    document.getElementById('level_5_qty').value = quoteData.shipping_levels.level_5 || 0;
+                }
+                
+                if (quoteData.rush) {
+                    document.getElementById('rush_2_day').value = quoteData.rush.rush_2_day || 0;
+                    document.getElementById('rush_3_day').value = quoteData.rush.rush_3_day || 0;
+                    document.getElementById('rush_4_day').value = quoteData.rush.rush_4_day || 0;
+                    document.getElementById('rush_5_day').value = quoteData.rush.rush_5_day || 0;
+                }
+                
+                if (quoteData.programs) {
+                    document.getElementById('spoilage_insurance').checked = quoteData.programs.spoilage_insurance || false;
+                    document.getElementById('printback_program').checked = quoteData.programs.printback_program || false;
+                    document.getElementById('cc_fee_toggle').checked = quoteData.programs.cc_fee_enabled || false;
+                }
+                
+                // Recalculate
+                await calculateQuotePrice();
+                
+                console.log(`Auto-loaded quote ${quoteNumber}`);
+                
+            } catch (error) {
+                console.error('Error auto-loading quote:', error);
+            }
+        }
     </script>
 </body>
 </html>
