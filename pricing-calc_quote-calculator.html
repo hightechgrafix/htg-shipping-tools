@@ -2378,8 +2378,16 @@
                 }
             }
             
-            if (!hasValidDecoration) {
-                console.log('Skipping calculation - no complete decorations yet');
+            // Also check if we have any shipping quantities (for shipping-only quotes)
+            const hasShipping = 
+                parseInt(document.getElementById('level_1_qty')?.value || 0) > 0 ||
+                parseInt(document.getElementById('level_2_qty')?.value || 0) > 0 ||
+                parseInt(document.getElementById('level_3_qty')?.value || 0) > 0 ||
+                parseInt(document.getElementById('level_4_qty')?.value || 0) > 0 ||
+                parseInt(document.getElementById('level_5_qty')?.value || 0) > 0;
+            
+            if (!hasValidDecoration && !hasShipping) {
+                console.log('Skipping calculation - no complete decorations or shipping yet');
                 return;
             }
             
