@@ -364,10 +364,15 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>
-                <div class="logo">H</div>
-                Quote Calculator
-            </h1>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <h1>
+                    <div class="logo">H</div>
+                    Quote Calculator
+                </h1>
+                <button onclick="window.location.href='index.html'" style="padding: 8px 16px; background: #718096; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                    ← Back to Menu
+                </button>
+            </div>
             <div style="display: flex; gap: 16px; align-items: center;">
                 <div class="quote-number">Quote #: <span id="quoteNumber">Loading...</span></div>
                 <div style="display: flex; align-items: center; gap: 8px;">
@@ -401,9 +406,12 @@
                         <label for="salesRep">Sales Rep *</label>
                         <select id="salesRep" required>
                             <option value="">Select...</option>
+                            <option value="Christen">Christen</option>
+                            <option value="Fatima">Fatima</option>
+                            <option value="Janie">Janie</option>
+                            <option value="Jazmine">Jazmine</option>
                             <option value="Jennifer">Jennifer</option>
-                            <option value="Mike">Mike</option>
-                            <option value="Sarah">Sarah</option>
+                            <option value="Ruby">Ruby</option>
                         </select>
                     </div>
                     <div class="form-group">
