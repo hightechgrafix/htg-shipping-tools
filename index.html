@@ -466,6 +466,7 @@
       // Production & Items Section
       const productionButtons = [];
       if (permissions.has_standard_tools || permissions.is_admin) {
+        productionButtons.push({ label: '💰 Quote Calculator', href: 'pricing-calc-quote-calculator.html' });
         productionButtons.push({ label: 'Edit Production Times', href: 'edit-production-times.html' });
         productionButtons.push({ label: 'Add Item', href: 'add-item.html' });
         productionButtons.push({ label: 'Item Lookup', href: 'item-lookup.html' });
