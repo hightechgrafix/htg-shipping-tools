@@ -84,10 +84,12 @@ export default async function handler(req, res) {
     start.setHours(0, 0, 0, 0);
     
     const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+    end.setHours(23, 59, 59, 0);
 
-    const modifiedSince = start.toISOString();
-    const modifiedBefore = end.toISOString();
+    // Format dates without milliseconds for HelpScout API
+    // HelpScout wants: yyyy-MM-dd'T'HH:mm:ss'Z' (no milliseconds)
+    const modifiedSince = start.toISOString().replace(/\.\d{3}Z$/, 'Z');
+    const modifiedBefore = end.toISOString().replace(/\.\d{3}Z$/, 'Z');
 
     console.log('Date range:', { modifiedSince, modifiedBefore });
 
