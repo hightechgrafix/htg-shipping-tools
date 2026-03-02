@@ -139,24 +139,35 @@ export default async function handler(req, res) {
         const subject = conversation.subject || '';
         const threads = conversation._embedded?.threads || [];
         
-        // Get the first thread (original email)
-        const firstThread = threads.find(t => t.type === 'customer') || threads[0];
-        const body = firstThread?.body || '';
-
-        // Parse store number from subject
-        // Subject format: "Re: Dominos Store Update!!: New Store Network Created DomOSnet-Store4190"
+        // Parse store number from subject first
         const storeMatch = subject.match(/Store(\d+)/i);
         const storeNumber = storeMatch ? storeMatch[1] : null;
 
-        // Parse IP address from body
-        // Body format: "Address : 100.78.114.2"
-        const ipMatch = body.match(/Address\s*:\s*(\d+\.\d+\.\d+\.\d+)/i);
-        const ipAddress = ipMatch ? ipMatch[1] : null;
+        // Look through ALL threads to find the IP address
+        // (sometimes replies come before the original email in the thread list)
+        let ipAddress = null;
+        let hostname = null;
 
-        // Parse hostname from body
-        // Body format: "Name : pulsebos4190.team.dominos.com"
-        const hostnameMatch = body.match(/Name\s*:\s*([^\s\n]+)/i);
-        const hostname = hostnameMatch ? hostnameMatch[1] : null;
+        for (const thread of threads) {
+          const body = thread?.body || '';
+          
+          // Parse IP address from body
+          const ipMatch = body.match(/Address\s*:\s*(\d+\.\d+\.\d+\.\d+)/i);
+          if (ipMatch && !ipAddress) {
+            ipAddress = ipMatch[1];
+          }
+
+          // Parse hostname from body (allow HTML tags after it)
+          const hostnameMatch = body.match(/Name\s*:\s*([^\s\n<]+)/i);
+          if (hostnameMatch && !hostname) {
+            hostname = hostnameMatch[1];
+          }
+
+          // If we found both, we can stop looking
+          if (ipAddress && hostname) {
+            break;
+          }
+        }
 
         if (storeNumber || ipAddress) {
           parsedEmails.push({
