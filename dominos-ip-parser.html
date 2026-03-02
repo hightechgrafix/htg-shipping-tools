@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Domino's IP Updates Parser</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #ffffff;
+      color: #111827;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      background: #111;
+      color: #fff;
+      padding: 20px 30px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      color: #b6282c;
+    }
+
+    .back-btn {
+      padding: 8px 20px;
+      background: #1a1a1a;
+      color: #fff;
+      border: 1px solid #333;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .back-btn:hover {
+      background: #b6282c;
+      border-color: #b6282c;
+    }
+
+    /* Controls */
+    .controls {
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+      border: 1px solid #e0e0e0;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      background: #b6282c;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .btn:hover {
+      background: #9b1f24;
+    }
+
+    .btn:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #111;
+    }
+
+    .btn-secondary:hover {
+      background: #1a1a1a;
+    }
+
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: #111;
+      color: #fff;
+      padding: 15px;
+      border-radius: 12px;
+      border: 1px solid #333;
+    }
+
+    .stat-card h3 {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      margin-bottom: 5px;
+    }
+
+    .stat-card .value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #b6282c;
+    }
+
+    /* Table */
+    .table-container {
+      background: #f5f5f5;
+      border-radius: 12px;
+      padding: 25px;
+      border: 1px solid #e0e0e0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    thead {
+      background: #111;
+      color: #fff;
+    }
+
+    th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    th:hover {
+      background: #1a1a1a;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    tbody tr:hover {
+      background: #f9fafb;
+    }
+
+    td {
+      padding: 12px;
+      font-size: 0.9rem;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #6b7280;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #fecaca;
+    }
+
+    .success {
+      background: #d1fae5;
+      color: #065f46;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #6ee7b7;
+    }
+
+    .ip-10 {
+      color: #dc2626;
+      font-weight: 600;
+    }
+
+    .ip-100 {
+      color: #059669;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🍕 Domino's IP Updates Parser</h1>
+      <a href="/admin" class="back-btn">← Back to Admin</a>
+    </div>
+
+    <div class="controls">
+      <label style="display: flex; flex-direction: column; gap: 5px;">
+        <span style="font-weight: 600; font-size: 0.85rem;">From Date:</span>
+        <input type="date" id="start-date" style="padding: 8px; border-radius: 8px; border: 1px solid #9ca3af;">
+      </label>
+      <label style="display: flex; flex-direction: column; gap: 5px;">
+        <span style="font-weight: 600; font-size: 0.85rem;">To Date:</span>
+        <input type="date" id="end-date" style="padding: 8px; border-radius: 8px; border: 1px solid #9ca3af;">
+      </label>
+      <button id="fetch-btn" class="btn" style="align-self: flex-end;">📧 Fetch Emails</button>
+      <button id="export-btn" class="btn btn-secondary" style="align-self: flex-end;" disabled>📥 Export to CSV</button>
+      <div style="margin-left: auto; color: #6b7280; font-size: 0.9rem; align-self: flex-end;" id="last-updated"></div>
+    </div>
+
+    <div id="message-area"></div>
+
+    <div class="stats" id="stats-area" style="display: none;">
+      <div class="stat-card">
+        <h3>Total Emails</h3>
+        <div class="value" id="stat-total">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>Needs Update (10.x)</h3>
+        <div class="value" id="stat-needs-update">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>Already Updated (100.x)</h3>
+        <div class="value" id="stat-updated">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>Parse Errors</h3>
+        <div class="value" id="stat-errors">0</div>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <div id="loading" class="loading" style="display: none;">
+        Loading emails...
+      </div>
+      <div id="no-data" class="loading">
+        Select a date range and click "Fetch Emails" to load Domino's IP updates from HelpScout
+      </div>
+      <table id="data-table" style="display: none;">
+        <thead>
+          <tr>
+            <th onclick="sortTable('store')">Store #</th>
+            <th onclick="sortTable('ip')">IP Address</th>
+            <th onclick="sortTable('hostname')">Hostname</th>
+            <th>Email Subject</th>
+            <th>Conversation ID</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let emailData = [];
+
+    // Set default dates to today
+    function initializeDates() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('start-date').value = today;
+      document.getElementById('end-date').value = today;
+    }
+
+    async function fetchEmails() {
+      const fetchBtn = document.getElementById('fetch-btn');
+      const loading = document.getElementById('loading');
+      const noData = document.getElementById('no-data');
+      const messageArea = document.getElementById('message-area');
+      
+      const startDate = document.getElementById('start-date').value;
+      const endDate = document.getElementById('end-date').value;
+
+      if (!startDate || !endDate) {
+        messageArea.innerHTML = '<div class="error">Please select both start and end dates</div>';
+        return;
+      }
+
+      if (new Date(startDate) > new Date(endDate)) {
+        messageArea.innerHTML = '<div class="error">Start date must be before or equal to end date</div>';
+        return;
+      }
+
+      fetchBtn.disabled = true;
+      loading.style.display = 'block';
+      noData.style.display = 'none';
+      messageArea.innerHTML = '';
+
+      try {
+        const response = await fetch(`/api/dominos/fetch-emails?startDate=${startDate}&endDate=${endDate}`);
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to fetch emails');
+        }
+
+        emailData = data.emails;
+
+        displayData();
+        updateStats();
+
+        document.getElementById('export-btn').disabled = emailData.length === 0;
+
+        const now = new Date().toLocaleTimeString();
+        document.getElementById('last-updated').textContent = `Last updated: ${now}`;
+
+        messageArea.innerHTML = `<div class="success">✓ Fetched ${emailData.length} emails from ${startDate} to ${endDate}</div>`;
+
+      } catch (error) {
+        console.error('Error:', error);
+        messageArea.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+      } finally {
+        fetchBtn.disabled = false;
+        loading.style.display = 'none';
+      }
+    }
+
+    function displayData() {
+      const table = document.getElementById('data-table');
+      const tbody = document.getElementById('table-body');
+      const noData = document.getElementById('no-data');
+
+      if (emailData.length === 0) {
+        table.style.display = 'none';
+        noData.style.display = 'block';
+        noData.textContent = 'No emails found for the selected date range';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      noData.style.display = 'none';
+      table.style.display = 'table';
+
+      emailData.forEach(email => {
+        const row = document.createElement('tr');
+        const ipClass = email.ip.startsWith('10.') ? 'ip-10' : 'ip-100';
+        
+        row.innerHTML = `
+          <td>${email.store || 'N/A'}</td>
+          <td class="${ipClass}">${email.ip || 'N/A'}</td>
+          <td style="font-size: 0.85rem; color: #6b7280;">${email.hostname || 'N/A'}</td>
+          <td style="font-size: 0.85rem;">${email.subject}</td>
+          <td style="font-size: 0.85rem; color: #6b7280;">${email.conversationId}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function updateStats() {
+      const statsArea = document.getElementById('stats-area');
+      statsArea.style.display = 'grid';
+
+      const total = emailData.length;
+      const needsUpdate = emailData.filter(e => e.ip && e.ip.startsWith('10.')).length;
+      const updated = emailData.filter(e => e.ip && e.ip.startsWith('100.')).length;
+      const errors = emailData.filter(e => !e.store || !e.ip).length;
+
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-needs-update').textContent = needsUpdate;
+      document.getElementById('stat-updated').textContent = updated;
+      document.getElementById('stat-errors').textContent = errors;
+    }
+
+    function sortTable(column) {
+      emailData.sort((a, b) => {
+        const valA = a[column] || '';
+        const valB = b[column] || '';
+        
+        if (column === 'store') {
+          return parseInt(valA) - parseInt(valB);
+        }
+        
+        return valA.localeCompare(valB);
+      });
+      
+      displayData();
+    }
+
+    function exportToCSV() {
+      if (emailData.length === 0) return;
+
+      const headers = ['Store Number', 'IP Address', 'Hostname'];
+      const rows = emailData.map(e => [
+        e.store || '',
+        e.ip || '',
+        e.hostname || ''
+      ]);
+
+      const csv = [headers, ...rows]
+        .map(row => row.map(cell => `"${cell}"`).join(','))
+        .join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      const startDate = document.getElementById('start-date').value;
+      const endDate = document.getElementById('end-date').value;
+      a.download = `dominos-ip-updates-${startDate}-to-${endDate}.csv`;
+      
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
+
+    // Event listeners
+    document.getElementById('fetch-btn').addEventListener('click', fetchEmails);
+    document.getElementById('export-btn').addEventListener('click', exportToCSV);
+
+    // Initialize dates on load
+    initializeDates();
+  </script>
+</body>
+</html>
