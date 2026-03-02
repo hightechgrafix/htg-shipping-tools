@@ -265,6 +265,7 @@
             <th onclick="sortTable('ip')">IP Address</th>
             <th onclick="sortTable('hostname')">Hostname</th>
             <th>Email Subject</th>
+            <th>Created Date</th>
             <th>Conversation ID</th>
           </tr>
         </thead>
@@ -368,13 +369,17 @@
 
       emailData.forEach(email => {
         const row = document.createElement('tr');
-        const ipClass = email.ip.startsWith('10.') ? 'ip-10' : 'ip-100';
+        const ipClass = (email.ip && email.ip.startsWith('10.')) ? 'ip-10' : (email.ip && email.ip.startsWith('100.')) ? 'ip-100' : '';
+        
+        // Format the date nicely
+        const createdDate = email.createdAt ? new Date(email.createdAt).toLocaleString() : 'N/A';
         
         row.innerHTML = `
           <td>${email.store || 'N/A'}</td>
           <td class="${ipClass}">${email.ip || 'N/A'}</td>
           <td style="font-size: 0.85rem; color: #6b7280;">${email.hostname || 'N/A'}</td>
           <td style="font-size: 0.85rem;">${email.subject}</td>
+          <td style="font-size: 0.85rem; color: #6b7280;">${createdDate}</td>
           <td style="font-size: 0.85rem; color: #6b7280;">${email.conversationId}</td>
         `;
         tbody.appendChild(row);

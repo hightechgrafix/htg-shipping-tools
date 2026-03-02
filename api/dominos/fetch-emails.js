@@ -123,51 +123,13 @@ export default async function handler(req, res) {
     }
 
     const conversationsData = await conversationsResponse.json();
-    const allConversations = conversationsData._embedded?.conversations || [];
+    const conversations = conversationsData._embedded?.conversations || [];
 
-    console.log('Fetched conversations from API:', allConversations.length);
+    console.log('Fetched conversations from API:', conversations.length);
+    console.log('Date range requested:', { startDate, endDate, start, end });
 
-    // DEBUG: Log the first few conversations to see what dates they have
-    if (allConversations.length > 0) {
-      console.log('Sample conversation dates:', allConversations.slice(0, 3).map(conv => ({
-        id: conv.id,
-        subject: conv.subject?.substring(0, 50),
-        createdAt: conv.createdAt,
-        userUpdatedAt: conv.userUpdatedAt,
-        customerWaitingSince: conv.customerWaitingSince?.time,
-        modifiedAt: conv.modifiedAt
-      })));
-    }
-
-    // Filter conversations to only include those within the date range
-    // Check multiple date fields because HelpScout tracks different timestamps
-    const conversations = allConversations.filter(conv => {
-      // Try multiple date fields to catch all relevant emails
-      const dates = [
-        conv.userUpdatedAt,
-        conv.customerWaitingSince?.time,
-        conv.createdAt,
-        conv.modifiedAt
-      ].filter(d => d); // Remove nulls
-      
-      console.log(`Conversation ${conv.id}: checking dates`, {
-        dates: dates,
-        start: start,
-        end: end,
-        matches: dates.some(dateStr => {
-          const date = new Date(dateStr);
-          return date >= start && date <= end;
-        })
-      });
-      
-      // If any of these dates fall within our range, include the conversation
-      return dates.some(dateStr => {
-        const date = new Date(dateStr);
-        return date >= start && date <= end;
-      });
-    });
-
-    console.log('Conversations after date filter:', conversations.length);
+    // TEMPORARILY DISABLED: Not filtering by date to debug
+    // We'll return ALL conversations and let you see what dates they actually have
 
     // Step 5: Parse emails for store numbers and IPs
     const parsedEmails = [];
@@ -203,6 +165,7 @@ export default async function handler(req, res) {
             ip: ipAddress,
             hostname: hostname,
             subject: subject,
+            createdAt: conversation.createdAt,
           });
         }
       } catch (parseError) {
