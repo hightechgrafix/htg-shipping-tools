@@ -320,7 +320,12 @@
         const data = await response.json();
 
         if (!data.success) {
-          throw new Error(data.error || 'Failed to fetch emails');
+          // Show detailed error information if available
+          let errorMsg = data.error || 'Failed to fetch emails';
+          if (data.details) {
+            errorMsg += '\n\nDetails: ' + JSON.stringify(data.details, null, 2);
+          }
+          throw new Error(errorMsg);
         }
 
         emailData = data.emails;
@@ -337,7 +342,8 @@
 
       } catch (error) {
         console.error('Error:', error);
-        messageArea.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+        const errorHtml = error.message.replace(/\n/g, '<br>');
+        messageArea.innerHTML = `<div class="error">Error: ${errorHtml}</div>`;
       } finally {
         fetchBtn.disabled = false;
         loading.style.display = 'none';

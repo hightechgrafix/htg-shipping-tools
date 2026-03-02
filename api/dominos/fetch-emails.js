@@ -93,17 +93,31 @@ export default async function handler(req, res) {
 
     // Step 4: Fetch conversations from BRTech mailbox
     // Get ALL active conversations, not filtered by user
-    const conversationsResponse = await fetch(
-      `https://api.helpscout.net/v2/conversations?mailbox=${mailboxId}&status=active&modifiedSince=${modifiedSince}&embed=threads`,
-      {
-        headers: {
-          'Authorization': `Bearer ${access_token}`,
-        },
-      }
-    );
+    const conversationsUrl = `https://api.helpscout.net/v2/conversations?mailbox=${mailboxId}&status=active&modifiedSince=${modifiedSince}&embed=threads`;
+    
+    console.log('Fetching conversations from URL:', conversationsUrl);
+    
+    const conversationsResponse = await fetch(conversationsUrl, {
+      headers: {
+        'Authorization': `Bearer ${access_token}`,
+      },
+    });
+
+    console.log('Conversations response status:', conversationsResponse.status);
 
     if (!conversationsResponse.ok) {
-      throw new Error('Failed to fetch conversations');
+      const errorText = await conversationsResponse.text();
+      console.error('Conversations API error:', errorText);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to fetch conversations',
+        details: {
+          status: conversationsResponse.status,
+          statusText: conversationsResponse.statusText,
+          body: errorText,
+          url: conversationsUrl
+        }
+      });
     }
 
     const conversationsData = await conversationsResponse.json();
