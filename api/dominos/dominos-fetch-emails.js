@@ -1,4 +1,7 @@
 export default async function handler(req, res) {
+  // Set CORS headers
+  res.setHeader('Content-Type', 'application/json');
+  
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
@@ -7,16 +10,31 @@ export default async function handler(req, res) {
     // Get date range from query params
     const { startDate, endDate } = req.query;
 
+    console.log('Received request with dates:', { startDate, endDate });
+
     if (!startDate || !endDate) {
-      throw new Error('Start date and end date are required');
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Start date and end date are required',
+        received: { startDate, endDate }
+      });
     }
 
     // Get HelpScout credentials from environment variables
     const appId = process.env.HELPSCOUT_APP_ID;
     const appSecret = process.env.HELPSCOUT_APP_SECRET;
 
+    console.log('Environment check:', { 
+      hasAppId: !!appId, 
+      hasAppSecret: !!appSecret 
+    });
+
     if (!appId || !appSecret) {
-      throw new Error('HelpScout credentials not configured');
+      return res.status(500).json({ 
+        success: false, 
+        error: 'HelpScout credentials not configured',
+        details: 'Missing HELPSCOUT_APP_ID or HELPSCOUT_APP_SECRET environment variables'
+      });
     }
 
     // Step 1: Get access token
@@ -170,9 +188,12 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Error in fetch-emails:', error);
+    console.error('Error stack:', error.stack);
     return res.status(500).json({
       success: false,
       error: error.message,
+      details: error.stack,
+      timestamp: new Date().toISOString()
     });
   }
 }
