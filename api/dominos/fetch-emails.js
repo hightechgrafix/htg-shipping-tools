@@ -127,6 +127,18 @@ export default async function handler(req, res) {
 
     console.log('Fetched conversations from API:', allConversations.length);
 
+    // DEBUG: Log the first few conversations to see what dates they have
+    if (allConversations.length > 0) {
+      console.log('Sample conversation dates:', allConversations.slice(0, 3).map(conv => ({
+        id: conv.id,
+        subject: conv.subject?.substring(0, 50),
+        createdAt: conv.createdAt,
+        userUpdatedAt: conv.userUpdatedAt,
+        customerWaitingSince: conv.customerWaitingSince?.time,
+        modifiedAt: conv.modifiedAt
+      })));
+    }
+
     // Filter conversations to only include those within the date range
     // Check multiple date fields because HelpScout tracks different timestamps
     const conversations = allConversations.filter(conv => {
@@ -137,6 +149,16 @@ export default async function handler(req, res) {
         conv.createdAt,
         conv.modifiedAt
       ].filter(d => d); // Remove nulls
+      
+      console.log(`Conversation ${conv.id}: checking dates`, {
+        dates: dates,
+        start: start,
+        end: end,
+        matches: dates.some(dateStr => {
+          const date = new Date(dateStr);
+          return date >= start && date <= end;
+        })
+      });
       
       // If any of these dates fall within our range, include the conversation
       return dates.some(dateStr => {
