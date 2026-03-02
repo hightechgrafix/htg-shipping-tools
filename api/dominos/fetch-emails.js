@@ -94,12 +94,8 @@ export default async function handler(req, res) {
     console.log('Date range:', { modifiedSince, modifiedBefore });
 
     // Step 4: Fetch conversations from BRTech mailbox
-    // Use a broader date range - go back further than requested to catch more emails
-    const broadStart = new Date(start);
-    broadStart.setDate(broadStart.getDate() - 7); // Go back an extra week
-    const broadModifiedSince = broadStart.toISOString().replace(/\.\d{3}Z$/, 'Z');
-    
-    const conversationsUrl = `https://api.helpscout.net/v2/conversations?mailbox=${mailboxId}&modifiedSince=${broadModifiedSince}&embed=threads&page=1&pageSize=100`;
+    // DEBUG MODE: Fetch recent conversations with NO filters to see what we get
+    const conversationsUrl = `https://api.helpscout.net/v2/conversations?mailbox=${mailboxId}&embed=threads&sortField=modifiedAt&sortOrder=desc&page=1`;
     
     console.log('Fetching conversations from URL:', conversationsUrl);
     
