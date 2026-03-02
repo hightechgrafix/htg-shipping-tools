@@ -125,12 +125,24 @@ export default async function handler(req, res) {
     const conversationsData = await conversationsResponse.json();
     const allConversations = conversationsData._embedded?.conversations || [];
 
-    console.log('Fetched conversations:', allConversations.length);
+    console.log('Fetched conversations from API:', allConversations.length);
 
     // Filter conversations to only include those within the date range
+    // Check multiple date fields because HelpScout tracks different timestamps
     const conversations = allConversations.filter(conv => {
-      const modifiedAt = new Date(conv.userUpdatedAt || conv.createdAt);
-      return modifiedAt >= start && modifiedAt <= end;
+      // Try multiple date fields to catch all relevant emails
+      const dates = [
+        conv.userUpdatedAt,
+        conv.customerWaitingSince?.time,
+        conv.createdAt,
+        conv.modifiedAt
+      ].filter(d => d); // Remove nulls
+      
+      // If any of these dates fall within our range, include the conversation
+      return dates.some(dateStr => {
+        const date = new Date(dateStr);
+        return date >= start && date <= end;
+      });
     });
 
     console.log('Conversations after date filter:', conversations.length);
