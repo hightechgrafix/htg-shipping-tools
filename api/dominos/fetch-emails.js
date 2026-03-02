@@ -76,30 +76,9 @@ export default async function handler(req, res) {
 
     const mailboxId = brtechMailbox.id;
 
-    // Step 3: Get users to find "polling" user ID
-    const usersResponse = await fetch('https://api.helpscout.net/v2/users', {
-      headers: {
-        'Authorization': `Bearer ${access_token}`,
-      },
-    });
+    console.log('Found BRTech mailbox:', mailboxId);
 
-    if (!usersResponse.ok) {
-      throw new Error('Failed to fetch users');
-    }
-
-    const usersData = await usersResponse.json();
-    const pollingUser = usersData._embedded.users.find(u => 
-      u.firstName?.toLowerCase() === 'polling' || 
-      u.email?.toLowerCase().includes('polling')
-    );
-
-    if (!pollingUser) {
-      throw new Error('Polling user not found');
-    }
-
-    const userId = pollingUser.id;
-
-    // Step 4: Build date range for query
+    // Step 3: Build date range for query
     // Parse dates and set to start/end of day
     const start = new Date(startDate);
     start.setHours(0, 0, 0, 0);
@@ -110,10 +89,12 @@ export default async function handler(req, res) {
     const modifiedSince = start.toISOString();
     const modifiedBefore = end.toISOString();
 
-    // Step 5: Fetch conversations from BRTech mailbox assigned to polling user
-    // Note: HelpScout API doesn't have a modifiedBefore parameter, so we'll filter in code
+    console.log('Date range:', { modifiedSince, modifiedBefore });
+
+    // Step 4: Fetch conversations from BRTech mailbox
+    // Get ALL active conversations, not filtered by user
     const conversationsResponse = await fetch(
-      `https://api.helpscout.net/v2/conversations?mailbox=${mailboxId}&assignedTo=${userId}&status=active&modifiedSince=${modifiedSince}&embed=threads`,
+      `https://api.helpscout.net/v2/conversations?mailbox=${mailboxId}&status=active&modifiedSince=${modifiedSince}&embed=threads`,
       {
         headers: {
           'Authorization': `Bearer ${access_token}`,
@@ -128,13 +109,17 @@ export default async function handler(req, res) {
     const conversationsData = await conversationsResponse.json();
     const allConversations = conversationsData._embedded?.conversations || [];
 
+    console.log('Fetched conversations:', allConversations.length);
+
     // Filter conversations to only include those within the date range
     const conversations = allConversations.filter(conv => {
       const modifiedAt = new Date(conv.userUpdatedAt || conv.createdAt);
       return modifiedAt >= start && modifiedAt <= end;
     });
 
-    // Step 6: Parse emails for store numbers and IPs
+    console.log('Conversations after date filter:', conversations.length);
+
+    // Step 5: Parse emails for store numbers and IPs
     const parsedEmails = [];
 
     for (const conversation of conversations) {
