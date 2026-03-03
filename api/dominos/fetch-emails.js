@@ -78,39 +78,30 @@ export default async function handler(req, res) {
 
     console.log('Found BRTech mailbox:', mailboxId);
 
-    // Step 3: Build date range for query
-    // Parse dates and set to start/end of day
+    // Step 3: Build date range
     const start = new Date(startDate);
     start.setHours(0, 0, 0, 0);
     
     const end = new Date(endDate);
-    end.setHours(23, 59, 59, 0);
+    end.setHours(23, 59, 59, 999);
 
-    // Format dates without milliseconds for HelpScout API
-    // HelpScout wants: yyyy-MM-dd'T'HH:mm:ss'Z' (no milliseconds)
-    const modifiedSince = start.toISOString().replace(/\.\d{3}Z$/, 'Z');
-    const modifiedBefore = end.toISOString().replace(/\.\d{3}Z$/, 'Z');
+    console.log('Date range:', { start, end });
 
-    console.log('Date range:', { modifiedSince, modifiedBefore });
-
-    // Step 4: Fetch conversations from BRTech mailbox
-    // Fetch ALL conversations with pagination
+    // Step 4: Fetch ALL conversations with pagination
     let allConversations = [];
     let page = 1;
     let hasMorePages = true;
     
-    while (hasMorePages && page <= 10) { // Max 10 pages (250 emails) to avoid infinite loops
+    while (hasMorePages && page <= 10) { // Max 10 pages (250 emails)
       const conversationsUrl = `https://api.helpscout.net/v2/conversations?mailbox=${mailboxId}&embed=threads&sortField=modifiedAt&sortOrder=desc&page=${page}`;
       
-      console.log(`Fetching page ${page} from:`, conversationsUrl);
+      console.log(`Fetching page ${page}`);
       
       const conversationsResponse = await fetch(conversationsUrl, {
         headers: {
           'Authorization': `Bearer ${access_token}`,
         },
       });
-
-      console.log(`Page ${page} response status:`, conversationsResponse.status);
 
       if (!conversationsResponse.ok) {
         const errorText = await conversationsResponse.text();
@@ -120,9 +111,7 @@ export default async function handler(req, res) {
           error: 'Failed to fetch conversations',
           details: {
             status: conversationsResponse.status,
-            statusText: conversationsResponse.statusText,
-            body: errorText,
-            url: conversationsUrl
+            body: errorText
           }
         });
       }
@@ -137,50 +126,51 @@ export default async function handler(req, res) {
       hasMorePages = pageInfo && pageInfo.number < pageInfo.totalPages;
       page++;
       
-      console.log(`Fetched ${pageConversations.length} conversations on page ${page - 1}. Total so far: ${allConversations.length}`);
+      console.log(`Page ${page - 1}: ${pageConversations.length} conversations. Total: ${allConversations.length}`);
     }
 
-    const conversations = allConversations;
+    console.log('Total conversations fetched:', allConversations.length);
 
-    console.log('Fetched conversations from API:', conversations.length);
-    console.log('Date range requested:', { startDate, endDate, start, end });
+    // Filter by date range - check createdAt date
+    const filteredConversations = allConversations.filter(conv => {
+      const createdDate = new Date(conv.createdAt);
+      return createdDate >= start && createdDate <= end;
+    });
 
-    // TEMPORARILY DISABLED: Not filtering by date to debug
-    // We'll return ALL conversations and let you see what dates they actually have
+    console.log('After date filter:', filteredConversations.length);
 
     // Step 5: Parse emails for store numbers and IPs
     const parsedEmails = [];
 
-    for (const conversation of conversations) {
+    for (const conversation of filteredConversations) {
       try {
         const subject = conversation.subject || '';
         const threads = conversation._embedded?.threads || [];
         
-        // Parse store number from subject first
+        // Parse store number from subject
         const storeMatch = subject.match(/Store(\d+)/i);
         const storeNumber = storeMatch ? storeMatch[1] : null;
 
-        // Look through ALL threads to find the IP address
-        // (sometimes replies come before the original email in the thread list)
+        // Look through ALL threads to find IP and hostname
         let ipAddress = null;
         let hostname = null;
 
         for (const thread of threads) {
           const body = thread?.body || '';
           
-          // Parse IP address from body
+          // Parse IP address
           const ipMatch = body.match(/Address\s*:\s*(\d+\.\d+\.\d+\.\d+)/i);
           if (ipMatch && !ipAddress) {
             ipAddress = ipMatch[1];
           }
 
-          // Parse hostname from body (allow HTML tags after it)
+          // Parse hostname
           const hostnameMatch = body.match(/Name\s*:\s*([^\s\n<]+)/i);
           if (hostnameMatch && !hostname) {
             hostname = hostnameMatch[1];
           }
 
-          // If we found both, we can stop looking
+          // Stop if we found both
           if (ipAddress && hostname) {
             break;
           }
@@ -198,7 +188,6 @@ export default async function handler(req, res) {
         }
       } catch (parseError) {
         console.error('Error parsing conversation:', parseError);
-        // Continue with next conversation
       }
     }
 
