@@ -94,36 +94,53 @@ export default async function handler(req, res) {
     console.log('Date range:', { modifiedSince, modifiedBefore });
 
     // Step 4: Fetch conversations from BRTech mailbox
-    // DEBUG MODE: Fetch recent conversations with NO filters to see what we get
-    const conversationsUrl = `https://api.helpscout.net/v2/conversations?mailbox=${mailboxId}&embed=threads&sortField=modifiedAt&sortOrder=desc&page=1`;
+    // Fetch ALL conversations with pagination
+    let allConversations = [];
+    let page = 1;
+    let hasMorePages = true;
     
-    console.log('Fetching conversations from URL:', conversationsUrl);
-    
-    const conversationsResponse = await fetch(conversationsUrl, {
-      headers: {
-        'Authorization': `Bearer ${access_token}`,
-      },
-    });
-
-    console.log('Conversations response status:', conversationsResponse.status);
-
-    if (!conversationsResponse.ok) {
-      const errorText = await conversationsResponse.text();
-      console.error('Conversations API error:', errorText);
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to fetch conversations',
-        details: {
-          status: conversationsResponse.status,
-          statusText: conversationsResponse.statusText,
-          body: errorText,
-          url: conversationsUrl
-        }
+    while (hasMorePages && page <= 10) { // Max 10 pages (250 emails) to avoid infinite loops
+      const conversationsUrl = `https://api.helpscout.net/v2/conversations?mailbox=${mailboxId}&embed=threads&sortField=modifiedAt&sortOrder=desc&page=${page}`;
+      
+      console.log(`Fetching page ${page} from:`, conversationsUrl);
+      
+      const conversationsResponse = await fetch(conversationsUrl, {
+        headers: {
+          'Authorization': `Bearer ${access_token}`,
+        },
       });
+
+      console.log(`Page ${page} response status:`, conversationsResponse.status);
+
+      if (!conversationsResponse.ok) {
+        const errorText = await conversationsResponse.text();
+        console.error('Conversations API error:', errorText);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to fetch conversations',
+          details: {
+            status: conversationsResponse.status,
+            statusText: conversationsResponse.statusText,
+            body: errorText,
+            url: conversationsUrl
+          }
+        });
+      }
+
+      const conversationsData = await conversationsResponse.json();
+      const pageConversations = conversationsData._embedded?.conversations || [];
+      
+      allConversations = allConversations.concat(pageConversations);
+      
+      // Check if there are more pages
+      const pageInfo = conversationsData.page;
+      hasMorePages = pageInfo && pageInfo.number < pageInfo.totalPages;
+      page++;
+      
+      console.log(`Fetched ${pageConversations.length} conversations on page ${page - 1}. Total so far: ${allConversations.length}`);
     }
 
-    const conversationsData = await conversationsResponse.json();
-    const conversations = conversationsData._embedded?.conversations || [];
+    const conversations = allConversations;
 
     console.log('Fetched conversations from API:', conversations.length);
     console.log('Date range requested:', { startDate, endDate, start, end });
